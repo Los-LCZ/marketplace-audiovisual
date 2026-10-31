@@ -9,12 +9,34 @@ export type SpaceCategory =
   | "photo_studio"
   | "outdoor_location";
 export type SpaceStatus = "draft" | "published" | "archived";
-export type BookingStatus = "pending_payment" | "confirmed" | "completed" | "cancelled";
+/**
+ * requested: espera aprobación del anfitrión (no bloquea el horario).
+ * rejected: el anfitrión rechazó la solicitud.
+ */
+export type BookingStatus =
+  | "requested"
+  | "pending_payment"
+  | "confirmed"
+  | "completed"
+  | "cancelled"
+  | "rejected";
 export type AmenityCategory = "audio" | "video" | "general";
 export type ReactionKind = "like" | "pass";
 export type GearCategory = "microfonos" | "consolas" | "amplificacion" | "iluminacion";
 /** Equipamiento técnico del espacio, agrupado por categoría (columna `spaces.gear`). */
 export type GearGroup = { category: GearCategory; items: string[] };
+
+/** Cliente visto por un anfitrión: perfil público, nota como cliente y última reseña recibida. */
+export type ClientSummaryRow = {
+  client_id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  verified: boolean;
+  /** Promedio (2 decimales) de reseñas reveladas; null si no tiene. */
+  avg_rating: number | null;
+  review_count: number;
+  last_review: { rating: number; comment: string | null; tags: string[]; created_at: string } | null;
+};
 
 /** Una reseña tal como la devuelve get_booking_reviews. */
 export type BookingReviewEntry = {
@@ -213,6 +235,10 @@ export type Database = {
           created_at: string;
           /** Lo fija la base al pasar a completed; inicia el plazo de 14 días de la calificación. */
           completed_at: string | null;
+          project: string | null;
+          message: string | null;
+          /** Cuándo el anfitrión aceptó o rechazó la solicitud. */
+          decided_at: string | null;
         };
         // Los montos los calcula el trigger compute_booking_amounts; se envían en 0.
         Insert: {
@@ -228,6 +254,8 @@ export type Database = {
           status?: BookingStatus;
           payment_id?: string | null;
           created_at?: string;
+          project?: string | null;
+          message?: string | null;
         };
         Update: {
           status?: BookingStatus;
@@ -382,6 +410,10 @@ export type Database = {
           author_name: string | null;
           author_avatar: string | null;
         }[];
+      };
+      get_client_summaries: {
+        Args: { p_client_ids: string[] };
+        Returns: ClientSummaryRow[];
       };
       get_discover_deck: {
         Args: { p_categories?: SpaceCategory[] | null; p_limit?: number };

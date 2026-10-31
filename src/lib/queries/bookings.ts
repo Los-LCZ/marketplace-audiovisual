@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import type { Booking, BookingReviews, Review, Space } from "@/types/database";
+import type { Booking, BookingReviews, ClientSummaryRow, Review, Space } from "@/types/database";
 
 export type BookingWithSpace = Booking & {
   space: Pick<
@@ -9,6 +9,25 @@ export type BookingWithSpace = Booking & {
   /** null si la reserva aún no tiene reseña (reviews.booking_id es único). */
   review: Pick<Review, "id" | "rating" | "comment" | "created_at"> | null;
 };
+
+/** Quien reservó, visto por el anfitrión (sin teléfono). */
+export type ClientSummary = Omit<ClientSummaryRow, "client_id"> & { id: string };
+
+/** Reserva o solicitud recibida por un anfitrión, con el resumen del cliente. */
+export type HostBooking = BookingWithSpace & { client: ClientSummary | null };
+
+type Client = Awaited<ReturnType<typeof createClient>>;
+
+async function attachClients(supabase: Client, bookings: BookingWithSpace[]): Promise<HostBooking[]> {
+  if (!bookings.length) return [];
+  const { data, error } = await supabase.rpc("get_client_summaries", {
+    p_client_ids: [...new Set(bookings.map((b) => b.client_id))],
+  });
+  if (error) throw new Error(`Error al obtener clientes: ${error.message}`);
+
+  const byId = new Map((data ?? []).map(({ client_id, ...rest }) => [client_id, { id: client_id, ...rest }]));
+  return bookings.map((b) => ({ ...b, client: byId.get(b.client_id) ?? null }));
+}
 
 const SPACE_FIELDS = "id, title, city, commune, images, host_id, price_per_hour, category";
 const REVIEW_SELECT = "review:reviews(id, rating, comment, created_at)";
@@ -39,6 +58,24 @@ export async function listHostBookings(hostId: string) {
 
   if (error) throw new Error(`Error al listar reservas recibidas: ${error.message}`);
   return (data ?? []) satisfies BookingWithSpace[];
+}
+
+/**
+ * Solicitudes pendientes (`requested`) en los espacios del anfitrión, por fecha.
+ * Incluye el perfil público del cliente, su nota y cantidad de reseñas como
+ * cliente y su última reseña recibida.
+ */
+export async function listHostRequests(hostId: string): Promise<HostBooking[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("bookings")
+    .select(HOST_BOOKING_SELECT)
+    .eq("space.host_id", hostId)
+    .eq("status", "requested")
+    .order("start_time", { ascending: true });
+
+  if (error) throw new Error(`Error al listar solicitudes: ${error.message}`);
+  return attachClients(supabase, (data ?? []) satisfies BookingWithSpace[]);
 }
 
 /**

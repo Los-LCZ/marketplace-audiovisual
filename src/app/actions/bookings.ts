@@ -16,9 +16,12 @@ function bookingErrorMessage(error: { code?: string; message: string }) {
 }
 
 /**
- * Crea una reserva. Espera `space_id`, `start_time` y `end_time` (ISO 8601).
- * Los montos (horas, subtotal, comisión, total) los calcula el trigger
- * compute_booking_amounts en la base de datos.
+ * Crea una reserva. Espera `space_id`, `start_time` y `end_time` (ISO 8601) y,
+ * opcionales, `project` y `message` para el anfitrión.
+ * Los montos (horas, subtotal, comisión, total) y el estado los decide el trigger
+ * compute_booking_amounts: `confirmed` si el cliente cumple la nota mínima del
+ * anfitrión (o no hay mínimo); si no, `requested` y el anfitrión la acepta o rechaza.
+ * Revisa `data.status` para saber cuál fue.
  */
 export async function createBooking(
   _prev: ActionState<Booking>,
@@ -30,6 +33,8 @@ export async function createBooking(
   const spaceId = getString(formData, "space_id");
   const start = new Date(getString(formData, "start_time"));
   const end = new Date(getString(formData, "end_time"));
+  const project = getString(formData, "project");
+  const message = getString(formData, "message");
 
   if (!spaceId) return fail("Espacio inválido");
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()))
@@ -38,6 +43,8 @@ export async function createBooking(
   if (start.getTime() <= Date.now()) return fail("La reserva debe comenzar en el futuro");
   if ((end.getTime() - start.getTime()) % HOUR_MS !== 0)
     return fail("La reserva debe ser por horas completas");
+  if (project.length > 200) return fail("Proyecto muy largo", { project: "Máximo 200 caracteres" });
+  if (message.length > 2000) return fail("Mensaje muy largo", { message: "Máximo 2000 caracteres" });
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -47,6 +54,8 @@ export async function createBooking(
       client_id: user.id,
       start_time: start.toISOString(),
       end_time: end.toISOString(),
+      project: project || null,
+      message: message || null,
     })
     .select()
     .single();
@@ -54,8 +63,16 @@ export async function createBooking(
   if (error) return fail(bookingErrorMessage(error));
 
   revalidatePath("/mis-reservas");
+  revalidatePath("/dashboard");
   revalidatePath(`/espacios/${spaceId}`);
-  return { ok: true, data, message: "Reserva confirmada" };
+  return {
+    ok: true,
+    data,
+    message:
+      data.status === "requested"
+        ? "Solicitud enviada: el anfitrión debe aprobarla"
+        : "Reserva confirmada",
+  };
 }
 
 async function setBookingStatus(bookingId: string, status: BookingStatus): Promise<ActionState> {
@@ -70,7 +87,10 @@ async function setBookingStatus(bookingId: string, status: BookingStatus): Promi
     .eq("id", bookingId)
     .select("id, space_id");
 
-  if (error) return fail(error.code === "P0001" ? error.message : `Error: ${error.message}`);
+  if (error) {
+    if (error.code === "23P01") return fail("Ese horario ya fue tomado por otra reserva");
+    return fail(error.code === "P0001" ? error.message : `Error: ${error.message}`);
+  }
   if (!data?.length) return fail("Reserva no encontrada");
 
   revalidatePath("/mis-reservas");
@@ -81,7 +101,8 @@ async function setBookingStatus(bookingId: string, status: BookingStatus): Promi
 }
 
 /**
- * Cancela una reserva (cliente dueño o anfitrión del espacio).
+ * Cancela una reserva. El cliente puede cancelar sus solicitudes y reservas; el
+ * anfitrión, las reservas confirmadas (las solicitudes se rechazan con rejectBooking).
  * No recibe FormData: úsala con `useTransition` o con `.bind` en un `<form action>`.
  *
  * @example
@@ -94,8 +115,26 @@ export async function cancelBooking(bookingId: string): Promise<ActionState> {
 }
 
 /**
- * Marca una reserva como completada. Solo el anfitrión del espacio puede hacerlo
- * (lo valida el trigger guard_booking_update). Habilita que el cliente la reseñe.
+ * El anfitrión acepta una solicitud (`requested` -> `confirmed`). Falla si el
+ * horario ya lo tomó otra reserva o si ya comenzó.
+ * No recibe FormData: úsala con `useTransition` o con `.bind`.
+ */
+export async function acceptBooking(bookingId: string): Promise<ActionState> {
+  return setBookingStatus(bookingId, "confirmed");
+}
+
+/**
+ * El anfitrión rechaza una solicitud (`requested` -> `rejected`).
+ * No recibe FormData: úsala con `useTransition` o con `.bind`.
+ */
+export async function rejectBooking(bookingId: string): Promise<ActionState> {
+  return setBookingStatus(bookingId, "rejected");
+}
+
+/**
+ * Marca una reserva como completada. Solo el anfitrión del espacio puede hacerlo y
+ * solo cuando terminó el horario (lo valida guard_booking_update). Habilita que
+ * ambas partes se califiquen.
  * No recibe FormData: úsala con `useTransition` o con `.bind`.
  */
 export async function completeBooking(bookingId: string): Promise<ActionState> {
