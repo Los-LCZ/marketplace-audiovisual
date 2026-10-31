@@ -132,11 +132,13 @@ function parseSpaceForm(formData: FormData) {
   };
 }
 
+// Portada y catálogo, panel del anfitrión, ficha y edición.
 function revalidateSpace(spaceId: string) {
   revalidatePath("/");
   revalidatePath("/explorar");
   revalidatePath("/dashboard");
   revalidatePath(`/espacios/${spaceId}`);
+  revalidatePath(`/espacios/${spaceId}/editar`);
 }
 
 export async function createSpace(
@@ -288,7 +290,7 @@ export async function addSpaceImages(
     return fail(error.message);
   }
 
-  revalidatePath(`/espacios/${spaceId}`);
+  revalidateSpace(spaceId);
   return { ok: true };
 }
 
@@ -317,6 +319,41 @@ export async function removeSpaceImage(spaceId: string, imageUrl: string): Promi
   if (error) return fail(error.message);
 
   await removeSpaceImages(supabase, [imageUrl]);
-  revalidatePath(`/espacios/${spaceId}`);
+  revalidateSpace(spaceId);
+  return { ok: true };
+}
+
+/**
+ * Cambia el orden de las fotos de un espacio propio; la primera es la portada.
+ * `urls` debe ser exactamente las mismas URLs de `space.images`, en otro orden.
+ * No recibe FormData: úsala con `useTransition` o con `.bind`.
+ */
+export async function reorderSpaceImages(spaceId: string, urls: string[]): Promise<ActionState> {
+  const user = await getCurrentUser();
+  if (!user) return fail("Debes iniciar sesión");
+  if (!Array.isArray(urls) || !urls.every((u) => typeof u === "string")) return fail("Orden inválido");
+
+  const supabase = await createClient();
+  const { data: space } = await supabase
+    .from("spaces")
+    .select("images, host_id")
+    .eq("id", spaceId)
+    .maybeSingle();
+  if (!space || space.host_id !== user.id) return fail("Espacio no encontrado");
+
+  // Permutación exacta: mismo largo, sin repetidas y las mismas URLs.
+  const current = new Set(space.images);
+  const isPermutation =
+    urls.length === space.images.length && new Set(urls).size === urls.length && urls.every((u) => current.has(u));
+  if (!isPermutation) return fail("Las fotos cambiaron mientras ordenabas; recarga e inténtalo de nuevo");
+
+  const { error } = await supabase
+    .from("spaces")
+    .update({ images: urls })
+    .eq("id", spaceId)
+    .eq("host_id", user.id);
+  if (error) return fail(error.message);
+
+  revalidateSpace(spaceId);
   return { ok: true };
 }
