@@ -21,8 +21,21 @@ Ejecutar las migraciones de `supabase/migrations/` **en orden** (SQL Editor o `s
 | `init.sql` | Esquema, RLS, triggers, bucket `space-images`, amenities iniciales |
 | `20261030120000_spaces_text_search.sql` | Índices trigram (`pg_trgm`) para la búsqueda por texto |
 | `20261030130000_space_reviews_and_ratings.sql` | RPC `get_space_reviews` y vista `space_rating_stats` |
+| `20261031100000_space_details.sql` | Ficha Señal: horario, aforo, equipamiento (`gear`), reglas, `featured` |
+| `20261031110000_catalog_search.sql` | Vista `space_cards`, orden en la base, disponibilidad por día |
+| `20261031120000_catalog_queries.sql` | Comunas y estadísticas por categoría |
+| `20261031130000_public_profiles.sql` | Perfil público (titular, bio, etiquetas, verificado, nota mínima) |
+| `20261031140000_client_reviews.sql` | Calificación del cliente y calificación a ciegas |
+| `20261031150000_space_reactions.sql` | Me gusta / descarte y mazo de Descubrir |
+| `20261031160000_booking_request_status.sql` | Estados `requested` y `rejected` (**ejecutar sola**, ver abajo) |
+| `20261031160100_booking_requests.sql` | Solicitudes de reserva y resumen de clientes |
+| `20261031170000_profile_rating_stats.sql` | Estadísticas y reseñas por perfil |
 
 `init.sql` no se edita: cada cambio de esquema va en una migración nueva `<timestamp>_<descripcion>.sql`.
+
+En el SQL Editor, ejecuta **cada archivo por separado**. Postgres no permite usar un valor nuevo de un enum en la misma transacción en que se agrega, así que `..._booking_request_status.sql` tiene que terminar antes de correr `..._booking_requests.sql`.
+
+La vista `space_cards` usa `spaces.*`: si agregas columnas a `spaces`, recrea la vista en la misma migración.
 
 ## Rutas
 
@@ -33,7 +46,8 @@ Ejecutar las migraciones de `supabase/migrations/` **en orden** (SQL Editor o `s
 | `/espacios/nuevo` | Anfitrión (protegida) | Crear espacio |
 | `/mis-reservas` | Cliente (protegida) | Reservas hechas por el usuario |
 | `/dashboard` | Anfitrión (protegida) | **Ruta definitiva del panel del anfitrión.** La construye frontend; backend ya redirige y revalida ahí |
-| `/perfil` | Usuario (protegida) | Perfil |
+| `/perfil` | Usuario (protegida) | Edición del perfil propio (protege también `/perfil/*`: el perfil público debe ir en otra ruta) |
+| `/descubrir` | Usuario (protegida) | Mazo de me gusta / descarte |
 | `/login`, `/registro` | Público (redirige a `/` con sesión) | Autenticación |
 
 Las rutas protegidas se definen en `PROTECTED_PREFIXES` de `src/utils/supabase/middleware.ts`.
@@ -54,18 +68,23 @@ Las rutas protegidas se definen en `PROTECTED_PREFIXES` de `src/utils/supabase/m
 
 | Valor | Etiqueta | Significado |
 |---|---|---|
+| `requested` | Solicitada | El cliente no cumple la nota mínima del anfitrión: espera aprobación. **No bloquea el horario** |
 | `pending_payment` | Pendiente de pago | Reservado a la espera del pago (aún no se usa, ver abajo) |
 | `confirmed` | Confirmada | Horario bloqueado para el cliente |
-| `completed` | Completada | El anfitrión la marcó como realizada; el cliente puede reseñarla |
+| `completed` | Completada | El anfitrión la marcó como realizada (solo cuando terminó); ambas partes pueden calificarse |
 | `cancelled` | Cancelada | Libera el horario |
+| `rejected` | Rechazada | El anfitrión rechazó la solicitud |
 
 `space_status`: `draft` → Borrador, `published` → Publicado, `archived` → Archivado.
 
 ## Notas de negocio
 
 - **Montos:** los calcula el trigger `compute_booking_amounts` (horas completas × `price_per_hour`, comisión de plataforma de 10%). El cliente nunca envía montos.
-- **`pending_payment` (integración de pago futura):** hoy `createBooking` no envía `status`, así que toda reserva nace `confirmed`. Cuando se integre una pasarela de pago (p. ej. Webpay/Flow/Mercado Pago):
-  1. `createBooking` insertará con `status: 'pending_payment'`. Ese estado ya bloquea el horario, igual que `confirmed`.
+- **Horario:** cada espacio tiene `open_hour`–`close_hour` (hora de Chile); las reservas fuera de ese rango se rechazan.
+- **Solicitudes:** la reserva nace `confirmed` si el anfitrión no exige nota mínima o el cliente la cumple. Si no, nace `requested` y el anfitrión la acepta (`acceptBooking`) o rechaza (`rejectBooking`). Un cliente sin reseñas reveladas no cumple ningún mínimo. Al aceptar, la restricción de solape valida que el horario siga libre.
+- **`pending_payment` (integración de pago futura):** hoy ninguna reserva nace así. Cuando se integre una pasarela de pago (p. ej. Webpay/Flow/Mercado Pago):
+  1. El trigger `compute_booking_amounts` pondrá `pending_payment` en vez de `confirmed`. Ese estado ya bloquea el horario.
   2. El webhook de la pasarela, con `service_role`, guardará `payment_id` y pasará la reserva a `confirmed`.
-  3. Habrá que expirar las `pending_payment` sin pagar (cron) y quitarle al anfitrión la transición `pending_payment → confirmed`, que hoy permite `guard_booking_update`.
-- **Reseñas:** una por reserva (`reviews.booking_id` es único), solo del cliente y solo si la reserva está `completed`.
+  3. Habrá que expirar las `pending_payment` sin pagar (cron). El anfitrión ya no puede confirmarlas por su cuenta.
+- **Calificación de ida y vuelta, a ciegas:** el cliente califica el espacio (`reviews`) y el anfitrión al cliente (`client_reviews`), una vez por reserva `completed`. Ninguna parte ve la reseña de la otra hasta que ambas existan o pasen 14 días desde que se completó. Promedios, listados y el orden por rating solo cuentan reseñas reveladas. Una reseña no se puede editar ni borrar después de revelada.
+- **Destacados y verificados:** `spaces.featured` y `profiles.verified` solo los cambia un admin (o el SQL Editor).

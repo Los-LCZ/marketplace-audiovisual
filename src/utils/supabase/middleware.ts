@@ -2,8 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 
-// Rutas que requieren sesión iniciada.
-const PROTECTED_PREFIXES = ["/dashboard", "/mis-reservas", "/espacios/nuevo", "/perfil"];
+// Rutas que requieren sesión iniciada (por prefijo: también protege sus subrutas).
+// `/perfil` es la edición del perfil propio; un perfil público debe vivir en otra ruta.
+const PROTECTED_PREFIXES = ["/dashboard", "/mis-reservas", "/espacios/nuevo", "/perfil", "/descubrir"];
 // Rutas a las que un usuario autenticado no necesita volver.
 const AUTH_ROUTES = ["/login", "/registro"];
 
