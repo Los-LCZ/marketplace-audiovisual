@@ -6,6 +6,7 @@ import { SPACE_CATEGORY_LABELS } from "@/lib/labels";
 import { formatCLP } from "@/lib/utils";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { RatingPill } from "@/components/ui/rating";
+import { LikeButton } from "@/components/spaces/like-button";
 
 const MAX_TAGS = 3;
 
@@ -21,8 +22,21 @@ function LevelBars({ rating }: { rating: number | null }) {
   );
 }
 
-/** Tarjeta de espacio del sistema Señal. `query` se agrega al link (p. ej. la fecha buscada). */
-export function SpaceCard({ space, priority, query }: { space: SpaceWithAmenities; priority?: boolean; query?: string }) {
+/**
+ * Tarjeta de espacio del sistema Señal. `query` se agrega al link (p. ej. la fecha
+ * buscada). Con `liked` (true/false con sesión, null sin sesión) muestra el corazón.
+ */
+export function SpaceCard({
+  space,
+  priority,
+  query,
+  liked,
+}: {
+  space: SpaceWithAmenities;
+  priority?: boolean;
+  query?: string;
+  liked?: boolean | null;
+}) {
   return (
     <article className="scard">
       <div className="ph">
@@ -45,6 +59,7 @@ export function SpaceCard({ space, priority, query }: { space: SpaceWithAmenitie
           {SPACE_CATEGORY_LABELS[space.category]}
         </span>
         <span className="focus-tag">AF ✓</span>
+        {liked !== undefined && <LikeButton spaceId={space.id} title={space.title} liked={liked} />}
       </div>
       <LevelBars rating={space.avg_rating} />
       <div className="row">
@@ -56,7 +71,7 @@ export function SpaceCard({ space, priority, query }: { space: SpaceWithAmenitie
           </h3>
           <p className="loc">
             <MapPin aria-hidden />
-            {space.commune}, {space.city}
+            {space.neighborhood ? `${space.neighborhood}, ${space.commune}` : `${space.commune}, ${space.city}`}
           </p>
         </div>
         <RatingPill rating={space.avg_rating} />

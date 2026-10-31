@@ -1,7 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeftRight, CalendarDays, ShieldCheck, SlidersHorizontal } from "lucide-react";
-import { listPublishedSpaces, type SpaceWithAmenities } from "@/lib/queries/spaces";
+import {
+  getCategoryStats,
+  listFeaturedSpaces,
+  listPublishedSpaces,
+  type SpaceWithAmenities,
+} from "@/lib/queries/spaces";
 import { SPACE_CATEGORY_LABELS } from "@/lib/labels";
 import { formatCLP } from "@/lib/utils";
 import { CATEGORY_META, WORLDS, worldOf, type World } from "@/lib/world";
@@ -48,20 +53,21 @@ function toHeroSpace(space: SpaceWithAmenities): HeroSpace {
   };
 }
 
-// Mejor evaluados primero; sin reseñas, los más recientes (la query ya viene por fecha).
-function byRating(a: SpaceWithAmenities, b: SpaceWithAmenities) {
-  return (b.avg_rating ?? 0) - (a.avg_rating ?? 0) || b.review_count - a.review_count;
-}
 
 export default async function Home() {
   const world = await getWorld();
   const copy = COPY[world];
   const other: World = world === "av" ? "mu" : "av";
 
-  // La portada trabaja con los últimos 50 espacios publicados (máximo por página de la query).
-  const { spaces } = await listPublishedSpaces({ pageSize: 50 });
-  const inWorld = spaces.filter((s) => worldOf(s.category) === world);
-  const featured = [...inWorld].sort(byRating).slice(0, FEATURED_COUNT);
+  const categories = WORLDS[world].categories;
+  // El Visor y la Consola muestran los mejor valorados del mundo activo. Destacados: los
+  // marcados por un admin; si no hay, los mejor valorados.
+  const [{ spaces: inWorld }, stats, featuredPicks] = await Promise.all([
+    listPublishedSpaces({ categories, sort: "rating", pageSize: 24 }),
+    getCategoryStats(),
+    listFeaturedSpaces(categories, FEATURED_COUNT),
+  ]);
+  const featured: SpaceWithAmenities[] = featuredPicks.length ? featuredPicks : inWorld.slice(0, FEATURED_COUNT);
   const days = nextDays(currentTime().today, 14);
   const categoryOrder = [...WORLDS[world].categories, ...WORLDS[other].categories];
 
@@ -93,8 +99,7 @@ export default async function Home() {
         </div>
         <div className="cats">
           {categoryOrder.map((category) => {
-            const inCategory = spaces.filter((s) => s.category === category);
-            const from = inCategory.length ? Math.min(...inCategory.map((s) => s.price_per_hour)) : null;
+            const { space_count: count, min_price: from } = stats[category];
             const isOther = worldOf(category) !== world;
             return (
               <Link key={category} className={`cat panel ${isOther ? "other" : ""}`} href={`/explorar?category=${category}`}>
@@ -105,9 +110,9 @@ export default async function Home() {
                 <b>{SPACE_CATEGORY_LABELS[category]}</b>
                 <span className="dim text-[13px]">{CATEGORY_META[category].blurb}</span>
                 <span className="dim mt-auto text-xs">
-                  {from != null ? (
+                  {count && from != null ? (
                     <>
-                      {inCategory.length} {inCategory.length === 1 ? "espacio" : "espacios"} desde{" "}
+                      {count} {count === 1 ? "espacio" : "espacios"} desde{" "}
                       <b className="acc">{formatCLP(from)}</b> por hora
                     </>
                   ) : (
@@ -125,18 +130,18 @@ export default async function Home() {
         <div className="sec-head">
           <div>
             <h2 className="display h2" id="sides-t">
-              Reserva con confianza, califica de vuelta.
+              Desliza, haz match y califica de vuelta.
             </h2>
             <p className="lede">
-              Ficha técnica completa antes de reservar, horarios en tiempo real y reseñas de quienes ya usaron cada
-              espacio. Después de cada sesión, cuenta cómo te fue.
+              Los clientes descubren espacios deslizando y los anfitriones eligen a quién abrirle la puerta. Después de
+              cada sesión, ambos se califican.
             </p>
           </div>
         </div>
         <div className="sides">
           <article className="side panel">
             <p className="mono acc">Si buscas espacio</p>
-            <h3 className="display h3">Descubre y reserva por hora</h3>
+            <h3 className="display h3">Descubre deslizando</h3>
             <div className="mini-deck" aria-hidden>
               {inWorld.slice(0, 3).map((s, i) => (
                 <div
@@ -150,11 +155,13 @@ export default async function Home() {
               ))}
             </div>
             <p className="dim text-sm">
-              Filtra por equipamiento, comuna y precio, elige tu bloque en la línea de tiempo y la reserva queda
-              confirmada al tiro.
+              {world === "av"
+                ? "Desliza a la derecha para marcar la toma buena."
+                : "Desliza a la derecha para dejar el canal en Solo."}{" "}
+              Si tu nota como cliente cumple lo que pide el anfitrión, reservas al tiro.
             </p>
-            <Link className="btn btn-acc" href="/explorar">
-              Explorar espacios
+            <Link className="btn btn-acc" href="/descubrir">
+              Ir a Descubrir
             </Link>
           </article>
           <div className="bridge" aria-label="Calificación de ida y vuelta">
@@ -165,7 +172,7 @@ export default async function Home() {
               <span>
                 <b>Clientes</b>
                 <br />
-                <span className="dim">reseñan el espacio</span>
+                <span className="dim">califican el espacio</span>
               </span>
             </span>
             <span className="btn btn-acc btn-sm pointer-events-none rounded-full">
@@ -178,19 +185,19 @@ export default async function Home() {
               <span>
                 <b>Anfitriones</b>
                 <br />
-                <span className="dim">completan la sesión</span>
+                <span className="dim">califican al cliente</span>
               </span>
             </span>
-            <p className="dim max-w-[22ch] text-xs">Solo quien reservó y usó el espacio puede reseñarlo.</p>
+            <p className="dim max-w-[22ch] text-xs">A ciegas: nadie ve la nota del otro hasta enviar la suya.</p>
           </div>
           <article className="side panel">
             <p className="mono acc">Si tienes un espacio</p>
-            <h3 className="display h3">Gestiona todo desde tu panel</h3>
+            <h3 className="display h3">Elige a quién abrirle la puerta</h3>
             <ul className="list my-2.5">
               {[
-                ["Reservas próximas", "Confirmadas y con horario bloqueado"],
-                ["Por completar", "Marca la sesión y habilita la reseña"],
-                ["Estado del espacio", "Publica, pausa o archiva cuando quieras"],
+                ["Nota mínima", "Quien la cumple reserva al tiro"],
+                ["Solicitudes", "Desliza para aceptar o rechazar al resto"],
+                ["Califica a tus clientes", "Su nota la ven los demás anfitriones"],
               ].map(([title, text], i) => (
                 <li key={title} className="li panel" style={{ opacity: 1 - i * 0.22, background: "var(--bg)" }}>
                   <div className="grow">
@@ -200,7 +207,7 @@ export default async function Home() {
                 </li>
               ))}
             </ul>
-            <p className="dim text-sm">Recibes reservas por horas completas y ves el total de cada sesión.</p>
+            <p className="dim text-sm">Ves la nota y la última reseña de cada cliente antes de aceptarlo.</p>
             <Link className="btn btn-line" href="/dashboard">
               Ir al panel de anfitrión
             </Link>

@@ -7,7 +7,6 @@ import type { Amenity } from "@/types/database";
 import { SPACE_CATEGORIES, SPACE_CATEGORY_LABELS } from "@/lib/labels";
 import { SORTS, type SortKey } from "@/lib/search-params";
 import { formatCLP } from "@/lib/utils";
-import { SUGGESTED_COMMUNES } from "@/lib/world";
 import { dayLabel, dayMonth } from "@/lib/zoned-time";
 import { AmenityIcon } from "@/components/ui/amenity-icon";
 import { CategoryIcon } from "@/components/ui/category-icon";
@@ -41,7 +40,7 @@ function useFilterUrl() {
 }
 
 /** Panel de filtros (escritorio y hoja móvil): tipo, comuna, precio y equipamiento. */
-function FilterPanel({ amenities }: { amenities: Amenity[] }) {
+function FilterPanel({ amenities, communes }: { amenities: Amenity[]; communes: string[] }) {
   const { params, update } = useFilterUrl();
   const category = params.get("category");
   const commune = params.get("commune");
@@ -94,7 +93,7 @@ function FilterPanel({ amenities }: { amenities: Amenity[] }) {
       <div className="fgroup">
         <h4>Comuna</h4>
         <div className="chips">
-          {SUGGESTED_COMMUNES.map((c) => (
+          {communes.map((c) => (
             <button
               key={c}
               type="button"
@@ -177,12 +176,12 @@ function FilterPanel({ amenities }: { amenities: Amenity[] }) {
 }
 
 /** Columna de filtros de escritorio (oculta bajo 1000 px). */
-export function DesktopFilters({ amenities }: { amenities: Amenity[] }) {
+export function DesktopFilters({ amenities, communes }: { amenities: Amenity[]; communes: string[] }) {
   const params = useSearchParams();
   return (
     <aside className="filters panel desk" aria-label="Filtros">
       {/* key: reinicia el rango de precio si los filtros cambian desde fuera (chips, limpiar) */}
-      <FilterPanel key={`${params.get("min")}-${params.get("max")}`} amenities={amenities} />
+      <FilterPanel key={`${params.get("min")}-${params.get("max")}`} amenities={amenities} communes={communes} />
     </aside>
   );
 }
@@ -190,11 +189,14 @@ export function DesktopFilters({ amenities }: { amenities: Amenity[] }) {
 /** Barra de resultados: buscador de texto, botón de filtros móvil, orden y chips activos. */
 export function ResultsBar({
   amenities,
+  communes,
   total,
   today,
   summary,
 }: {
   amenities: Amenity[];
+  /** Comunas con espacios publicados (chips del filtro). */
+  communes: string[];
   total: number;
   today: string;
   summary: ReactNode;
@@ -295,7 +297,7 @@ export function ResultsBar({
 
       <Sheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="Filtros">
         <div className="filters" style={{ position: "static", padding: 0 }}>
-          <FilterPanel key={`${min}-${max}`} amenities={amenities} />
+          <FilterPanel key={`${min}-${max}`} amenities={amenities} communes={communes} />
         </div>
         <div className="mt-5 flex gap-2">
           <button type="button" className="btn btn-soft flex-1" onClick={() => update(clearAll)}>
