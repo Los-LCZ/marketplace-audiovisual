@@ -50,3 +50,14 @@ export async function getProfileReviews(
   if (error) throw new Error(`Error al obtener reseñas del perfil: ${error.message}`);
   return data ?? [];
 }
+
+/** Perfiles públicos de varios usuarios en una sola query, por id (los que no existen se omiten). */
+export async function getPublicProfiles(profileIds: string[]): Promise<Map<string, PublicProfile>> {
+  const ids = [...new Set(profileIds)];
+  if (!ids.length) return new Map();
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("public_profiles").select("*").in("id", ids);
+  if (error) throw new Error(`Error al obtener perfiles: ${error.message}`);
+  return new Map((data ?? []).map((p) => [p.id, p]));
+}

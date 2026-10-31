@@ -462,6 +462,10 @@ export type Database = {
           my_client_rating: number | null;
         }[];
       };
+      get_bookings_reviews: {
+        Args: { p_booking_ids: string[] };
+        Returns: { booking_id: string; reviews: BookingReviews }[];
+      };
       get_booking_reviews: {
         Args: { p_booking_id: string };
         Returns: BookingReviews | null;
