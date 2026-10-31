@@ -17,6 +17,7 @@ import type { ActionState } from "@/lib/action-state";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Field, FormMessage, Input, Select, Textarea } from "@/components/ui/form-controls";
 import { ImagePicker, type PickedImage } from "./image-picker";
+import { SpaceImagesManager } from "./space-images-manager";
 
 function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
@@ -316,7 +317,11 @@ export function SpaceForm({ amenities, space }: { amenities: Amenity[]; space?: 
         </Section>
       )}
 
-      {!space && (
+      {space ? (
+        <Section title="Fotos" description="Agrega o elimina fotos; los cambios se guardan al instante.">
+          <SpaceImagesManager spaceId={space.id} images={space.images} />
+        </Section>
+      ) : (
         <Section title="Fotos" description="La primera foto es la portada. Podrás agregar más después.">
           <ImagePicker images={images} onChange={setImages} error={fieldErrors?.images} />
         </Section>
