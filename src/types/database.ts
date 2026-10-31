@@ -54,6 +54,14 @@ export type Database = {
           avatar_url: string | null;
           role: UserRole;
           created_at: string;
+          headline: string | null;
+          bio: string | null;
+          commune: string | null;
+          tags: string[];
+          /** Solo lo cambia un admin. */
+          verified: boolean;
+          /** Nota mínima (1–5) que el anfitrión exige para confirmar sin aprobación; null = cualquiera. */
+          min_client_rating: number | null;
         };
         Insert: {
           id: string;
@@ -68,6 +76,12 @@ export type Database = {
           phone?: string | null;
           avatar_url?: string | null;
           role?: UserRole;
+          headline?: string | null;
+          bio?: string | null;
+          commune?: string | null;
+          tags?: string[];
+          verified?: boolean;
+          min_client_rating?: number | null;
         };
         Relationships: [];
       };
@@ -237,6 +251,7 @@ export type Database = {
       };
     };
     Views: {
+      /** Perfil público (sin teléfono). */
       public_profiles: {
         Row: {
           id: string;
@@ -244,6 +259,12 @@ export type Database = {
           avatar_url: string | null;
           role: UserRole;
           created_at: string;
+          headline: string | null;
+          bio: string | null;
+          commune: string | null;
+          tags: string[];
+          verified: boolean;
+          min_client_rating: number | null;
         };
         Relationships: [];
       };
