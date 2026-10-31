@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Hanken_Grotesk, Martian_Mono, Unbounded } from "next/font/google";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { Toaster } from "@/components/ui/toaster";
 import { getWorld } from "@/lib/world-server";
 import { WORLDS } from "@/lib/world";
 import "./globals.css";
@@ -37,6 +38,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <Navbar world={world} />
         <main id="app">{children}</main>
         <Footer />
+        <Toaster />
       </body>
     </html>
   );

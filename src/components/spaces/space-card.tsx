@@ -1,47 +1,81 @@
+import Image from "next/image";
 import Link from "next/link";
-import { MapPin } from "lucide-react";
+import { ImageOff, MapPin } from "lucide-react";
 import type { SpaceWithAmenities } from "@/lib/queries/spaces";
 import { SPACE_CATEGORY_LABELS } from "@/lib/labels";
 import { formatCLP } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { RatingSummary } from "@/components/ui/rating";
-import { SpaceImage } from "./space-image";
+import { CategoryIcon } from "@/components/ui/category-icon";
+import { RatingPill } from "@/components/ui/rating";
 
-export function SpaceCard({ space, priority }: { space: SpaceWithAmenities; priority?: boolean }) {
+const MAX_TAGS = 3;
+
+// Medidor de nivel bajo la foto (mundo Música): más nota, más nivel.
+function LevelBars({ rating }: { rating: number | null }) {
+  const lit = rating == null ? 0 : Math.round(((rating - 4.5) / 0.5) * 12);
   return (
-    <Link
-      href={`/espacios/${space.id}`}
-      className="group flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-shadow hover:shadow-lg"
-    >
-      <div className="relative">
-        <SpaceImage
-          src={space.images[0]}
-          alt={space.title}
-          priority={priority}
-          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-          className="transition-transform group-hover:scale-[1.02]"
-        />
-        <Badge className="absolute top-3 left-3 bg-surface/90 text-foreground backdrop-blur">
+    <div className="lvl" aria-hidden>
+      {Array.from({ length: 14 }, (_, i) => (
+        <b key={i} className={`${i < lit ? "on" : ""} ${i >= 10 ? "h" : ""} ${i >= 13 ? "p" : ""}`} />
+      ))}
+    </div>
+  );
+}
+
+/** Tarjeta de espacio del sistema Señal. `query` se agrega al link (p. ej. la fecha buscada). */
+export function SpaceCard({ space, priority, query }: { space: SpaceWithAmenities; priority?: boolean; query?: string }) {
+  return (
+    <article className="scard">
+      <div className="ph">
+        {space.images[0] ? (
+          <Image
+            src={space.images[0]}
+            alt={space.title}
+            fill
+            priority={priority}
+            sizes="(min-width: 1100px) 400px, (min-width: 640px) 50vw, 100vw"
+          />
+        ) : (
+          <div className="dim flex size-full items-center justify-center">
+            <ImageOff className="size-8" aria-hidden />
+            <span className="sr-only">Sin fotos</span>
+          </div>
+        )}
+        <span className="badge-cat">
+          <CategoryIcon category={space.category} />
           {SPACE_CATEGORY_LABELS[space.category]}
-        </Badge>
+        </span>
+        <span className="focus-tag">AF ✓</span>
       </div>
-      <div className="flex flex-1 flex-col gap-1.5 p-4">
-        <h3 className="line-clamp-1 font-semibold">{space.title}</h3>
-        <p className="flex items-center gap-1 text-sm text-muted-foreground">
-          <MapPin className="size-4 shrink-0" aria-hidden />
-          <span className="truncate">
+      <LevelBars rating={space.avg_rating} />
+      <div className="row">
+        <div className="min-w-0">
+          <h3>
+            <Link className="stretch" href={`/espacios/${space.id}${query ?? ""}`}>
+              {space.title}
+            </Link>
+          </h3>
+          <p className="loc">
+            <MapPin aria-hidden />
             {space.commune}, {space.city}
-          </span>
-        </p>
-        <RatingSummary avgRating={space.avg_rating} reviewCount={space.review_count} />
-        <p className="mt-auto pt-2 text-sm">
-          <span className="text-base font-semibold">{formatCLP(space.price_per_hour)}</span>
-          <span className="text-muted-foreground"> / hora</span>
-          {space.min_hours > 1 && (
-            <span className="text-muted-foreground"> · mín. {space.min_hours} h</span>
-          )}
-        </p>
+          </p>
+        </div>
+        <RatingPill rating={space.avg_rating} />
       </div>
-    </Link>
+      {space.amenities.length > 0 && (
+        <div className="tags">
+          {space.amenities.slice(0, MAX_TAGS).map((a) => (
+            <span key={a.id} className="tag">
+              {a.name}
+            </span>
+          ))}
+        </div>
+      )}
+      <p className="price">
+        <span>
+          <b>{formatCLP(space.price_per_hour)}</b> <span className="dim">por hora</span>
+        </span>
+        <span className="dim">Mínimo {space.min_hours} h</span>
+      </p>
+    </article>
   );
 }
