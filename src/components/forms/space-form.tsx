@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { startTransition, useActionState, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createSpace, updateSpace } from "@/app/actions/spaces";
@@ -13,6 +13,7 @@ import {
   SPACE_CATEGORY_LABELS,
 } from "@/lib/labels";
 import { toast } from "@/components/ui/toaster";
+import type { ActionState } from "@/lib/action-state";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Field, FormMessage, Input, Select, Textarea } from "@/components/ui/form-controls";
 import { ImagePicker, type PickedImage } from "./image-picker";
@@ -45,16 +46,24 @@ type EditableSpace = Space & { amenities: Amenity[] };
  */
 export function SpaceForm({ amenities, space }: { amenities: Amenity[]; space?: EditableSpace }) {
   const router = useRouter();
-  const [state, formAction, pending] = useActionState(space ? updateSpace.bind(null, space.id) : createSpace, null);
+  // Al editar, la navegación va dentro de la misma transición de la action: desde un
+  // useEffect posterior, el refresco que dispara revalidatePath la pisaba.
+  const [state, formAction, pending] = useActionState(
+    space
+      ? async (prev: ActionState<{ id: string }>, formData: FormData) => {
+          const result = await updateSpace(space.id, prev, formData);
+          if (result?.ok) {
+            toast("Cambios guardados", space.title);
+            router.push(`/espacios/${space.id}`);
+          }
+          return result;
+        }
+      : createSpace,
+    null,
+  );
   const [images, setImages] = useState<PickedImage[]>([]);
   const fieldErrors = state && !state.ok ? state.fieldErrors : undefined;
   const selected = new Set(space?.amenities.map((a) => a.id));
-
-  useEffect(() => {
-    if (!space || !state?.ok) return;
-    toast("Cambios guardados", space.title);
-    router.push(`/espacios/${space.id}`);
-  }, [state, space, router]);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
