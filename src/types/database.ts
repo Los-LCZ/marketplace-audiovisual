@@ -37,6 +37,17 @@ export type RatingSummary = {
   top_tags: { label: string; count: number }[];
 };
 
+/** Respuesta del anfitrión a solicitudes de los últimos 90 días. */
+export type HostResponseStats = {
+  /** Mediana de minutos entre la solicitud y la decisión; null si no decidió ninguna. */
+  median_response_minutes: number | null;
+  /** 0–1: decididas antes de empezar el horario / (decididas + vencidas); null sin datos. */
+  response_rate: number | null;
+  /** Solicitudes recibidas en el período (incluye vigentes y canceladas por el cliente). */
+  request_count: number;
+  decided_count: number;
+};
+
 export type ProfileRatingStats = { as_host: RatingSummary; as_client: RatingSummary };
 
 export type ProfileReviewRole = "host" | "client";
@@ -254,6 +265,8 @@ export type Database = {
           message: string | null;
           /** Cuándo el anfitrión aceptó o rechazó la solicitud. */
           decided_at: string | null;
+          /** Lo fija la base si la reserva nació como solicitud (requested). */
+          requested_at: string | null;
         };
         // Los montos los calcula el trigger compute_booking_amounts; se envían en 0.
         Insert: {
@@ -426,6 +439,10 @@ export type Database = {
           author_avatar: string | null;
         }[];
       };
+      get_host_response_stats: {
+        Args: { p_host_id: string };
+        Returns: HostResponseStats;
+      };
       get_profile_rating_stats: {
         Args: { p_profile_id: string };
         Returns: ProfileRatingStats;
@@ -449,6 +466,10 @@ export type Database = {
         Args: { p_client_ids: string[] };
         Returns: ClientSummaryRow[];
       };
+      reset_passes: {
+        Args: { p_categories?: SpaceCategory[] | null };
+        Returns: number;
+      };
       get_discover_deck: {
         Args: { p_categories?: SpaceCategory[] | null; p_limit?: number };
         Returns: {
@@ -457,6 +478,10 @@ export type Database = {
           host_min_client_rating: number | null;
           my_client_rating: number | null;
         }[];
+      };
+      get_bookings_reviews: {
+        Args: { p_booking_ids: string[] };
+        Returns: { booking_id: string; reviews: BookingReviews }[];
       };
       get_booking_reviews: {
         Args: { p_booking_id: string };

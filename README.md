@@ -30,6 +30,9 @@ Ejecutar las migraciones de `supabase/migrations/` **en orden** (SQL Editor o `s
 | `20261031160000_booking_request_status.sql` | Estados `requested` y `rejected` (**ejecutar sola**, ver abajo) |
 | `20261031160100_booking_requests.sql` | Solicitudes de reserva y resumen de clientes |
 | `20261031170000_profile_rating_stats.sql` | Estadísticas y reseñas por perfil |
+| `20261101100000_reset_passes.sql` | Descubrir: volver a ver los descartados |
+| `20261101110000_bookings_reviews_batch.sql` | Reseñas de varias reservas en una llamada |
+| `20261101120000_host_response_stats.sql` | `requested_at` y KPI de respuesta del anfitrión |
 
 `init.sql` no se edita: cada cambio de esquema va en una migración nueva `<timestamp>_<descripcion>.sql`.
 

@@ -168,6 +168,23 @@ export async function listFeaturedSpaces(categories?: SpaceCategory[], limit = 8
   return attachAmenities(supabase, data ?? []);
 }
 
+/**
+ * Espacios publicados de un anfitrión (para su perfil público), con rating.
+ * Nunca incluye borradores ni archivados, aunque quien consulta sea el dueño.
+ */
+export async function listHostPublicSpaces(hostId: string, limit = 24): Promise<SpaceWithAmenities[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("space_cards")
+    .select("*")
+    .eq("host_id", hostId)
+    .order("featured", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(Math.min(Math.max(1, limit), 50));
+  if (error) throw new Error(`Error al listar los espacios del anfitrión: ${error.message}`);
+  return attachAmenities(supabase, data ?? []);
+}
+
 /** Comunas con espacios publicados, de más a menos espacios. */
 export async function listCommunes(): Promise<CommuneCount[]> {
   const supabase = await createClient();

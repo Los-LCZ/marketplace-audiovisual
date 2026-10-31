@@ -91,3 +91,21 @@ export async function getBookingReviews(bookingId: string): Promise<BookingRevie
   if (error) throw new Error(`Error al obtener reseñas de la reserva: ${error.message}`);
   return data;
 }
+
+/** Máximo de reservas por llamada a getBookingsReviews. */
+export const BOOKINGS_REVIEWS_MAX = 100;
+
+/**
+ * Reseñas de varias reservas en una sola llamada, con las mismas reglas que
+ * getBookingReviews. Solo trae las reservas en que participa el usuario
+ * (las demás no aparecen en el Map). Máximo BOOKINGS_REVIEWS_MAX ids.
+ */
+export async function getBookingsReviews(bookingIds: string[]): Promise<Map<string, BookingReviews>> {
+  const ids = [...new Set(bookingIds)].slice(0, BOOKINGS_REVIEWS_MAX);
+  if (!ids.length) return new Map();
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_bookings_reviews", { p_booking_ids: ids });
+  if (error) throw new Error(`Error al obtener reseñas de las reservas: ${error.message}`);
+  return new Map((data ?? []).map((row) => [row.booking_id, row.reviews]));
+}
