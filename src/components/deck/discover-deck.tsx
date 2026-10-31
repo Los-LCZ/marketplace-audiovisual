@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Camera, CircleCheck, Lock, Music } from "lucide-react";
-import { likeSpace, passSpace, undoReaction } from "@/app/actions/reactions";
+import { Camera, CircleCheck, Lock, Music, RotateCcw } from "lucide-react";
+import { likeSpace, passSpace, resetPasses, undoReaction } from "@/app/actions/reactions";
 import type { DeckCard } from "@/lib/queries/spaces";
 import { SPACE_CATEGORY_LABELS } from "@/lib/labels";
 import { formatCLP, formatRating } from "@/lib/utils";
@@ -188,6 +188,9 @@ export function DiscoverDeck({
 }) {
   const router = useRouter();
   const [match, setMatch] = useState<DeckCard | null>(null);
+  // Cambia al reiniciar los descartes: remonta el mazo para olvidar las tarjetas ya deslizadas.
+  const [round, setRound] = useState(0);
+  const [resetting, startReset] = useTransition();
   const copy = WORLDS[world].deck;
   const other: World = world === "av" ? "mu" : "av";
   const order = new Map(cards.map((c, i) => [c.id, i]));
@@ -215,10 +218,22 @@ export function DiscoverDeck({
     return true;
   }
 
+  function reset() {
+    startReset(async () => {
+      const result = await resetPasses(WORLDS[world].categories);
+      if (!result?.ok) return toast("No se pudo reiniciar", result?.ok === false ? result.error : undefined, "info");
+      const n = result.data?.count ?? 0;
+      if (!n) return toast("No tienes descartes", "Los espacios que te gustaron siguen en tus me gusta.", "info");
+      toast(n === 1 ? "Un espacio vuelve al mazo" : `${n} espacios vuelven al mazo`, undefined, "ok");
+      setRound((r) => r + 1);
+    });
+  }
+
   const EmptyIcon = world === "av" ? Camera : Music;
   return (
     <>
       <SwipeDeck
+        key={round}
         items={cards}
         itemKey={(c) => c.id}
         renderCard={(c, photo) => <CardFace card={c} photo={photo} index={order.get(c.id) ?? 0} world={world} />}
@@ -233,7 +248,11 @@ export function DiscoverDeck({
           <div className="empty min-h-[420px] w-full max-w-[400px] content-center">
             <EmptyIcon className="size-8 text-[var(--acc)]" aria-hidden />
             <b className="display h3">Revisaste todo {WORLDS[world].name}</b>
-            <p className="dim">Mira tus matches o cambia de mundo para seguir.</p>
+            <p className="dim">Vuelve a ver lo que descartaste, mira tus matches o cambia de mundo.</p>
+            <button type="button" className="btn btn-line" disabled={resetting} onClick={reset}>
+              <RotateCcw aria-hidden />
+              {resetting ? "Reiniciando..." : "Volver a ver todo"}
+            </button>
             <button
               type="button"
               className="btn btn-acc"
