@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import type {
+  HostResponseStats,
   ProfileRatingStats,
   ProfileReview,
   ProfileReviewRole,
@@ -60,4 +61,15 @@ export async function getPublicProfiles(profileIds: string[]): Promise<Map<strin
   const { data, error } = await supabase.from("public_profiles").select("*").in("id", ids);
   if (error) throw new Error(`Error al obtener perfiles: ${error.message}`);
   return new Map((data ?? []).map((p) => [p.id, p]));
+}
+
+/**
+ * KPI de respuesta del anfitrión a solicitudes de los últimos 90 días: mediana de
+ * minutos hasta decidir y tasa de respuesta (null cuando no hay datos).
+ */
+export async function getHostResponseStats(hostId: string): Promise<HostResponseStats> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_host_response_stats", { p_host_id: hostId });
+  if (error) throw new Error(`Error al obtener el tiempo de respuesta: ${error.message}`);
+  return data;
 }
