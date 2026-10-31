@@ -2,24 +2,46 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Check, Clock, MapPin, MessageSquare, UserRound } from "lucide-react";
+import {
+  BrickWall,
+  ChevronLeft,
+  CircleCheck,
+  Clock,
+  DoorOpen,
+  Guitar,
+  MapPin,
+  ShieldCheck,
+  Tag,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { getSpaceBusySlots, getSpaceById, getSpaceReviews, REVIEWS_PAGE_SIZE } from "@/lib/queries/spaces";
-import { AMENITY_CATEGORY_LABELS, SPACE_CATEGORY_LABELS } from "@/lib/labels";
-import { firstParam } from "@/lib/search-params";
-import { formatShortDate } from "@/lib/utils";
+import { SPACE_CATEGORY_LABELS } from "@/lib/labels";
+import { firstParam, parseDateParam } from "@/lib/search-params";
+import { formatCLP } from "@/lib/utils";
+import { worldOf } from "@/lib/world";
 import { addDays, currentTime, zonedTimeToUtc } from "@/lib/zoned-time";
-import { Badge, SpaceStatusBadge } from "@/components/ui/badge";
-import { buttonClasses } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
+import { Avatar } from "@/components/ui/avatar";
+import { SpaceStatusBadge } from "@/components/ui/badge";
+import { CategoryIcon } from "@/components/ui/category-icon";
 import { Pagination } from "@/components/ui/pagination";
-import { RatingSummary } from "@/components/ui/rating";
-import { BookingWidget } from "@/components/bookings/booking-widget";
+import { RatingPill } from "@/components/ui/rating";
+import { BookingPanel } from "@/components/bookings/booking-widget";
+import { GearAccordion } from "@/components/spaces/gear-accordion";
 import { ReviewList } from "@/components/spaces/review-list";
 import { SpaceGallery } from "@/components/spaces/space-gallery";
 
-const BOOKING_DAYS_AHEAD = 60;
+const BOOKING_DAYS_AHEAD = 14;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Infraestructura destacada: se deriva del equipamiento (amenities) del espacio.
+const FEATURES: { label: string; match: RegExp; icon: LucideIcon }[] = [
+  { label: "Backline incluido", match: /backline/i, icon: Guitar },
+  { label: "Potencia trifásica", match: /trif[aá]sica/i, icon: Zap },
+  { label: "Control room separado", match: /control room/i, icon: DoorOpen },
+  { label: "Aislación acústica", match: /ac[uú]stic/i, icon: BrickWall },
+];
 
 // Compartido entre generateMetadata y la página dentro del mismo request.
 const getSpace = cache(async (id: string) => (UUID_RE.test(id) ? getSpaceById(id) : null));
@@ -35,12 +57,14 @@ export async function generateMetadata({ params }: PageProps<"/espacios/[id]">):
 
 export default async function SpacePage({ params, searchParams }: PageProps<"/espacios/[id]">) {
   const { id } = await params;
-  const reviewsPage = Math.max(1, Number(firstParam((await searchParams).resenas)) || 1);
+  const query = await searchParams;
+  const reviewsPage = Math.max(1, Number(firstParam(query.resenas)) || 1);
 
   const [space, user] = await Promise.all([getSpace(id), getCurrentUser()]);
   if (!space) notFound();
 
   const isOwner = user?.id === space.host_id;
+  const world = worldOf(space.category);
   const { now, today } = currentTime();
 
   const [reviews, busySlots] = await Promise.all([
@@ -53,142 +77,184 @@ export default async function SpacePage({ params, searchParams }: PageProps<"/es
         )
       : [],
   ]);
-  const reviewPages = Math.ceil(space.review_count / REVIEWS_PAGE_SIZE);
-
-  const amenityGroups = Object.groupBy(space.amenities, (a) => a.category);
+  const amenityNames = space.amenities.map((a) => a.name);
+  const paragraphs = space.description?.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean) ?? [];
+  const hostName = space.host?.full_name ?? "Anfitrión";
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6">
+    // data-world: cada espacio se ve en su propio mundo, sin importar el mundo activo.
+    <div className="wrap" data-world={world}>
+      <Link className="back" href="/explorar">
+        <ChevronLeft aria-hidden />
+        Volver a explorar
+      </Link>
+
       {space.status !== "published" && (
-        <p className="rounded-xl bg-warning/10 px-4 py-3 text-sm text-warning">
+        <p className="panel mb-4 px-4 py-3 text-sm text-warning">
           Este espacio no está publicado ({space.status === "draft" ? "borrador" : "archivado"}): solo tú puedes verlo.
         </p>
       )}
 
-      <header className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge tone="primary">{SPACE_CATEGORY_LABELS[space.category]}</Badge>
-          {isOwner && <SpaceStatusBadge status={space.status} />}
-        </div>
-        <h1 className="text-3xl font-semibold tracking-tight">{space.title}</h1>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-          <RatingSummary avgRating={space.avg_rating} reviewCount={space.review_count} />
-          <span className="flex items-center gap-1">
-            <MapPin className="size-4" aria-hidden />
-            {space.address}, {space.commune}, {space.city}
-          </span>
-        </div>
-      </header>
+      <p className="mono acc inline-flex items-center gap-1.5">
+        <CategoryIcon category={space.category} className="size-3.5" />
+        {SPACE_CATEGORY_LABELS[space.category]}
+        {isOwner && <SpaceStatusBadge status={space.status} />}
+      </p>
+      <h1 className="display h2 mt-2">{space.title}</h1>
+      <p className="dim mt-2 flex flex-wrap items-center gap-4">
+        <RatingPill rating={space.avg_rating} count={space.review_count} label="reseñas" />
+        <span className="inline-flex items-center gap-1.5">
+          <MapPin className="size-4" aria-hidden />
+          {space.address}, {space.commune}, {space.city}
+        </span>
+      </p>
 
-      <SpaceGallery images={space.images} title={space.title} />
+      <div className="detail">
+        <div className="grid min-w-0 gap-10">
+          <SpaceGallery images={space.images} title={space.title} world={world} />
 
-      <div className="grid gap-10 lg:grid-cols-[1fr_380px]">
-        <div className="flex flex-col gap-8">
-          <section className="flex items-center gap-3 border-b border-border pb-6">
-            <span className="flex size-12 items-center justify-center rounded-full bg-muted">
-              <UserRound className="size-5" aria-hidden />
-            </span>
-            <div>
-              <p className="font-medium">Anfitrión: {space.host?.full_name ?? "Anfitrión"}</p>
-              {space.host && (
-                <p className="text-sm text-muted-foreground">En la plataforma desde {formatShortDate(space.host.created_at)}</p>
-              )}
+          <dl className="specs">
+            {[
+              ["Precio", `${formatCLP(space.price_per_hour)} / h`, Tag],
+              ["Mínimo", `${space.min_hours} ${space.min_hours === 1 ? "hora" : "horas"}`, Clock],
+              ["Comuna", space.commune, MapPin],
+            ].map(([label, value, Icon]) => {
+              const I = Icon as LucideIcon;
+              return (
+                <div key={label as string} className="spec panel">
+                  <dt>
+                    <I className="inline size-3 align-[-1px]" aria-hidden /> {label as string}
+                  </dt>
+                  <dd>{value as string}</dd>
+                </div>
+              );
+            })}
+          </dl>
+
+          <section className="host-card panel" aria-label="Anfitrión">
+            <div className="host-top">
+              <span className="flex min-w-[220px] flex-1 items-center gap-3.5">
+                <Avatar name={hostName} size="lg" />
+                <span>
+                  <b>Anfitrión: {hostName}</b>
+                  <br />
+                  {space.host && (
+                    <span className="dim text-sm">En Señal desde {new Date(space.host.created_at).getFullYear()}</span>
+                  )}
+                </span>
+              </span>
             </div>
-          </section>
-
-          {space.description && (
-            <section className="flex flex-col gap-2">
-              <h2 className="text-xl font-semibold">Sobre este espacio</h2>
-              <p className="leading-relaxed whitespace-pre-line">{space.description}</p>
-            </section>
-          )}
-
-          <section className="flex flex-col gap-3">
-            <h2 className="text-xl font-semibold">Condiciones</h2>
-            <p className="flex items-center gap-2 text-sm">
-              <Clock className="size-4 text-muted-foreground" aria-hidden />
-              Reserva por horas completas, mínimo {space.min_hours} {space.min_hours === 1 ? "hora" : "horas"}.
+            <p className="rule">
+              <ShieldCheck aria-hidden />
+              Reserva directa: eliges tu bloque y la sesión queda confirmada al tiro. Puedes cancelarla desde Mis sesiones
+              antes de que comience.
             </p>
           </section>
 
-          {space.amenities.length > 0 && (
-            <section className="flex flex-col gap-3">
-              <h2 className="text-xl font-semibold">Equipamiento</h2>
-              <div className="grid gap-4 sm:grid-cols-3">
-                {(["audio", "video", "general"] as const).map((group) =>
-                  amenityGroups[group]?.length ? (
-                    <div key={group}>
-                      <h3 className="mb-2 text-xs font-medium text-muted-foreground uppercase">
-                        {AMENITY_CATEGORY_LABELS[group]}
-                      </h3>
-                      <ul className="flex flex-col gap-1.5">
-                        {amenityGroups[group].map((a) => (
-                          <li key={a.id} className="flex items-center gap-2 text-sm">
-                            <Check className="size-4 text-success" aria-hidden />
-                            {a.name}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null,
-                )}
+          {paragraphs.length > 0 && (
+            <section>
+              <h2 className="display h3">Sobre el espacio</h2>
+              <div className="dim mt-3.5 grid max-w-[65ch] gap-3.5">
+                {paragraphs.map((p, i) => (
+                  <p key={i}>{p}</p>
+                ))}
               </div>
             </section>
           )}
 
-          <section id="resenas" className="flex scroll-mt-24 flex-col gap-4 border-t border-border pt-8">
-            <div className="flex items-center gap-3">
-              <h2 className="text-xl font-semibold">Reseñas</h2>
-              <RatingSummary avgRating={space.avg_rating} reviewCount={space.review_count} />
+          <section>
+            <h2 className="display h3">Infraestructura</h2>
+            <div className="feats mt-3.5">
+              {FEATURES.map((f) => {
+                const has = amenityNames.some((n) => f.match.test(n));
+                const Icon = has ? CircleCheck : f.icon;
+                return (
+                  <div key={f.label} className={`feat ${has ? "" : "no"}`}>
+                    <Icon aria-hidden />
+                    {f.label}
+                    <span className="sr-only">{has ? "disponible" : "no disponible"}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {space.amenities.length > 0 && (
+            <section>
+              <h2 className="display h3">Equipamiento técnico</h2>
+              <p className="dim mt-1 text-sm">Todo lo listado está incluido en el precio por hora.</p>
+              <div className="mt-3.5">
+                <GearAccordion amenities={space.amenities} />
+              </div>
+            </section>
+          )}
+
+          <section>
+            <h2 className="display h3">Antes de reservar</h2>
+            <ul className="rules mt-3.5">
+              <li>
+                Reservas por horas completas, con un mínimo de {space.min_hours} {space.min_hours === 1 ? "hora" : "horas"}.
+              </li>
+              <li>Al precio por hora se suma una tarifa de servicio de 10%.</li>
+              <li>Puedes cancelar desde Mis sesiones mientras la reserva no haya comenzado.</li>
+              <li>Después de la sesión, el anfitrión la marca como completada y puedes dejar tu reseña.</li>
+            </ul>
+          </section>
+
+          <section id="resenas" className="scroll-mt-24">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="display h3">Reseñas</h2>
+              <RatingPill rating={space.avg_rating} count={space.review_count} />
             </div>
             {reviews.length ? (
               <>
                 <ReviewList reviews={reviews} />
-                <Pagination
-                  page={reviewsPage}
-                  totalPages={reviewPages}
-                  hrefForPage={(p) => `/espacios/${space.id}${p > 1 ? `?resenas=${p}` : ""}#resenas`}
-                />
+                <div className="mt-6">
+                  <Pagination
+                    page={reviewsPage}
+                    totalPages={Math.ceil(space.review_count / REVIEWS_PAGE_SIZE)}
+                    hrefForPage={(p) => `/espacios/${space.id}${p > 1 ? `?resenas=${p}` : ""}#resenas`}
+                  />
+                </div>
               </>
             ) : (
-              <EmptyState
-                icon={MessageSquare}
-                title={space.review_count ? "No hay más reseñas" : "Todavía no hay reseñas"}
-                description={space.review_count ? undefined : "Reserva y sé el primero en contar tu experiencia."}
-              />
+              <p className="dim mt-3 text-sm">
+                {space.review_count ? "No hay más reseñas." : "Todavía no hay reseñas. Reserva y sé el primero en contar tu experiencia."}
+              </p>
             )}
           </section>
         </div>
 
-        <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
-            {isOwner ? (
-              <div className="flex flex-col gap-3">
-                <p className="font-semibold">Este es tu espacio</p>
-                <p className="text-sm text-muted-foreground">
-                  Gestiona su estado y revisa las reservas recibidas desde tu panel.
-                </p>
-                <Link href="/dashboard" className={buttonClasses()}>
-                  Ir al panel de anfitrión
-                </Link>
-              </div>
-            ) : space.status === "published" ? (
-              <BookingWidget
-                spaceId={space.id}
-                pricePerHour={space.price_per_hour}
-                minHours={space.min_hours}
-                busySlots={busySlots}
-                today={today}
-                now={now}
-                maxDaysAhead={BOOKING_DAYS_AHEAD}
-                loginHref={user ? null : `/login?next=${encodeURIComponent(`/espacios/${space.id}`)}`}
-              />
-            ) : (
-              <p className="text-sm text-muted-foreground">Este espacio no está disponible para reservas.</p>
-            )}
-          </div>
+        <aside aria-label="Reserva">
+          {isOwner ? (
+            <div className="book panel">
+              <b>Este es tu espacio</b>
+              <p className="dim text-sm">Gestiona su estado y revisa las reservas recibidas desde tu panel.</p>
+              <Link className="btn btn-acc" href="/dashboard">
+                Ir al panel de anfitrión
+              </Link>
+            </div>
+          ) : space.status === "published" ? (
+            <BookingPanel
+              spaceId={space.id}
+              spaceTitle={space.title}
+              pricePerHour={space.price_per_hour}
+              minHours={space.min_hours}
+              avgRating={space.avg_rating}
+              reviewCount={space.review_count}
+              busySlots={busySlots}
+              today={today}
+              now={now}
+              initialDate={parseDateParam(query)}
+              loginHref={user ? null : `/login?next=${encodeURIComponent(`/espacios/${space.id}`)}`}
+            />
+          ) : (
+            <div className="book panel">
+              <p className="dim text-sm">Este espacio no está disponible para reservas.</p>
+            </div>
+          )}
         </aside>
       </div>
-    </main>
+    </div>
   );
 }
