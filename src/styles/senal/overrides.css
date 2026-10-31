@@ -14,3 +14,7 @@
 .rule.ok svg { color: var(--ok); }
 .book .rule { padding-top: 0; border-top: 0; }
 .scard .like[aria-pressed="true"] svg { fill: currentColor; }
+/* El formulario de reserva es grid: sin min-width 0, la tira de 14 días ensancha el panel. */
+.book form > * { min-width: 0; }
+/* Panel fijo más alto que la ventana (campos opcionales abiertos): se desplaza por dentro. */
+.book.desk { max-height: calc(100svh - 96px); overflow-y: auto; scrollbar-width: thin; }
