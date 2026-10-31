@@ -318,7 +318,7 @@ export function SpaceForm({ amenities, space }: { amenities: Amenity[]; space?: 
       )}
 
       {space ? (
-        <Section title="Fotos" description="Agrega o elimina fotos; los cambios se guardan al instante.">
+        <Section title="Fotos" description="Agrega, ordena o elimina fotos; los cambios se guardan al instante.">
           <SpaceImagesManager spaceId={space.id} images={space.images} />
         </Section>
       ) : (
