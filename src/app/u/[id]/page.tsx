@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { CalendarDays, MapPin, Pencil, ShieldCheck } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { getProfileRatingStats, getProfileReviews, getPublicProfile } from "@/lib/queries/profiles";
-import { listMySpaces } from "@/lib/queries/spaces";
+import { listHostPublicSpaces } from "@/lib/queries/spaces";
 import { Avatar } from "@/components/ui/avatar";
 import { Tabs } from "@/components/ui/tabs";
 import { SpaceCard } from "@/components/spaces/space-card";
@@ -35,13 +35,11 @@ export default async function PerfilPublicoPage({ params }: PageProps<"/u/[id]">
     getProfileRatingStats(profile.id),
     getProfileReviews(profile.id, "host"),
     getProfileReviews(profile.id, "client"),
-    // Sin sesión del dueño, RLS solo devuelve espacios publicados; igual se filtran abajo.
-    isHost ? listMySpaces(profile.id) : [],
+    isHost ? listHostPublicSpaces(profile.id) : [],
   ]);
   const isMe = viewer?.id === profile.id;
   const name = profile.full_name ?? "Usuario";
   const first = name.split(" ")[0];
-  const published = spaces.filter((s) => s.status === "published");
 
   const reviewTabs = [
     { key: "clientes", label: "De clientes", reviews: hostReviews },
@@ -133,11 +131,11 @@ export default async function PerfilPublicoPage({ params }: PageProps<"/u/[id]">
           )}
         </section>
 
-        {published.length > 0 && (
+        {spaces.length > 0 && (
           <section className="mt-[50px]">
             <h2 className="display h3">Espacios de {first}</h2>
             <div className="grid-cards mt-5">
-              {published.map((space) => (
+              {spaces.map((space) => (
                 <SpaceCard key={space.id} space={space} />
               ))}
             </div>
