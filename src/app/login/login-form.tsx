@@ -3,22 +3,40 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { login } from "@/app/auth/actions";
+import { Button } from "@/components/ui/button";
+import { Field, FormMessage, Input } from "@/components/ui/form-controls";
 
-export function LoginForm({ next }: { next?: string }) {
+export function LoginForm({ next, callbackError }: { next?: string; callbackError?: boolean }) {
   const [state, action, pending] = useActionState(login, null);
 
   return (
-    <form action={action} className="flex w-full max-w-sm flex-col gap-4">
-      <h1 className="text-2xl font-semibold">Iniciar sesión</h1>
+    <form
+      action={action}
+      className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-border bg-surface p-6 shadow-sm"
+    >
+      <div>
+        <h1 className="text-2xl font-semibold">Iniciar sesión</h1>
+        <p className="text-sm text-muted-foreground">Ingresa para reservar o gestionar tus espacios.</p>
+      </div>
+      {callbackError && !state && (
+        <FormMessage state={{ ok: false, error: "El enlace de confirmación no es válido o expiró" }} />
+      )}
       <input type="hidden" name="next" value={next ?? "/"} />
-      <input name="email" type="email" required placeholder="Correo" className="rounded border px-3 py-2" />
-      <input name="password" type="password" required placeholder="Contraseña" className="rounded border px-3 py-2" />
-      {state && !state.ok && <p className="text-sm text-red-600">{state.error}</p>}
-      <button disabled={pending} className="rounded bg-black px-3 py-2 text-white disabled:opacity-50">
+      <Field label="Correo" htmlFor="email">
+        <Input id="email" name="email" type="email" autoComplete="email" required />
+      </Field>
+      <Field label="Contraseña" htmlFor="password">
+        <Input id="password" name="password" type="password" autoComplete="current-password" required />
+      </Field>
+      <FormMessage state={state} />
+      <Button type="submit" disabled={pending}>
         {pending ? "Ingresando..." : "Ingresar"}
-      </button>
-      <p className="text-sm">
-        ¿No tienes cuenta? <Link href="/registro" className="underline">Regístrate</Link>
+      </Button>
+      <p className="text-center text-sm text-muted-foreground">
+        ¿No tienes cuenta?{" "}
+        <Link href="/registro" className="font-medium text-primary hover:underline">
+          Regístrate
+        </Link>
       </p>
     </form>
   );
