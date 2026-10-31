@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import type { Booking, Review, Space } from "@/types/database";
+import type { Booking, BookingReviews, Review, Space } from "@/types/database";
 
 export type BookingWithSpace = Booking & {
   space: Pick<
@@ -39,4 +39,15 @@ export async function listHostBookings(hostId: string) {
 
   if (error) throw new Error(`Error al listar reservas recibidas: ${error.message}`);
   return (data ?? []) satisfies BookingWithSpace[];
+}
+
+/**
+ * Las dos reseñas de una reserva según lo que el usuario actual puede ver
+ * (calificación a ciegas). null si no participa en la reserva.
+ */
+export async function getBookingReviews(bookingId: string): Promise<BookingReviews | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_booking_reviews", { p_booking_id: bookingId });
+  if (error) throw new Error(`Error al obtener reseñas de la reserva: ${error.message}`);
+  return data;
 }

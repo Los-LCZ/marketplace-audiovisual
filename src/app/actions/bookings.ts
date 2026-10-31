@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
-import { fail, getString, type ActionState } from "@/lib/action-state";
+import { fail, getString, getStringList, type ActionState } from "@/lib/action-state";
 import type { Booking, BookingStatus } from "@/types/database";
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -102,17 +102,36 @@ export async function completeBooking(bookingId: string): Promise<ActionState> {
   return setBookingStatus(bookingId, "completed");
 }
 
+const MAX_REVIEW_TAGS = 8;
+
+// Campos comunes de las dos reseñas: booking_id, rating (1–5), comment y tags (repetido).
+function parseReviewForm(formData: FormData) {
+  const bookingId = getString(formData, "booking_id");
+  const rating = Number(getString(formData, "rating"));
+  const comment = getString(formData, "comment");
+  const tags = getStringList(formData, "tags", MAX_REVIEW_TAGS);
+
+  if (!bookingId) return { error: fail("Reserva inválida") };
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5)
+    return { error: fail("La calificación debe ser entre 1 y 5", { rating: "Entre 1 y 5" }) };
+  if (comment.length > 2000) return { error: fail("Comentario muy largo", { comment: "Máximo 2000 caracteres" }) };
+  if (tags.some((t) => t.length > 30)) return { error: fail("Etiqueta muy larga", { tags: "Máximo 30 caracteres" }) };
+
+  return { values: { booking_id: bookingId, rating, comment: comment || null, tags } };
+}
+
+/**
+ * El cliente califica el espacio/anfitrión de una reserva completada.
+ * Campos: booking_id, rating, comment, tags (repetido). Es a ciegas: el anfitrión
+ * la ve cuando envíe la suya o a los 14 días.
+ */
 export async function createReview(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await getCurrentUser();
   if (!user) return fail("Debes iniciar sesión");
 
-  const bookingId = getString(formData, "booking_id");
-  const rating = Number(getString(formData, "rating"));
-  const comment = getString(formData, "comment");
-
-  if (!bookingId) return fail("Reserva inválida");
-  if (!Number.isInteger(rating) || rating < 1 || rating > 5)
-    return fail("La calificación debe ser entre 1 y 5", { rating: "Entre 1 y 5" });
+  const parsed = parseReviewForm(formData);
+  if (parsed.error) return parsed.error;
+  const { booking_id: bookingId } = parsed.values;
 
   const supabase = await createClient();
   // RLS: el usuario solo ve sus reservas (o las de sus espacios).
@@ -123,9 +142,7 @@ export async function createReview(_prev: ActionState, formData: FormData): Prom
     .maybeSingle();
   if (!booking) return fail("Reserva no encontrada");
 
-  const { error } = await supabase
-    .from("reviews")
-    .insert({ booking_id: bookingId, rating, comment: comment || null });
+  const { error } = await supabase.from("reviews").insert(parsed.values);
 
   if (error) {
     if (error.code === "23505") return fail("Ya dejaste una reseña para esta reserva");
@@ -136,4 +153,29 @@ export async function createReview(_prev: ActionState, formData: FormData): Prom
   revalidatePath("/mis-reservas");
   revalidatePath(`/espacios/${booking.space_id}`);
   return { ok: true, message: "¡Gracias por tu reseña!" };
+}
+
+/**
+ * El anfitrión califica al cliente de una reserva completada (mismos campos que
+ * createReview). Es a ciegas: el cliente la ve cuando envíe la suya o a los 14 días.
+ */
+export async function createClientReview(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await getCurrentUser();
+  if (!user) return fail("Debes iniciar sesión");
+
+  const parsed = parseReviewForm(formData);
+  if (parsed.error) return parsed.error;
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("client_reviews").insert(parsed.values);
+
+  if (error) {
+    if (error.code === "23505") return fail("Ya calificaste a este cliente");
+    if (error.code === "42501") return fail("Solo puedes calificar clientes de reservas completadas en tus espacios");
+    return fail(error.message);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/mis-reservas");
+  return { ok: true, message: "Calificación enviada" };
 }

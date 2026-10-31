@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
-import { fail, getString, type ActionState } from "@/lib/action-state";
+import { fail, getString, getStringList, type ActionState } from "@/lib/action-state";
 
 const MAX_TAGS = 12;
 
@@ -21,14 +21,7 @@ export async function updateProfile(_prev: ActionState, formData: FormData): Pro
   const headline = getString(formData, "headline");
   const bio = getString(formData, "bio");
   const commune = getString(formData, "commune");
-  const tags = [
-    ...new Set(
-      formData
-        .getAll("tags")
-        .map((t) => (typeof t === "string" ? t.trim() : ""))
-        .filter(Boolean),
-    ),
-  ];
+  const tags = getStringList(formData, "tags", MAX_TAGS + 1);
   const minRatingRaw = getString(formData, "min_client_rating");
   const minClientRating = minRatingRaw ? Number(minRatingRaw) : null;
 

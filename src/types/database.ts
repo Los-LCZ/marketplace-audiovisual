@@ -15,6 +15,33 @@ export type GearCategory = "microfonos" | "consolas" | "amplificacion" | "ilumin
 /** Equipamiento técnico del espacio, agrupado por categoría (columna `spaces.gear`). */
 export type GearGroup = { category: GearCategory; items: string[] };
 
+/** Una reseña tal como la devuelve get_booking_reviews. */
+export type BookingReviewEntry = {
+  id: string;
+  rating: number;
+  comment: string | null;
+  tags: string[];
+  created_at: string;
+};
+
+/**
+ * Reseñas de una reserva vistas por el usuario actual (calificación a ciegas):
+ * la de la contraparte es null hasta que `revealed` sea true.
+ */
+export type BookingReviews = {
+  role: "client" | "host" | "admin";
+  /** Ambas partes enviaron su reseña o pasaron 14 días desde que se completó. */
+  revealed: boolean;
+  /** Cuándo se revelan por plazo (null si la reserva no está completada). */
+  reveal_at: string | null;
+  space_review_submitted: boolean;
+  client_review_submitted: boolean;
+  /** Del cliente sobre el espacio/anfitrión (tabla reviews). */
+  space_review: BookingReviewEntry | null;
+  /** Del anfitrión sobre el cliente (tabla client_reviews). */
+  client_review: BookingReviewEntry | null;
+};
+
 type SpaceRow = {
   id: string;
   host_id: string;
@@ -183,6 +210,8 @@ export type Database = {
           status: BookingStatus;
           payment_id: string | null;
           created_at: string;
+          /** Lo fija la base al pasar a completed; inicia el plazo de 14 días de la calificación. */
+          completed_at: string | null;
         };
         // Los montos los calcula el trigger compute_booking_amounts; se envían en 0.
         Insert: {
@@ -227,6 +256,7 @@ export type Database = {
           rating: number;
           comment: string | null;
           created_at: string;
+          tags: string[];
         };
         Insert: {
           id?: string;
@@ -234,14 +264,49 @@ export type Database = {
           rating: number;
           comment?: string | null;
           created_at?: string;
+          tags?: string[];
         };
         Update: {
           rating?: number;
           comment?: string | null;
+          tags?: string[];
         };
         Relationships: [
           {
             foreignKeyName: "reviews_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: true;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      /** Calificación que el anfitrión hace del cliente (una por reserva completada). */
+      client_reviews: {
+        Row: {
+          id: string;
+          booking_id: string;
+          rating: number;
+          comment: string | null;
+          tags: string[];
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          booking_id: string;
+          rating: number;
+          comment?: string | null;
+          tags?: string[];
+          created_at?: string;
+        };
+        Update: {
+          rating?: number;
+          comment?: string | null;
+          tags?: string[];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "client_reviews_booking_id_fkey";
             columns: ["booking_id"];
             isOneToOne: true;
             referencedRelation: "bookings";
@@ -302,6 +367,14 @@ export type Database = {
           author_avatar: string | null;
         }[];
       };
+      get_booking_reviews: {
+        Args: { p_booking_id: string };
+        Returns: BookingReviews | null;
+      };
+      get_client_rating: {
+        Args: { p_profile_id: string };
+        Returns: { avg_rating: number | null; review_count: number }[];
+      };
       list_communes: {
         Args: Record<string, never>;
         Returns: { commune: string; space_count: number }[];
@@ -344,6 +417,7 @@ export type Space = Tables<"spaces">;
 export type Amenity = Tables<"amenities">;
 export type Booking = Tables<"bookings">;
 export type Review = Tables<"reviews">;
+export type ClientReview = Tables<"client_reviews">;
 export type PublicProfile = PublicSchema["Views"]["public_profiles"]["Row"];
 export type SpaceRatingStats = PublicSchema["Views"]["space_rating_stats"]["Row"];
 export type CommuneCount = PublicSchema["Functions"]["list_communes"]["Returns"][number];

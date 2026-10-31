@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
-import { fail, getString, type ActionState } from "@/lib/action-state";
+import { fail, getString, getStringList, type ActionState } from "@/lib/action-state";
 import { MAX_IMAGES_PER_SPACE, removeSpaceImages, uploadSpaceImages } from "@/lib/storage";
 import type { GearCategory, GearGroup, SpaceCategory, SpaceStatus } from "@/types/database";
 
@@ -26,14 +26,6 @@ function optionalInt(formData: FormData, key: string) {
   if (!raw) return null;
   const n = Number(raw);
   return Number.isInteger(n) ? n : undefined;
-}
-
-function getStrings(formData: FormData, key: string, max: number) {
-  return formData
-    .getAll(key)
-    .map((v) => (typeof v === "string" ? v.trim() : ""))
-    .filter(Boolean)
-    .slice(0, max);
 }
 
 /** `gear` llega como JSON: `[{ "category": "microfonos", "items": ["SM7B"] }]`. */
@@ -79,7 +71,7 @@ function parseSpaceForm(formData: FormData) {
   const openHour = Number(getString(formData, "open_hour") || 8);
   const closeHour = Number(getString(formData, "close_hour") || 24);
   const status = (getString(formData, "status") || "published") as SpaceStatus;
-  const rules = getStrings(formData, "rules", MAX_RULES);
+  const rules = getStringList(formData, "rules", MAX_RULES);
   const gear = parseGear(getString(formData, "gear"));
   const amenityIds = formData
     .getAll("amenity_ids")
