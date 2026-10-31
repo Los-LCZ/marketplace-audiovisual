@@ -1,5 +1,12 @@
 import { createClient } from "@/utils/supabase/server";
-import type { Amenity, PublicProfile, Space, SpaceCategory } from "@/types/database";
+import type {
+  Amenity,
+  PublicProfile,
+  Space,
+  SpaceCategory,
+  SpaceRatingStats,
+  SpaceReview,
+} from "@/types/database";
 
 export type SpaceFilters = {
   /** Texto libre: busca en título, descripción, ciudad y comuna. */
@@ -15,7 +22,9 @@ export type SpaceFilters = {
   pageSize?: number;
 };
 
-export type SpaceWithAmenities = Space & { amenities: Amenity[] };
+type RatingFields = Pick<SpaceRatingStats, "avg_rating" | "review_count">;
+
+export type SpaceWithAmenities = Space & RatingFields & { amenities: Amenity[] };
 export type SpaceDetail = SpaceWithAmenities & { host: PublicProfile | null };
 
 const SEARCH_COLUMNS = ["title", "description", "city", "commune"] as const;
@@ -73,7 +82,7 @@ export async function listPublishedSpaces(filters: SpaceFilters = {}) {
   if (error) throw new Error(`Error al listar espacios: ${error.message}`);
 
   return {
-    spaces: (data ?? []) as SpaceWithAmenities[],
+    spaces: await withRatingStats(data ?? []),
     total: count ?? 0,
     page,
     pageSize,
@@ -98,7 +107,8 @@ export async function getSpaceById(id: string): Promise<SpaceDetail | null> {
     .eq("id", space.host_id)
     .maybeSingle();
 
-  return { ...(space as SpaceWithAmenities), host };
+  const [withStats] = await withRatingStats([space]);
+  return { ...withStats, host };
 }
 
 // Espacios del anfitrión autenticado (incluye borradores y archivados).
@@ -111,7 +121,7 @@ export async function listMySpaces(hostId: string) {
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(`Error al listar tus espacios: ${error.message}`);
-  return (data ?? []) as SpaceWithAmenities[];
+  return withRatingStats(data ?? []);
 }
 
 export async function listAmenities() {
@@ -129,5 +139,54 @@ export async function getSpaceBusySlots(spaceId: string, from: Date, to: Date) {
     p_to: to.toISOString(),
   });
   if (error) throw new Error(`Error al obtener disponibilidad: ${error.message}`);
+  return data ?? [];
+}
+
+const EMPTY_STATS: RatingFields = { avg_rating: null, review_count: 0 };
+
+/**
+ * Rating promedio y cantidad de reseñas de varios espacios en una sola query
+ * (para las tarjetas del listado). Siempre trae una entrada por cada id pedido.
+ */
+export async function getSpaceRatingStats(
+  spaceIds: string[],
+): Promise<Record<string, RatingFields>> {
+  const ids = [...new Set(spaceIds)];
+  const result: Record<string, RatingFields> = Object.fromEntries(
+    ids.map((id) => [id, EMPTY_STATS]),
+  );
+  if (!ids.length) return result;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("space_rating_stats")
+    .select("space_id, avg_rating, review_count")
+    .in("space_id", ids);
+  if (error) throw new Error(`Error al obtener ratings: ${error.message}`);
+
+  for (const { space_id, avg_rating, review_count } of data ?? []) {
+    result[space_id] = { avg_rating, review_count };
+  }
+  return result;
+}
+
+async function withRatingStats<T extends Space & { amenities: Amenity[] }>(
+  spaces: T[],
+): Promise<(T & RatingFields)[]> {
+  const stats = await getSpaceRatingStats(spaces.map((s) => s.id));
+  return spaces.map((space) => ({ ...space, ...(stats[space.id] ?? EMPTY_STATS) }));
+}
+
+export const REVIEWS_PAGE_SIZE = 20;
+
+/** Reseñas de un espacio publicado, paginadas (page empieza en 1). */
+export async function getSpaceReviews(spaceId: string, page = 1): Promise<SpaceReview[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_space_reviews", {
+    p_space_id: spaceId,
+    p_limit: REVIEWS_PAGE_SIZE,
+    p_offset: (Math.max(1, page) - 1) * REVIEWS_PAGE_SIZE,
+  });
+  if (error) throw new Error(`Error al obtener reseñas: ${error.message}`);
   return data ?? [];
 }

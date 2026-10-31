@@ -212,11 +212,31 @@ export type Database = {
         };
         Relationships: [];
       };
+      space_rating_stats: {
+        Row: {
+          space_id: string;
+          /** null si el espacio no tiene reseñas. */
+          avg_rating: number | null;
+          review_count: number;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       get_space_busy_slots: {
         Args: { p_space_id: string; p_from: string; p_to: string };
         Returns: { start_time: string; end_time: string }[];
+      };
+      get_space_reviews: {
+        Args: { p_space_id: string; p_limit?: number; p_offset?: number };
+        Returns: {
+          id: string;
+          rating: number;
+          comment: string | null;
+          created_at: string;
+          author_name: string | null;
+          author_avatar: string | null;
+        }[];
       };
       is_admin: { Args: Record<string, never>; Returns: boolean };
       is_host: { Args: Record<string, never>; Returns: boolean };
@@ -245,3 +265,5 @@ export type Amenity = Tables<"amenities">;
 export type Booking = Tables<"bookings">;
 export type Review = Tables<"reviews">;
 export type PublicProfile = PublicSchema["Views"]["public_profiles"]["Row"];
+export type SpaceRatingStats = PublicSchema["Views"]["space_rating_stats"]["Row"];
+export type SpaceReview = PublicSchema["Functions"]["get_space_reviews"]["Returns"][number];
