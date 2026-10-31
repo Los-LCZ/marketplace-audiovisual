@@ -6,15 +6,9 @@ import { useRouter } from "next/navigation";
 import { Loader2, Search, SlidersHorizontal } from "lucide-react";
 import type { Amenity } from "@/types/database";
 import type { SpaceFilters as Filters } from "@/lib/queries/spaces";
-import { SPACE_CATEGORIES, SPACE_CATEGORY_LABELS } from "@/lib/labels";
+import { AMENITY_CATEGORY_LABELS, SPACE_CATEGORIES, SPACE_CATEGORY_LABELS } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/form-controls";
-
-const AMENITY_GROUP_LABELS: Record<Amenity["category"], string> = {
-  audio: "Audio",
-  video: "Video",
-  general: "General",
-};
 
 /**
  * Buscador y filtros del listado. El estado vive en la URL: al enviar se navega a
@@ -110,7 +104,7 @@ export function SpaceFilters({ filters, amenities }: { filters: Filters; ameniti
               </legend>
               {groups.map(([group, items]) => (
                 <div key={group} className="flex flex-wrap items-center gap-2">
-                  <span className="w-16 text-xs text-muted-foreground uppercase">{AMENITY_GROUP_LABELS[group]}</span>
+                  <span className="w-16 text-xs text-muted-foreground uppercase">{AMENITY_CATEGORY_LABELS[group]}</span>
                   {items.map((amenity) => (
                     <label
                       key={amenity.id}

@@ -1,4 +1,10 @@
-import type { BookingStatus, SpaceCategory, SpaceStatus } from "@/types/database";
+import type { AmenityCategory, BookingStatus, SpaceCategory, SpaceStatus } from "@/types/database";
+
+export const AMENITY_CATEGORY_LABELS: Record<AmenityCategory, string> = {
+  audio: "Audio",
+  video: "Video",
+  general: "General",
+};
 
 // Etiquetas en español de los enums (ver README).
 export const SPACE_CATEGORY_LABELS: Record<SpaceCategory, string> = {

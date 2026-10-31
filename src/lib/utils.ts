@@ -39,15 +39,15 @@ const shortDateFormatter = new Intl.DateTimeFormat("es-CL", {
   year: "numeric",
 });
 
-export function formatDate(value: string | Date) {
+export function formatDate(value: string | number | Date) {
   return dateFormatter.format(new Date(value));
 }
 
-export function formatShortDate(value: string | Date) {
+export function formatShortDate(value: string | number | Date) {
   return shortDateFormatter.format(new Date(value));
 }
 
-export function formatTimeRange(start: string | Date, end: string | Date) {
+export function formatTimeRange(start: string | number | Date, end: string | number | Date) {
   return `${timeFormatter.format(new Date(start))} – ${timeFormatter.format(new Date(end))}`;
 }
 
