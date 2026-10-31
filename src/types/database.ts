@@ -15,6 +15,34 @@ export type GearCategory = "microfonos" | "consolas" | "amplificacion" | "ilumin
 /** Equipamiento técnico del espacio, agrupado por categoría (columna `spaces.gear`). */
 export type GearGroup = { category: GearCategory; items: string[] };
 
+type SpaceRow = {
+  id: string;
+  host_id: string;
+  title: string;
+  category: SpaceCategory;
+  description: string | null;
+  address: string;
+  city: string;
+  commune: string;
+  price_per_hour: number;
+  min_hours: number;
+  images: string[];
+  status: SpaceStatus;
+  created_at: string;
+  neighborhood: string | null;
+  size_m2: number | null;
+  capacity: number | null;
+  /** Hora de apertura (0–23, hora de Chile). */
+  open_hour: number;
+  /** Hora de cierre (1–24, hora de Chile); siempre mayor que open_hour. */
+  close_hour: number;
+  summary: string | null;
+  rules: string[];
+  /** Solo lo cambia un admin. */
+  featured: boolean;
+  gear: GearGroup[];
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -44,33 +72,7 @@ export type Database = {
         Relationships: [];
       };
       spaces: {
-        Row: {
-          id: string;
-          host_id: string;
-          title: string;
-          category: SpaceCategory;
-          description: string | null;
-          address: string;
-          city: string;
-          commune: string;
-          price_per_hour: number;
-          min_hours: number;
-          images: string[];
-          status: SpaceStatus;
-          created_at: string;
-          neighborhood: string | null;
-          size_m2: number | null;
-          capacity: number | null;
-          /** Hora de apertura (0–23, hora de Chile). */
-          open_hour: number;
-          /** Hora de cierre (1–24, hora de Chile); siempre mayor que open_hour. */
-          close_hour: number;
-          summary: string | null;
-          rules: string[];
-          /** Solo lo cambia un admin. */
-          featured: boolean;
-          gear: GearGroup[];
-        };
+        Row: SpaceRow;
         Insert: {
           id?: string;
           host_id: string;
@@ -245,6 +247,14 @@ export type Database = {
         };
         Relationships: [];
       };
+      /** Espacios publicados con rating (solo reseñas públicas). Fuente del catálogo. */
+      space_cards: {
+        Row: SpaceRow & {
+          avg_rating: number | null;
+          review_count: number;
+        };
+        Relationships: [];
+      };
       space_rating_stats: {
         Row: {
           space_id: string;
@@ -270,6 +280,10 @@ export type Database = {
           author_name: string | null;
           author_avatar: string | null;
         }[];
+      };
+      get_available_space_ids: {
+        Args: { p_date: string; p_categories?: SpaceCategory[] | null };
+        Returns: string[];
       };
       set_space_amenities: {
         Args: { p_space_id: string; p_amenity_ids: number[] };
