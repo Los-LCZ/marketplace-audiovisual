@@ -14,21 +14,43 @@ export function isWorld(value: unknown): value is World {
   return value === "av" || value === "mu";
 }
 
-export const WORLDS: Record<
-  World,
-  { name: string; device: string; categories: SpaceCategory[]; themeColor: string }
-> = {
+type WorldConfig = {
+  name: string;
+  device: string;
+  categories: SpaceCategory[];
+  themeColor: string;
+  /** Textos del mazo de Descubrir: sellos al deslizar, botones y título del match. */
+  deck: { kicker: string; like: string; pass: string; stampLike: string; stampPass: string; matchTitle: string };
+};
+
+export const WORLDS: Record<World, WorldConfig> = {
   av: {
     name: "Audiovisual",
     device: "Visor",
     categories: ["filming_set", "photo_studio", "outdoor_location"],
     themeColor: "#090b0e",
+    deck: {
+      kicker: "Revisión de tomas",
+      like: "Toma buena",
+      pass: "Corte",
+      stampLike: "TOMA",
+      stampPass: "CORTE",
+      matchTitle: "¡Toma aprobada!",
+    },
   },
   mu: {
     name: "Música",
     device: "Consola",
     categories: ["recording_studio", "rehearsal_room"],
     themeColor: "#0d0906",
+    deck: {
+      kicker: "Escucha de canales",
+      like: "Solo",
+      pass: "Mute",
+      stampLike: "SOLO",
+      stampPass: "MUTE",
+      matchTitle: "¡En sincronía!",
+    },
   },
 };
 

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   CalendarDays,
   Compass,
+  Heart,
   LayoutDashboard,
   Plus,
   Search,
@@ -16,6 +17,7 @@ export type NavItem = { href: string; label: string; icon: keyof typeof ICONS };
 
 const ICONS = {
   compass: Compass,
+  heart: Heart,
   search: Search,
   calendar: CalendarDays,
   dashboard: LayoutDashboard,

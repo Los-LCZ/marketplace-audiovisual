@@ -7,7 +7,7 @@ import { WORLDS, WORLD_COOKIE, type World } from "@/lib/world";
 const ICONS = { av: Camera, mu: Music } as const;
 
 // Aplica el mundo en el documento y lo recuerda por un año.
-function applyWorld(world: World) {
+export function applyWorld(world: World) {
   document.documentElement.dataset.world = world;
   document.cookie = `${WORLD_COOKIE}=${world}; path=/; max-age=31536000; samesite=lax`;
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", WORLDS[world].themeColor);

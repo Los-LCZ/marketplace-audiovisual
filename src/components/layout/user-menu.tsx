@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, LayoutDashboard, LogOut, Plus } from "lucide-react";
+import { CalendarDays, LayoutDashboard, LogOut, Plus, UserRound } from "lucide-react";
 import { signout } from "@/app/auth/actions";
 import { Avatar } from "@/components/ui/avatar";
 
@@ -10,11 +10,13 @@ const ITEM = "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:
 
 // Chip del usuario (.me) con menú: accesos según rol y cerrar sesión.
 export function UserMenu({
+  userId,
   name,
   email,
   roleLabel,
   isHost,
 }: {
+  userId: string;
   name: string;
   email?: string;
   roleLabel: string;
@@ -62,6 +64,9 @@ export function UserMenu({
         <div role="menu" className="panel absolute right-0 z-50 mt-2 w-64 p-2 shadow-2xl">
           <p className="truncate px-3 pt-1 font-semibold">{name}</p>
           {email && <p className="dim truncate px-3 pb-2 text-xs">{email}</p>}
+          <Link role="menuitem" href={`/u/${userId}`} onClick={close} className={ITEM}>
+            <UserRound className="size-4" aria-hidden /> Mi perfil
+          </Link>
           <Link role="menuitem" href="/mis-reservas" onClick={close} className={ITEM}>
             <CalendarDays className="size-4" aria-hidden /> Mis sesiones
           </Link>

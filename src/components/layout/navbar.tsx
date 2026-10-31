@@ -22,6 +22,7 @@ export async function Navbar({ world }: { world: World }) {
   const desktop: NavItem[] = [
     { href: "/", label: "Inicio", icon: "compass" },
     { href: "/explorar", label: "Explorar", icon: "search" },
+    { href: "/descubrir", label: "Descubrir", icon: "heart" },
   ];
   if (user) desktop.push({ href: "/mis-reservas", label: "Mis sesiones", icon: "calendar" });
   if (isHost) desktop.push({ href: "/dashboard", label: "Panel", icon: "dashboard" });
@@ -29,6 +30,7 @@ export async function Navbar({ world }: { world: World }) {
   const mobile: NavItem[] = [
     { href: "/", label: "Inicio", icon: "compass" },
     { href: "/explorar", label: "Explorar", icon: "search" },
+    { href: "/descubrir", label: "Descubrir", icon: "heart" },
     user
       ? { href: "/mis-reservas", label: "Sesiones", icon: "calendar" }
       : { href: "/login", label: "Ingresar", icon: "user" },
@@ -47,7 +49,7 @@ export async function Navbar({ world }: { world: World }) {
           <div className="topbar-right">
             <WorldSwitch world={world} />
             {user ? (
-              <UserMenu name={displayName} email={user.email} roleLabel={roleLabel} isHost={isHost} />
+              <UserMenu userId={user.id} name={displayName} email={user.email} roleLabel={roleLabel} isHost={isHost} />
             ) : (
               <>
                 <Link className="btn btn-line btn-sm hidden sm:inline-flex" href="/login">
