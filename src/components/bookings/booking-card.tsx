@@ -6,18 +6,23 @@ import { formatCLP, formatTimeRange } from "@/lib/utils";
 import { dayLabel, dayOfMonth, zonedDateString } from "@/lib/zoned-time";
 import { BookingStatusBadge } from "@/components/ui/badge";
 import { Stars } from "@/components/ui/rating";
+import { BlindReviews } from "@/components/bookings/blind-reviews";
+import type { BookingReviews } from "@/types/database";
 
 // Fila de reserva (.li) compartida por /mis-reservas y /dashboard; `children` lleva las acciones.
 export function BookingCard({
   booking,
   today,
   subtitle,
+  reviews,
   children,
 }: {
   booking: BookingWithSpace;
   today: string;
   /** Línea extra bajo el título (p. ej. el cliente en el panel del anfitrión). */
   subtitle?: ReactNode;
+  /** Calificación a ciegas (reservas completadas): reemplaza la reseña simple. */
+  reviews?: { data: BookingReviews; viewer: "client" | "host"; counterpart: string } | null;
   children?: ReactNode;
 }) {
   const { space, review } = booking;
@@ -46,6 +51,7 @@ export function BookingCard({
             {space && ` · ${space.commune}`}
           </span>
           {subtitle}
+          {booking.project && <span className="mono acc mt-1 block">{booking.project}</span>}
         </div>
         <div className="flex flex-col items-end gap-1.5 text-right">
           <BookingStatusBadge status={booking.status} />
@@ -53,7 +59,13 @@ export function BookingCard({
         </div>
       </div>
 
-      {review && (
+      {booking.message && booking.status === "requested" && (
+        <p className="dim mt-3 rounded-[10px] bg-[var(--bg)] p-3 text-sm">“{booking.message}”</p>
+      )}
+
+      {reviews ? (
+        <BlindReviews reviews={reviews.data} viewer={reviews.viewer} counterpart={reviews.counterpart} />
+      ) : review && (
         <div className="reveal">
           <span className="dim text-xs">Tu calificación </span>
           <Stars rating={review.rating} />
