@@ -81,3 +81,42 @@ export function Dialog({
     document.body,
   );
 }
+
+/**
+ * Confirmación con el estilo Señal, en lugar de window.confirm (que bloquea la página
+ * y no sigue el diseño). Queda abierta mientras `pending` para mostrar el progreso.
+ */
+export function ConfirmDialog({
+  open,
+  title,
+  body,
+  confirmLabel,
+  cancelLabel = "Volver",
+  pending = false,
+  onConfirm,
+  onClose,
+}: {
+  open: boolean;
+  title: string;
+  body?: ReactNode;
+  confirmLabel: string;
+  cancelLabel?: string;
+  pending?: boolean;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog open={open} onClose={pending ? () => {} : onClose} label={title}>
+      <h2 className="display h3 px-6">{title}</h2>
+      {body && <p className="dim text-sm">{body}</p>}
+      <div className="mt-1 grid w-full grid-cols-2 gap-2">
+        <button type="button" className="btn btn-line" disabled={pending} onClick={onClose}>
+          {cancelLabel}
+        </button>
+        <button type="button" className="btn btn-acc" disabled={pending} onClick={onConfirm}>
+          {pending ? "Procesando..." : confirmLabel}
+        </button>
+      </div>
+    </Dialog>
+  );
+}
