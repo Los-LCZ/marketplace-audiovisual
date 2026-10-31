@@ -1,5 +1,17 @@
-import { Star } from "lucide-react";
 import { cn, formatRating, pluralize } from "@/lib/utils";
+
+/** Píldora "★ 4,96 (128)" del sistema Señal. Sin reseñas muestra "Nuevo". */
+export function RatingPill({ rating, count, label }: { rating: number | null; count?: number; label?: string }) {
+  if (rating == null) return <span className="pill dim">Nuevo</span>;
+  return (
+    <span className="pill">
+      <span className="star">★</span>
+      {formatRating(rating)}
+      {count != null && <span className="dim">({count})</span>}
+      {label && <span className="dim">{label}</span>}
+    </span>
+  );
+}
 
 // Resumen "★ 4,7 (12 reseñas)". Sin reseñas muestra "Nuevo".
 export function RatingSummary({
@@ -12,26 +24,25 @@ export function RatingSummary({
   className?: string;
 }) {
   if (avgRating == null || reviewCount === 0) {
-    return <span className={cn("text-sm text-muted-foreground", className)}>Nuevo · sin reseñas</span>;
+    return <span className={cn("dim text-sm", className)}>Nuevo · sin reseñas</span>;
   }
   return (
     <span className={cn("inline-flex items-center gap-1 text-sm", className)}>
-      <Star className="size-4 fill-current text-amber-500" aria-hidden />
-      <span className="font-medium">{formatRating(avgRating)}</span>
-      <span className="text-muted-foreground">({pluralize(reviewCount, "reseña", "reseñas")})</span>
+      <span className="acc">★</span>
+      <span className="font-semibold">{formatRating(avgRating)}</span>
+      <span className="dim">({pluralize(reviewCount, "reseña", "reseñas")})</span>
     </span>
   );
 }
 
+// Estrellas del sistema Señal (.stars): llenas en el color del mundo activo.
 export function Stars({ rating, className }: { rating: number; className?: string }) {
   return (
-    <span className={cn("inline-flex gap-0.5", className)} aria-label={`${rating} de 5 estrellas`}>
+    <span className={cn("stars", className)} aria-label={`${formatRating(rating)} de 5 estrellas`}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <Star
-          key={n}
-          aria-hidden
-          className={cn("size-4", n <= rating ? "fill-amber-500 text-amber-500" : "text-border")}
-        />
+        <span key={n} className={rating >= n - 0.25 ? "" : "off"}>
+          ★
+        </span>
       ))}
     </span>
   );

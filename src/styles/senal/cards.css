@@ -1,0 +1,42 @@
+/* Señal · Tarjeta de espacio. Portado del prototipo senal-prototipo.html. */
+
+/* ---------- Tarjeta de espacio ---------- */
+.grid-cards { display: grid; gap: 28px 22px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .grid-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .grid-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.scard { position: relative; text-decoration: none; display: flex; flex-direction: column; gap: 10px; }
+.scard .ph { position: relative; aspect-ratio: 4 / 3; border-radius: var(--radius); overflow: hidden; background: var(--s2); border: 1px solid var(--line); }
+.scard .ph img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s cubic-bezier(.2,.8,.2,1), filter .4s; }
+.scard:hover .ph img { transform: scale(1.04); }
+.scard .ph .badge-cat { position: absolute; left: 10px; top: 10px; z-index: 2; background: rgba(0,0,0,.6); color: #fff; backdrop-filter: blur(6px); border-radius: 6px; padding: 3px 8px; font-size: 12px; display: inline-flex; gap: 6px; align-items: center; }
+.scard .ph .badge-cat svg { width: 14px; height: 14px; }
+.scard .like { position: absolute; right: 10px; top: 10px; z-index: 3; width: 34px; height: 34px; border-radius: 50%; border: 0; background: rgba(0,0,0,.55); color: #fff; display: grid; place-items: center; backdrop-filter: blur(6px); }
+.scard .like[aria-pressed="true"] { color: var(--acc); }
+.scard .like svg { width: 18px; height: 18px; }
+/* Visor: esquinas de encuadre que se cierran al enfocar */
+[data-world="av"] .scard .ph::after { content: ""; position: absolute; inset: 14px; pointer-events: none; z-index: 1;
+  background:
+    linear-gradient(#fff,#fff) top left / 18px 2px no-repeat, linear-gradient(#fff,#fff) top left / 2px 18px no-repeat,
+    linear-gradient(#fff,#fff) top right / 18px 2px no-repeat, linear-gradient(#fff,#fff) top right / 2px 18px no-repeat,
+    linear-gradient(#fff,#fff) bottom left / 18px 2px no-repeat, linear-gradient(#fff,#fff) bottom left / 2px 18px no-repeat,
+    linear-gradient(#fff,#fff) bottom right / 18px 2px no-repeat, linear-gradient(#fff,#fff) bottom right / 2px 18px no-repeat;
+  opacity: 0; transition: inset .35s cubic-bezier(.2,.8,.2,1), opacity .25s; }
+[data-world="av"] .scard:hover .ph::after, [data-world="av"] .scard:focus-within .ph::after { inset: 26px; opacity: .9; filter: drop-shadow(0 0 6px var(--acc)); }
+[data-world="av"] .scard .ph .focus-tag { position: absolute; right: 50px; top: 14px; z-index: 2; font: 600 10px var(--font-mono); color: var(--acc); opacity: 0; transition: opacity .2s; letter-spacing: .08em; }
+[data-world="av"] .scard:hover .ph .focus-tag { opacity: 1; }
+/* Consola: medidor de nivel bajo la foto */
+.scard .lvl { display: none; }
+[data-world="mu"] .scard .lvl { display: flex; gap: 2px; height: 6px; }
+[data-world="mu"] .scard .lvl b { flex: 1; background: var(--s3); border-radius: 1px; }
+[data-world="mu"] .scard .lvl b.on { background: var(--ok); }
+[data-world="mu"] .scard .lvl b.on.h { background: var(--acc); }
+[data-world="mu"] .scard .lvl b.on.p { background: var(--rec); }
+.scard .row { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
+.scard h3 { font-size: 16px; font-weight: 700; }
+.scard .loc { color: var(--dim); font-size: 13px; display: flex; align-items: center; gap: 5px; }
+.scard .loc svg { width: 13px; height: 13px; flex: none; }
+.scard .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.scard .price { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; }
+.scard .price b { font-family: var(--font-mono); font-size: 15px; color: var(--acc); font-weight: 600; }
+.stretch::after { content: ""; position: absolute; inset: 0; z-index: 2; }
+

@@ -1,10 +1,18 @@
-import type { AmenityCategory, BookingStatus, SpaceCategory, SpaceStatus } from "@/types/database";
+import type { AmenityCategory, BookingStatus, GearCategory, SpaceCategory, SpaceStatus } from "@/types/database";
 
 export const AMENITY_CATEGORY_LABELS: Record<AmenityCategory, string> = {
   audio: "Audio",
   video: "Video",
   general: "General",
 };
+
+export const GEAR_CATEGORY_LABELS: Record<GearCategory, string> = {
+  microfonos: "Micrófonos",
+  consolas: "Consolas y grabación",
+  amplificacion: "Amplificación y backline",
+  iluminacion: "Iluminación",
+};
+export const GEAR_CATEGORIES = Object.keys(GEAR_CATEGORY_LABELS) as GearCategory[];
 
 // Etiquetas en español de los enums (ver README).
 export const SPACE_CATEGORY_LABELS: Record<SpaceCategory, string> = {

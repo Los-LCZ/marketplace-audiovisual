@@ -55,6 +55,41 @@ export function zonedTimeToUtc(date: string, hour: number) {
   return guess - offsetAt(first);
 }
 
+const weekdayFormatter = new Intl.DateTimeFormat("es-CL", { timeZone: "UTC", weekday: "short" });
+const dayMonthFormatter = new Intl.DateTimeFormat("es-CL", { timeZone: "UTC", day: "numeric", month: "short" });
+
+function fromDateString(date: string) {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d, 12));
+}
+
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** "Hoy", "Mañana" o el día de la semana abreviado ("Lun") para `date` respecto de `today`. */
+export function dayLabel(date: string, today: string) {
+  if (date === today) return "Hoy";
+  if (date === addDays(today, 1)) return "Mañana";
+  return capitalize(weekdayFormatter.format(fromDateString(date)).replace(".", ""));
+}
+
+/** "31 oct" para una fecha `YYYY-MM-DD`. */
+export function dayMonth(date: string) {
+  return dayMonthFormatter.format(fromDateString(date)).replace(".", "");
+}
+
+/** Día del mes (número) de una fecha `YYYY-MM-DD`. */
+export function dayOfMonth(date: string) {
+  return Number(date.slice(8, 10));
+}
+
+/** Próximos `count` días desde `today`, con etiqueta para selectores ("Hoy 31 oct"). */
+export function nextDays(today: string, count: number) {
+  return Array.from({ length: count }, (_, i) => {
+    const value = addDays(today, i);
+    return { value, label: `${dayLabel(value, today)} ${dayMonth(value)}` };
+  });
+}
+
 /**
  * Instante actual y fecha de hoy en Chile. Se calcula fuera de los componentes
  * (en el servidor) y se pasa como prop para no romper la pureza del render.

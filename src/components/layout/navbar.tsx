@@ -1,50 +1,69 @@
 import Link from "next/link";
-import { Clapperboard } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
-import { buttonClasses } from "@/components/ui/button";
-import { NavLinks, type NavItem } from "./nav-links";
+import type { World } from "@/lib/world";
+import { NavLinks, TabBar, type NavItem } from "./nav-links";
 import { UserMenu } from "./user-menu";
-import { MobileNav } from "./mobile-nav";
+import { WorldSwitch } from "./world-switch";
 
-export async function Navbar() {
+export function Logo() {
+  return (
+    <Link className="logo" href="/" aria-label="Señal, ir al inicio">
+      <span className="logo-led" />
+      SEÑAL
+    </Link>
+  );
+}
+
+// Barra superior + barra inferior móvil. Los links dependen de la sesión y del rol.
+export async function Navbar({ world }: { world: World }) {
   const user = await getCurrentUser();
   const isHost = user?.profile.role === "host" || user?.profile.role === "admin";
 
-  const items: NavItem[] = [{ href: "/", label: "Explorar" }];
-  if (user) items.push({ href: "/mis-reservas", label: "Mis reservas" });
-  if (isHost) items.push({ href: "/dashboard", label: "Panel anfitrión" });
+  const desktop: NavItem[] = [
+    { href: "/", label: "Inicio", icon: "compass" },
+    { href: "/explorar", label: "Explorar", icon: "search" },
+    { href: "/descubrir", label: "Descubrir", icon: "heart" },
+  ];
+  if (user) desktop.push({ href: "/mis-reservas", label: "Mis sesiones", icon: "calendar" });
+  if (isHost) desktop.push({ href: "/dashboard", label: "Panel", icon: "dashboard" });
+
+  const mobile: NavItem[] = [
+    { href: "/", label: "Inicio", icon: "compass" },
+    { href: "/explorar", label: "Explorar", icon: "search" },
+    { href: "/descubrir", label: "Descubrir", icon: "heart" },
+    user
+      ? { href: "/mis-reservas", label: "Sesiones", icon: "calendar" }
+      : { href: "/login", label: "Ingresar", icon: "user" },
+  ];
+  if (isHost) mobile.push({ href: "/dashboard", label: "Panel", icon: "dashboard" });
 
   const displayName = user?.profile.full_name || user?.email || "Mi cuenta";
+  const roleLabel = isHost ? "Anfitrión" : "Cliente";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
-      <nav className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-          <Clapperboard className="size-6 text-primary" aria-hidden />
-          <span>Estudios&nbsp;CL</span>
-        </Link>
-
-        <div className="hidden flex-1 md:flex">
-          <NavLinks items={items} />
+    <>
+      <header className="topbar">
+        <div className="wrap topbar-in">
+          <Logo />
+          <NavLinks items={desktop} />
+          <div className="topbar-right">
+            <WorldSwitch world={world} />
+            {user ? (
+              <UserMenu userId={user.id} name={displayName} email={user.email} roleLabel={roleLabel} isHost={isHost} />
+            ) : (
+              <>
+                <Link className="btn btn-line btn-sm hidden sm:inline-flex" href="/login">
+                  Ingresar
+                </Link>
+                <Link className="btn btn-acc btn-sm" href="/registro">
+                  Crear cuenta
+                </Link>
+              </>
+            )}
+          </div>
         </div>
-
-        <div className="ml-auto hidden items-center gap-2 md:flex">
-          {user ? (
-            <UserMenu name={displayName} email={user.email} />
-          ) : (
-            <>
-              <Link href="/login" className={buttonClasses({ variant: "ghost" })}>
-                Iniciar sesión
-              </Link>
-              <Link href="/registro" className={buttonClasses()}>
-                Registrarse
-              </Link>
-            </>
-          )}
-        </div>
-
-        <MobileNav items={items} user={user ? { name: displayName, email: user.email } : null} />
-      </nav>
-    </header>
+      </header>
+      <TabBar items={mobile} />
+    </>
   );
 }

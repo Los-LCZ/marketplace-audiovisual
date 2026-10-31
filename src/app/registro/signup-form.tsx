@@ -28,7 +28,7 @@ export function SignupForm() {
   return (
     <form action={action} className={CARD}>
       <div>
-        <h1 className="text-2xl font-semibold">Crear cuenta</h1>
+        <h1 className="display h3">Crear cuenta</h1>
         <p className="text-sm text-muted-foreground">Arrienda espacios o publica el tuyo.</p>
       </div>
       <Field label="Nombre completo" htmlFor="full_name" error={fieldErrors?.full_name}>

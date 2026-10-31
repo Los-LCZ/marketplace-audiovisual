@@ -49,3 +49,22 @@ export function buildQueryString(
   const qs = search.toString();
   return qs ? `?${qs}` : "";
 }
+
+export const SORTS = {
+  relevancia: "Más recientes",
+  "precio-asc": "Precio: menor a mayor",
+  "precio-desc": "Precio: mayor a menor",
+  valoracion: "Mejor valorados",
+} as const;
+export type SortKey = keyof typeof SORTS;
+
+export function parseSort(params: RawSearchParams): SortKey {
+  const sort = firstParam(params.sort);
+  return sort && sort in SORTS ? (sort as SortKey) : "relevancia";
+}
+
+/** Fecha buscada (`?fecha=YYYY-MM-DD`): se usa para preseleccionar el día en la ficha. */
+export function parseDateParam(params: RawSearchParams) {
+  const fecha = firstParam(params.fecha);
+  return fecha && /^\d{4}-\d{2}-\d{2}$/.test(fecha) ? fecha : undefined;
+}

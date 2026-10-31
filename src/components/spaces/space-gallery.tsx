@@ -1,29 +1,61 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
-import { SpaceImage } from "./space-image";
+import { ImageOff } from "lucide-react";
 
-// Foto principal + hasta 4 miniaturas (en pantallas grandes).
-export function SpaceGallery({ images, title }: { images: string[]; title: string }) {
-  const [main, ...rest] = images;
-  const thumbs = rest.slice(0, 4);
-
-  if (!thumbs.length) {
-    return <SpaceImage src={main} alt={title} priority sizes="(min-width: 1024px) 1152px, 100vw" className="rounded-2xl" />;
-  }
+/**
+ * Galería de la ficha: foto principal + tira de miniaturas. En el mundo Audiovisual la
+ * foto principal se ve dentro de un visor (HUD de cámara); en Música, como una foto simple.
+ */
+export function SpaceGallery({ images, title, world }: { images: string[]; title: string; world: "av" | "mu" }) {
+  const [current, setCurrent] = useState(0);
+  const src = images[current];
 
   return (
-    <div className="grid gap-2 overflow-hidden rounded-2xl lg:grid-cols-4 lg:grid-rows-2">
-      <SpaceImage
-        src={main}
-        alt={title}
-        priority
-        sizes="(min-width: 1024px) 576px, 100vw"
-        className="lg:col-span-2 lg:row-span-2 lg:aspect-auto lg:h-full"
-      />
-      {thumbs.map((src, i) => (
-        <div key={src} className="relative hidden aspect-[4/3] bg-muted lg:block">
-          <Image src={src} alt={`${title} — foto ${i + 2}`} fill sizes="288px" className="object-cover" />
+    <div className="gallery">
+      <div className={`main ${world === "av" ? "vf cursor-default" : ""}`} style={world === "av" ? { aspectRatio: "16/9" } : undefined}>
+        {src ? (
+          <Image src={src} alt={`${title} — foto ${current + 1}`} fill priority sizes="(min-width: 1240px) 800px, 100vw" className="object-cover" />
+        ) : (
+          <div className="dim flex size-full items-center justify-center">
+            <ImageOff className="size-10" aria-hidden />
+            <span className="sr-only">Sin fotos</span>
+          </div>
+        )}
+        {world === "av" && (
+          <>
+            <div className="vf-shade" />
+            <div className="vf-grid" />
+            <div className="vf-corners">
+              <i />
+              <i />
+              <i />
+              <i />
+            </div>
+            <div className="vf-hud top">
+              <span className="rec">
+                <i />
+                REC
+              </span>
+              <span>A001 C00{current + 1}</span>
+              <span className="sp" />
+              <span>
+                {images.length ? current + 1 : 0}/{images.length}
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+      {images.length > 1 && (
+        <div className="strip-th" role="group" aria-label="Fotos">
+          {images.map((img, i) => (
+            <button key={img} type="button" aria-pressed={i === current} aria-label={`Foto ${i + 1}`} onClick={() => setCurrent(i)}>
+              <Image src={img} alt="" fill sizes="120px" className="object-cover" />
+            </button>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }

@@ -15,7 +15,7 @@ export function LoginForm({ next, callbackError }: { next?: string; callbackErro
       className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-border bg-surface p-6 shadow-sm"
     >
       <div>
-        <h1 className="text-2xl font-semibold">Iniciar sesión</h1>
+        <h1 className="display h3">Iniciar sesión</h1>
         <p className="text-sm text-muted-foreground">Ingresa para reservar o gestionar tus espacios.</p>
       </div>
       {callbackError && !state && (

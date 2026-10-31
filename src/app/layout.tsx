@@ -1,38 +1,44 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Hanken_Grotesk, Martian_Mono, Unbounded } from "next/font/google";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { Toaster } from "@/components/ui/toaster";
+import { getWorld } from "@/lib/world-server";
+import { WORLDS } from "@/lib/world";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const unbounded = Unbounded({ variable: "--font-unbounded", subsets: ["latin"], weight: ["500", "600"] });
+const hanken = Hanken_Grotesk({ variable: "--font-hanken", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
+const martian = Martian_Mono({ variable: "--font-martian", subsets: ["latin"], weight: ["400", "500", "600"] });
 
 export const metadata: Metadata = {
   title: {
-    default: "Estudios CL · Arrienda espacios audiovisuales",
-    template: "%s · Estudios CL",
+    default: "Señal · Estudios, salas, sets y locaciones por hora",
+    template: "%s · Señal",
   },
   description:
-    "Arrienda por hora estudios de grabación, salas de ensayo, sets de rodaje, estudios fotográficos y locaciones.",
+    "Marketplace de estudios de grabación, salas de ensayo, sets de filmación y locaciones por hora en Santiago, con ficha técnica completa antes de reservar.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export async function generateViewport(): Promise<Viewport> {
+  const world = await getWorld();
+  return { themeColor: WORLDS[world].themeColor, viewportFit: "cover", colorScheme: "dark" };
+}
+
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const world = await getWorld();
+
   return (
     <html
-      lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang="es-CL"
+      data-world={world}
+      className={`${unbounded.variable} ${hanken.variable} ${martian.variable}`}
     >
-      <body className="flex min-h-full flex-col font-sans">
-        <Navbar />
-        <div className="flex flex-1 flex-col">{children}</div>
+      <body>
+        <Navbar world={world} />
+        <main id="app">{children}</main>
         <Footer />
+        <Toaster />
       </body>
     </html>
   );
