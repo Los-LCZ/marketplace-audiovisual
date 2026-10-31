@@ -1,23 +1,26 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useEffectEvent, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
-// Cierra con Escape y enfoca el primer control al abrir.
+// Cierra con Escape y enfoca el primer control al abrir. El efecto depende solo de
+// `open`: si dependiera de `onClose` (una función nueva en cada render del padre),
+// cada cambio de estado dentro de la capa devolvería el foco al botón de cerrar.
 function useLayer(open: boolean, onClose: () => void) {
   const ref = useRef<HTMLDivElement>(null);
+  const onEscape = useEffectEvent((e: KeyboardEvent) => {
+    if (e.key === "Escape") onClose();
+  });
   useEffect(() => {
     if (!open) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
+    const onKeyDown = (e: KeyboardEvent) => onEscape(e);
     document.addEventListener("keydown", onKeyDown);
     ref.current
       ?.querySelector<HTMLElement>("button, [href], input, select, textarea")
       ?.focus({ preventScroll: true });
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+  }, [open]);
   return ref;
 }
 
