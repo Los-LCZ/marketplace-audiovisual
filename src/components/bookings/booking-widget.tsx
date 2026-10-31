@@ -13,6 +13,8 @@ import { toast } from "@/components/ui/toaster";
 
 const HOUR_MS = 60 * 60 * 1000;
 const DAYS_SHOWN = 14;
+// Comisión de la plataforma (trigger compute_booking_amounts: round(subtotal * 0.10)).
+const PLATFORM_FEE_RATE = 0.1;
 
 export type BusySlot = { start_time: string; end_time: string };
 
@@ -95,6 +97,9 @@ export function BookingPanel(props: Props) {
   }, [state, spaceTitle]);
 
   const hours = Array.from({ length: closeHour - openHour }, (_, i) => openHour + i);
+  // Estimación con la misma fórmula del trigger compute_booking_amounts; el monto final lo fija la base.
+  const subtotal = pricePerHour * dur;
+  const fee = Math.round(subtotal * PLATFORM_FEE_RATE);
   const maxDur = start != null ? freeRun(date, start) : minHours;
   const startMs = start != null ? hourStart(date, start) : null;
 
@@ -247,14 +252,15 @@ export function BookingPanel(props: Props) {
           <span className="dim">
             {formatCLP(pricePerHour)} × {dur} h
           </span>
+          <span>{formatCLP(subtotal)}</span>
         </div>
         <div>
           <span className="dim">Tarifa de servicio</span>
-          <span className="dim">10% del subtotal</span>
+          <span>{formatCLP(fee)}</span>
         </div>
         <div className="tot">
           <span>Total</span>
-          <span className="dim text-sm font-normal">Se calcula al confirmar</span>
+          <span>{formatCLP(subtotal + fee)}</span>
         </div>
       </div>
 
