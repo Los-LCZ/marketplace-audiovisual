@@ -47,8 +47,11 @@ export async function listMyBookings(clientId: string) {
   return (data ?? []) satisfies BookingWithSpace[];
 }
 
-// Reservas recibidas en los espacios del anfitrión autenticado.
-export async function listHostBookings(hostId: string) {
+/**
+ * Reservas recibidas en los espacios del anfitrión autenticado, con nombre, avatar
+ * y nota como cliente de quien reservó (`client`).
+ */
+export async function listHostBookings(hostId: string): Promise<HostBooking[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("bookings")
@@ -57,7 +60,7 @@ export async function listHostBookings(hostId: string) {
     .order("start_time", { ascending: true });
 
   if (error) throw new Error(`Error al listar reservas recibidas: ${error.message}`);
-  return (data ?? []) satisfies BookingWithSpace[];
+  return attachClients(supabase, (data ?? []) satisfies BookingWithSpace[]);
 }
 
 /**

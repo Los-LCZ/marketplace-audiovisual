@@ -26,6 +26,21 @@ export type GearCategory = "microfonos" | "consolas" | "amplificacion" | "ilumin
 /** Equipamiento técnico del espacio, agrupado por categoría (columna `spaces.gear`). */
 export type GearGroup = { category: GearCategory; items: string[] };
 
+/** Resumen de calificaciones en un rol (solo reseñas reveladas). */
+export type RatingSummary = {
+  /** Promedio con 2 decimales; null si no hay reseñas. */
+  avg: number | null;
+  count: number;
+  /** Cantidad de reseñas con 5, 4, 3, 2 y 1 estrellas (en ese orden). */
+  distribution: [number, number, number, number, number];
+  /** Hasta 5 etiquetas más repetidas. */
+  top_tags: { label: string; count: number }[];
+};
+
+export type ProfileRatingStats = { as_host: RatingSummary; as_client: RatingSummary };
+
+export type ProfileReviewRole = "host" | "client";
+
 /** Cliente visto por un anfitrión: perfil público, nota como cliente y última reseña recibida. */
 export type ClientSummaryRow = {
   client_id: string;
@@ -411,6 +426,25 @@ export type Database = {
           author_avatar: string | null;
         }[];
       };
+      get_profile_rating_stats: {
+        Args: { p_profile_id: string };
+        Returns: ProfileRatingStats;
+      };
+      get_profile_reviews: {
+        Args: { p_profile_id: string; p_role: ProfileReviewRole; p_page?: number; p_page_size?: number };
+        Returns: {
+          id: string;
+          rating: number;
+          comment: string | null;
+          tags: string[];
+          created_at: string;
+          author_id: string;
+          author_name: string | null;
+          author_avatar: string | null;
+          space_id: string;
+          space_title: string;
+        }[];
+      };
       get_client_summaries: {
         Args: { p_client_ids: string[] };
         Returns: ClientSummaryRow[];
@@ -477,5 +511,6 @@ export type Review = Tables<"reviews">;
 export type ClientReview = Tables<"client_reviews">;
 export type PublicProfile = PublicSchema["Views"]["public_profiles"]["Row"];
 export type SpaceRatingStats = PublicSchema["Views"]["space_rating_stats"]["Row"];
+export type ProfileReview = PublicSchema["Functions"]["get_profile_reviews"]["Returns"][number];
 export type CommuneCount = PublicSchema["Functions"]["list_communes"]["Returns"][number];
 export type SpaceReview = PublicSchema["Functions"]["get_space_reviews"]["Returns"][number];
