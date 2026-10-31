@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { cancelBooking, completeBooking } from "@/app/actions/bookings";
-import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toaster";
 
 /**
  * Botones de cambio de estado de una reserva. Quién puede hacer qué lo decide la
@@ -22,12 +22,13 @@ export function BookingActions({
 
   if (!canCancel && !canComplete) return null;
 
-  function run(action: (id: string) => ReturnType<typeof cancelBooking>, confirmText: string) {
+  function run(action: (id: string) => ReturnType<typeof cancelBooking>, confirmText: string, done: string) {
     if (!window.confirm(confirmText)) return;
     setError(null);
     startTransition(async () => {
       const result = await action(bookingId);
       if (result && !result.ok) setError(result.error);
+      else toast(done);
     });
   }
 
@@ -35,23 +36,24 @@ export function BookingActions({
     <div className="flex flex-col gap-1">
       <div className="flex flex-wrap gap-2">
         {canComplete && (
-          <Button
-            size="sm"
+          <button
+            type="button"
+            className="btn btn-acc btn-sm"
             disabled={pending}
-            onClick={() => run(completeBooking, "¿Marcar esta reserva como completada? El cliente podrá reseñarla.")}
+            onClick={() => run(completeBooking, "¿Marcar esta sesión como completada? El cliente podrá calificarla.", "Sesión completada")}
           >
             Marcar completada
-          </Button>
+          </button>
         )}
         {canCancel && (
-          <Button
-            size="sm"
-            variant="danger"
+          <button
+            type="button"
+            className="btn btn-line btn-sm"
             disabled={pending}
-            onClick={() => run(cancelBooking, "¿Seguro que quieres cancelar esta reserva? Esta acción no se puede deshacer.")}
+            onClick={() => run(cancelBooking, "¿Seguro que quieres cancelar esta reserva? Esta acción no se puede deshacer.", "Reserva cancelada")}
           >
             {pending ? "Procesando..." : "Cancelar reserva"}
-          </Button>
+          </button>
         )}
       </div>
       {error && (

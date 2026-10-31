@@ -10,11 +10,11 @@ export default function ErrorPage({ error, retry }: { error: unknown; retry: () 
   }, [error]);
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
+    <div className="flex flex-col items-center justify-center gap-4 px-4 py-20 text-center">
       <TriangleAlert className="size-10 text-warning" aria-hidden />
-      <h1 className="text-2xl font-semibold">Algo salió mal</h1>
+      <h1 className="display h3">Algo salió mal</h1>
       <p className="text-muted-foreground">No pudimos cargar esta sección. Intenta nuevamente.</p>
       <Button onClick={() => retry()}>Reintentar</Button>
-    </main>
+    </div>
   );
 }

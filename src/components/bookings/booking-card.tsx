@@ -1,68 +1,67 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { CalendarDays, MapPin } from "lucide-react";
 import type { BookingWithSpace } from "@/lib/queries/bookings";
-import { formatCLP, formatDate, formatTimeRange } from "@/lib/utils";
+import { formatCLP, formatTimeRange } from "@/lib/utils";
+import { dayLabel, dayOfMonth, zonedDateString } from "@/lib/zoned-time";
 import { BookingStatusBadge } from "@/components/ui/badge";
 import { Stars } from "@/components/ui/rating";
-import { SpaceImage } from "@/components/spaces/space-image";
 
-// Tarjeta de reserva compartida por /mis-reservas y /dashboard; `children` lleva las acciones.
-export function BookingCard({ booking, children }: { booking: BookingWithSpace; children?: ReactNode }) {
+// Fila de reserva (.li) compartida por /mis-reservas y /dashboard; `children` lleva las acciones.
+export function BookingCard({
+  booking,
+  today,
+  subtitle,
+  children,
+}: {
+  booking: BookingWithSpace;
+  today: string;
+  /** Línea extra bajo el título (p. ej. el cliente en el panel del anfitrión). */
+  subtitle?: ReactNode;
+  children?: ReactNode;
+}) {
   const { space, review } = booking;
+  const date = zonedDateString(Date.parse(booking.start_time));
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border border-border bg-surface sm:flex-row">
-      <SpaceImage
-        src={space?.images[0]}
-        alt={space?.title ?? "Espacio"}
-        sizes="(min-width: 640px) 224px, 100vw"
-        className="sm:w-56 sm:shrink-0"
-      />
-      <div className="flex flex-1 flex-col gap-3 p-4">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            {space ? (
-              <Link href={`/espacios/${space.id}`} className="font-semibold hover:underline">
-                {space.title}
-              </Link>
-            ) : (
-              <p className="font-semibold">Espacio no disponible</p>
-            )}
-            {space && (
-              <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                <MapPin className="size-3.5" aria-hidden />
-                {space.commune}, {space.city}
-              </p>
-            )}
-          </div>
+    <article className="panel p-3.5">
+      <div className="li p-0">
+        <div className="date-box">
+          <span className="text-[11px]">{dayLabel(date, today)}</span>
+          <b>{dayOfMonth(date)}</b>
+        </div>
+        <div className="thumb hidden sm:block">
+          {space?.images[0] && <Image src={space.images[0]} alt="" width={64} height={64} />}
+        </div>
+        <div className="grow">
+          {space ? (
+            <Link href={`/espacios/${space.id}`} className="font-bold no-underline hover:underline">
+              {space.title}
+            </Link>
+          ) : (
+            <b>Espacio no disponible</b>
+          )}
+          <span className="dim block text-[13px]">
+            {formatTimeRange(booking.start_time, booking.end_time)} · {booking.total_hours} h
+            {space && ` · ${space.commune}`}
+          </span>
+          {subtitle}
+        </div>
+        <div className="flex flex-col items-end gap-1.5 text-right">
           <BookingStatusBadge status={booking.status} />
+          <span className="mono">{formatCLP(booking.total_amount)}</span>
         </div>
-
-        <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
-          <p className="flex items-center gap-1.5">
-            <CalendarDays className="size-4 text-muted-foreground" aria-hidden />
-            <span className="capitalize">{formatDate(booking.start_time)}</span>
-            <span className="text-muted-foreground">· {formatTimeRange(booking.start_time, booking.end_time)}</span>
-          </p>
-          <p>
-            <span className="text-muted-foreground">{booking.total_hours} h · Total </span>
-            <span className="font-semibold">{formatCLP(booking.total_amount)}</span>
-          </p>
-        </div>
-
-        {review && (
-          <div className="rounded-lg bg-muted px-3 py-2 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="font-medium">Reseña</span>
-              <Stars rating={review.rating} />
-            </div>
-            {review.comment && <p className="mt-1 text-muted-foreground">{review.comment}</p>}
-          </div>
-        )}
-
-        {children && <div className="mt-auto flex flex-wrap items-start gap-2 pt-1">{children}</div>}
       </div>
+
+      {review && (
+        <div className="reveal">
+          <span className="dim text-xs">Tu calificación </span>
+          <Stars rating={review.rating} />
+          {review.comment && <p className="mt-1">“{review.comment}”</p>}
+        </div>
+      )}
+
+      {children && <div className="mt-3 flex flex-wrap items-start gap-2">{children}</div>}
     </article>
   );
 }

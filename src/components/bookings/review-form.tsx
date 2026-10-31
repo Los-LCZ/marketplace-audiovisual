@@ -1,77 +1,106 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { Star } from "lucide-react";
+import { useActionState, useEffect, useState } from "react";
 import { createReview } from "@/app/actions/bookings";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { FormMessage, Label, Textarea } from "@/components/ui/form-controls";
-import { SubmitButton } from "@/components/ui/submit-button";
+import { Dialog } from "@/components/ui/layer";
+import { FormMessage } from "@/components/ui/form-controls";
+import { toast } from "@/components/ui/toaster";
 
-// Botón "Reseñar" que despliega el formulario. Al guardar, la página se revalida
-// y la reserva pasa a mostrar la reseña en vez de este formulario.
-export function ReviewForm({ bookingId }: { bookingId: string }) {
+const STAR_LABELS = ["", "Muy mala", "Regular", "Buena", "Muy buena", "Excelente"];
+const COMPLIMENTS = [
+  "Equipo tal cual la ficha",
+  "Anfitrión atento",
+  "Gran acústica",
+  "Excelente iluminación",
+  "Llegada fácil",
+  "Sonido impecable",
+];
+const ISSUES = ["Llegó tarde", "Problemas con el equipo", "Mala comunicación", "No coincidía con lo acordado", "Se pasó del horario"];
+
+/**
+ * Botón "Calificar" que abre el diálogo de reseña del prototipo: estrellas, etiquetas
+ * (elogios o problemas según la nota) y comentario. Las etiquetas se guardan al inicio
+ * del comentario. Al guardar, la página se revalida y la reserva muestra la reseña.
+ */
+export function ReviewForm({ bookingId, spaceTitle }: { bookingId: string; spaceTitle: string }) {
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState(0);
-  const [state, action] = useActionState(createReview, null);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [text, setText] = useState("");
+  const [state, action, pending] = useActionState(createReview, null);
 
-  if (!open) {
-    return (
-      <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>
-        <Star className="size-4" aria-hidden /> Reseñar
-      </Button>
-    );
-  }
+  useEffect(() => {
+    if (state?.ok) toast("Calificación enviada", state.message);
+  }, [state]);
+
+  const chips = rating >= 4 ? COMPLIMENTS : ISSUES;
+  const comment = [picked.length ? `${picked.join(" · ")}.` : "", text.trim()].filter(Boolean).join(" ");
 
   return (
-    <form action={action} className="flex w-full flex-col gap-3 rounded-xl border border-border p-4">
-      <input type="hidden" name="booking_id" value={bookingId} />
-      <fieldset>
-        <legend className="mb-1.5 text-sm font-medium">¿Cómo fue tu experiencia?</legend>
-        <div className="flex gap-1">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <label key={n} className="cursor-pointer">
-              <input
-                type="radio"
-                name="rating"
-                value={n}
-                required
-                checked={rating === n}
-                onChange={() => setRating(n)}
-                className="peer sr-only"
+    <>
+      <button type="button" className="btn btn-acc btn-sm" onClick={() => setOpen(true)}>
+        ★ Calificar
+      </button>
+      <Dialog open={open} onClose={() => setOpen(false)} label={`Calificar ${spaceTitle}`}>
+        <form action={action} className="grid w-full justify-items-center gap-3.5">
+          <input type="hidden" name="booking_id" value={bookingId} />
+          <input type="hidden" name="rating" value={rating || ""} />
+          <input type="hidden" name="comment" value={comment} />
+          <h2 className="display h3">¿Cómo estuvo {spaceTitle}?</h2>
+          <p className="dim text-sm">Tu reseña ayuda a otros clientes a elegir y al anfitrión a mejorar.</p>
+          <div className="big-stars" role="radiogroup" aria-label="Estrellas">
+            {[1, 2, 3, 4, 5].map((v) => (
+              <button
+                key={v}
+                type="button"
+                role="radio"
+                aria-checked={rating === v}
+                aria-label={`${v} ${v === 1 ? "estrella" : "estrellas"}`}
+                className={v <= rating ? "on" : ""}
+                onClick={() => {
+                  setRating(v);
+                  setPicked([]);
+                }}
+              >
+                ★
+              </button>
+            ))}
+          </div>
+          <b className="min-h-[22px]">{STAR_LABELS[rating]}</b>
+          {rating > 0 && (
+            <>
+              <p className="dim text-[13px]">{rating >= 4 ? "¿Qué destacarías?" : "¿Qué podría mejorar?"}</p>
+              <div className="chips justify-center">
+                {chips.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className="chip"
+                    aria-pressed={picked.includes(c)}
+                    onClick={() => setPicked((list) => (list.includes(c) ? list.filter((x) => x !== c) : [...list, c]))}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+              <label htmlFor={`rv-${bookingId}`} className="sr-only">
+                Comentario
+              </label>
+              <textarea
+                id={`rv-${bookingId}`}
+                value={text}
+                maxLength={900}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Cuéntale a la comunidad cómo fue la sesión (opcional)"
               />
-              <Star
-                aria-hidden
-                className={cn(
-                  "size-7 transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-primary",
-                  n <= rating ? "fill-amber-500 text-amber-500" : "text-border hover:text-amber-500",
-                )}
-              />
-              <span className="sr-only">
-                {n} {n === 1 ? "estrella" : "estrellas"}
-              </span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor={`comment-${bookingId}`}>Comentario (opcional)</Label>
-        <Textarea
-          id={`comment-${bookingId}`}
-          name="comment"
-          maxLength={1000}
-          placeholder="Cuéntale a otros cómo estuvo el espacio, el equipamiento y el anfitrión."
-        />
-      </div>
-      <FormMessage state={state} />
-      <div className="flex gap-2">
-        <SubmitButton size="sm" disabled={!rating} pendingText="Enviando...">
-          Publicar reseña
-        </SubmitButton>
-        <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>
-          Cancelar
-        </Button>
-      </div>
-    </form>
+            </>
+          )}
+          <FormMessage state={state && !state.ok ? state : null} />
+          <button type="submit" className="btn btn-acc btn-lg w-full" disabled={!rating || pending}>
+            {pending ? "Enviando..." : "Enviar calificación"}
+          </button>
+        </form>
+      </Dialog>
+    </>
   );
 }

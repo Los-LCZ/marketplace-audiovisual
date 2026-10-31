@@ -17,7 +17,7 @@ export default async function NuevoEspacioPage() {
 
   if (user.profile.role === "client") {
     return (
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center px-4 py-8 sm:px-6">
+      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center px-4 py-8 sm:px-6">
         <EmptyState
           icon={Store}
           title="Solo los anfitriones pueden publicar espacios"
@@ -28,19 +28,19 @@ export default async function NuevoEspacioPage() {
             </Link>
           }
         />
-      </main>
+      </div>
     );
   }
 
   const amenities = await listAmenities();
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-8 sm:px-6">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-8 sm:px-6">
       <header className="flex flex-col gap-1">
-        <h1 className="text-3xl font-semibold tracking-tight">Publicar un espacio</h1>
+        <h1 className="display h2">Publicar un espacio</h1>
         <p className="text-muted-foreground">Completa los datos de tu estudio, sala o locación.</p>
       </header>
       <SpaceForm amenities={amenities} />
-    </main>
+    </div>
   );
 }

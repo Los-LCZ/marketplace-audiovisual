@@ -1,32 +1,30 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { SpaceWithAmenities } from "@/lib/queries/spaces";
-import { SPACE_CATEGORY_LABELS } from "@/lib/labels";
 import { formatCLP } from "@/lib/utils";
 import { SpaceStatusBadge } from "@/components/ui/badge";
-import { RatingSummary } from "@/components/ui/rating";
-import { SpaceImage } from "@/components/spaces/space-image";
+import { RatingPill } from "@/components/ui/rating";
 import { SpaceStatusControl } from "./space-status-control";
 
 export function HostSpaceRow({ space }: { space: SpaceWithAmenities }) {
   return (
-    <li className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-3 sm:flex-row sm:items-center">
-      <SpaceImage src={space.images[0]} alt={space.title} sizes="160px" className="rounded-xl sm:w-40 sm:shrink-0" />
-      <div className="flex flex-1 flex-col gap-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <Link href={`/espacios/${space.id}`} className="font-semibold hover:underline">
-            {space.title}
-          </Link>
-          <SpaceStatusBadge status={space.status} />
+    <li className="panel overflow-hidden">
+      <Link href={`/espacios/${space.id}`} className="block no-underline">
+        <div className="relative aspect-video bg-[var(--s2)]">
+          {space.images[0] && <Image src={space.images[0]} alt={space.title} fill sizes="360px" className="object-cover" />}
         </div>
-        <p className="text-sm text-muted-foreground">
-          {SPACE_CATEGORY_LABELS[space.category]} · {space.commune}, {space.city}
-        </p>
-        <p className="text-sm">
-          {formatCLP(space.price_per_hour)} / hora · mín. {space.min_hours} h
-        </p>
-        <RatingSummary avgRating={space.avg_rating} reviewCount={space.review_count} />
+        <div className="flex items-center justify-between gap-2.5 p-3.5">
+          <span className="min-w-0">
+            <b className="block truncate">{space.title}</b>
+            <span className="dim text-[13px]">{formatCLP(space.price_per_hour)} por hora</span>
+          </span>
+          <RatingPill rating={space.avg_rating} count={space.review_count} />
+        </div>
+      </Link>
+      <div className="flex items-center justify-between gap-2 border-t border-[var(--line)] px-3.5 py-2.5">
+        <SpaceStatusBadge status={space.status} />
+        <SpaceStatusControl spaceId={space.id} status={space.status} />
       </div>
-      <SpaceStatusControl spaceId={space.id} status={space.status} />
     </li>
   );
 }
