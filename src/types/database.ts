@@ -11,6 +11,9 @@ export type SpaceCategory =
 export type SpaceStatus = "draft" | "published" | "archived";
 export type BookingStatus = "pending_payment" | "confirmed" | "completed" | "cancelled";
 export type AmenityCategory = "audio" | "video" | "general";
+export type GearCategory = "microfonos" | "consolas" | "amplificacion" | "iluminacion";
+/** Equipamiento técnico del espacio, agrupado por categoría (columna `spaces.gear`). */
+export type GearGroup = { category: GearCategory; items: string[] };
 
 export type Database = {
   public: {
@@ -55,6 +58,18 @@ export type Database = {
           images: string[];
           status: SpaceStatus;
           created_at: string;
+          neighborhood: string | null;
+          size_m2: number | null;
+          capacity: number | null;
+          /** Hora de apertura (0–23, hora de Chile). */
+          open_hour: number;
+          /** Hora de cierre (1–24, hora de Chile); siempre mayor que open_hour. */
+          close_hour: number;
+          summary: string | null;
+          rules: string[];
+          /** Solo lo cambia un admin. */
+          featured: boolean;
+          gear: GearGroup[];
         };
         Insert: {
           id?: string;
@@ -70,6 +85,15 @@ export type Database = {
           images?: string[];
           status?: SpaceStatus;
           created_at?: string;
+          neighborhood?: string | null;
+          size_m2?: number | null;
+          capacity?: number | null;
+          open_hour?: number;
+          close_hour?: number;
+          summary?: string | null;
+          rules?: string[];
+          featured?: boolean;
+          gear?: GearGroup[];
         };
         Update: {
           title?: string;
@@ -82,6 +106,15 @@ export type Database = {
           min_hours?: number;
           images?: string[];
           status?: SpaceStatus;
+          neighborhood?: string | null;
+          size_m2?: number | null;
+          capacity?: number | null;
+          open_hour?: number;
+          close_hour?: number;
+          summary?: string | null;
+          rules?: string[];
+          featured?: boolean;
+          gear?: GearGroup[];
         };
         Relationships: [
           {
@@ -237,6 +270,10 @@ export type Database = {
           author_name: string | null;
           author_avatar: string | null;
         }[];
+      };
+      set_space_amenities: {
+        Args: { p_space_id: string; p_amenity_ids: number[] };
+        Returns: undefined;
       };
       is_admin: { Args: Record<string, never>; Returns: boolean };
       is_host: { Args: Record<string, never>; Returns: boolean };
