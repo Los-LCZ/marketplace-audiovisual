@@ -11,3 +11,6 @@
 #rdeck .deck { height: 640px; }
 .req { gap: 10px; }
 .req blockquote { font-size: 13px; }
+.rule.ok svg { color: var(--ok); }
+.book .rule { padding-top: 0; border-top: 0; }
+.scard .like[aria-pressed="true"] svg { fill: currentColor; }

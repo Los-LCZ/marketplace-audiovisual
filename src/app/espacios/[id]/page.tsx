@@ -4,22 +4,27 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   BrickWall,
+  CalendarClock,
   ChevronLeft,
   CircleCheck,
   Clock,
   DoorOpen,
   Guitar,
+  Lock,
   MapPin,
+  Ruler,
   ShieldCheck,
   Tag,
+  Users,
   Zap,
   type LucideIcon,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { getSpaceBusySlots, getSpaceById, getSpaceReviews, REVIEWS_PAGE_SIZE } from "@/lib/queries/spaces";
+import { getProfileRatingStats } from "@/lib/queries/profiles";
 import { SPACE_CATEGORY_LABELS } from "@/lib/labels";
 import { firstParam, parseDateParam } from "@/lib/search-params";
-import { formatCLP } from "@/lib/utils";
+import { formatCLP, formatRating } from "@/lib/utils";
 import { worldOf } from "@/lib/world";
 import { addDays, currentTime, zonedTimeToUtc } from "@/lib/zoned-time";
 import { Avatar } from "@/components/ui/avatar";
@@ -35,7 +40,9 @@ import { SpaceGallery } from "@/components/spaces/space-gallery";
 const BOOKING_DAYS_AHEAD = 14;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-// Infraestructura destacada: se deriva del equipamiento (amenities) del espacio.
+const hh = (h: number) => `${String(h % 24).padStart(2, "0")}:00`;
+
+// Infraestructura destacada: se deriva del equipamiento (amenities y gear) del espacio.
 const FEATURES: { label: string; match: RegExp; icon: LucideIcon }[] = [
   { label: "Backline incluido", match: /backline/i, icon: Guitar },
   { label: "Potencia trifásica", match: /trif[aá]sica/i, icon: Zap },
@@ -51,7 +58,8 @@ export async function generateMetadata({ params }: PageProps<"/espacios/[id]">):
   if (!space) return { title: "Espacio no encontrado" };
   return {
     title: space.title,
-    description: space.description?.slice(0, 160) ?? `${SPACE_CATEGORY_LABELS[space.category]} en ${space.commune}`,
+    description:
+      space.summary ?? space.description?.slice(0, 160) ?? `${SPACE_CATEGORY_LABELS[space.category]} en ${space.commune}`,
   };
 }
 
@@ -67,7 +75,7 @@ export default async function SpacePage({ params, searchParams }: PageProps<"/es
   const world = worldOf(space.category);
   const { now, today } = currentTime();
 
-  const [reviews, busySlots] = await Promise.all([
+  const [reviews, busySlots, myStats] = await Promise.all([
     space.review_count ? getSpaceReviews(space.id, reviewsPage) : [],
     space.status === "published"
       ? getSpaceBusySlots(
@@ -76,8 +84,10 @@ export default async function SpacePage({ params, searchParams }: PageProps<"/es
           new Date(zonedTimeToUtc(addDays(today, BOOKING_DAYS_AHEAD + 1), 0)),
         )
       : [],
+    user && !isOwner ? getProfileRatingStats(user.id) : null,
   ]);
-  const amenityNames = space.amenities.map((a) => a.name);
+  const equipment = [...space.amenities.map((a) => a.name), ...space.gear.flatMap((g) => g.items)];
+  const minRating = space.host?.min_client_rating ?? null;
   const paragraphs = space.description?.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean) ?? [];
   const hostName = space.host?.full_name ?? "Anfitrión";
 
@@ -101,11 +111,13 @@ export default async function SpacePage({ params, searchParams }: PageProps<"/es
         {isOwner && <SpaceStatusBadge status={space.status} />}
       </p>
       <h1 className="display h2 mt-2">{space.title}</h1>
+      {space.summary && <p className="dim mt-2 max-w-[65ch]">{space.summary}</p>}
       <p className="dim mt-2 flex flex-wrap items-center gap-4">
         <RatingPill rating={space.avg_rating} count={space.review_count} label="reseñas" />
         <span className="inline-flex items-center gap-1.5">
           <MapPin className="size-4" aria-hidden />
-          {space.address}, {space.commune}, {space.city}
+          {space.address}, {space.neighborhood ? `${space.neighborhood}, ` : ""}
+          {space.commune}, {space.city}
         </span>
       </p>
 
@@ -114,41 +126,61 @@ export default async function SpacePage({ params, searchParams }: PageProps<"/es
           <SpaceGallery images={space.images} title={space.title} world={world} />
 
           <dl className="specs">
-            {[
-              ["Precio", `${formatCLP(space.price_per_hour)} / h`, Tag],
-              ["Mínimo", `${space.min_hours} ${space.min_hours === 1 ? "hora" : "horas"}`, Clock],
-              ["Comuna", space.commune, MapPin],
-            ].map(([label, value, Icon]) => {
-              const I = Icon as LucideIcon;
-              return (
-                <div key={label as string} className="spec panel">
+            {(
+              [
+                ["Precio", `${formatCLP(space.price_per_hour)} / h`, Tag],
+                ["Mínimo", `${space.min_hours} ${space.min_hours === 1 ? "hora" : "horas"}`, Clock],
+                ["Horario", `${hh(space.open_hour)} a ${hh(space.close_hour)}`, CalendarClock],
+                space.size_m2 ? ["Superficie", `${space.size_m2} m²`, Ruler] : null,
+                space.capacity ? ["Capacidad", `${space.capacity} personas`, Users] : null,
+                ["Comuna", space.commune, MapPin],
+              ] satisfies ([string, string, LucideIcon] | null)[]
+            )
+              .filter((spec) => spec !== null)
+              .map(([label, value, Icon]) => (
+                <div key={label} className="spec panel">
                   <dt>
-                    <I className="inline size-3 align-[-1px]" aria-hidden /> {label as string}
+                    <Icon className="inline size-3 align-[-1px]" aria-hidden /> {label}
                   </dt>
-                  <dd>{value as string}</dd>
+                  <dd>{value}</dd>
                 </div>
-              );
-            })}
+              ))}
           </dl>
 
           <section className="host-card panel" aria-label="Anfitrión">
             <div className="host-top">
               <span className="flex min-w-[220px] flex-1 items-center gap-3.5">
-                <Avatar name={hostName} size="lg" />
+                <Avatar name={hostName} size="lg" verified={space.host?.verified} />
                 <span>
-                  <b>Anfitrión: {hostName}</b>
+                  {space.host ? (
+                    <Link href={`/u/${space.host.id}`} className="font-bold no-underline hover:underline">
+                      Anfitrión: {hostName}
+                    </Link>
+                  ) : (
+                    <b>Anfitrión: {hostName}</b>
+                  )}
                   <br />
                   {space.host && (
-                    <span className="dim text-sm">En Señal desde {new Date(space.host.created_at).getFullYear()}</span>
+                    <span className="dim text-sm">
+                      {space.host.headline ?? `En Señal desde ${new Date(space.host.created_at).getFullYear()}`}
+                    </span>
                   )}
                 </span>
               </span>
             </div>
-            <p className="rule">
-              <ShieldCheck aria-hidden />
-              Reserva directa: eliges tu bloque y la sesión queda confirmada al tiro. Puedes cancelarla desde Mis sesiones
-              antes de que comience.
-            </p>
+            {minRating == null ? (
+              <p className="rule">
+                <ShieldCheck aria-hidden />
+                Reserva directa: eliges tu bloque y la sesión queda confirmada al tiro. Puedes cancelarla desde Mis
+                sesiones antes de que comience.
+              </p>
+            ) : (
+              <p className="rule">
+                <Lock aria-hidden />
+                {hostName.split(" ")[0]} pide nota {formatRating(minRating)} como cliente para reservar directo. Si no la
+                alcanzas, tu reserva llega como solicitud y la acepta o rechaza.
+              </p>
+            )}
           </section>
 
           {paragraphs.length > 0 && (
@@ -166,7 +198,7 @@ export default async function SpacePage({ params, searchParams }: PageProps<"/es
             <h2 className="display h3">Infraestructura</h2>
             <div className="feats mt-3.5">
               {FEATURES.map((f) => {
-                const has = amenityNames.some((n) => f.match.test(n));
+                const has = equipment.some((n) => f.match.test(n));
                 const Icon = has ? CircleCheck : f.icon;
                 return (
                   <div key={f.label} className={`feat ${has ? "" : "no"}`}>
@@ -179,12 +211,12 @@ export default async function SpacePage({ params, searchParams }: PageProps<"/es
             </div>
           </section>
 
-          {space.amenities.length > 0 && (
+          {equipment.length > 0 && (
             <section>
               <h2 className="display h3">Equipamiento técnico</h2>
               <p className="dim mt-1 text-sm">Todo lo listado está incluido en el precio por hora.</p>
               <div className="mt-3.5">
-                <GearAccordion amenities={space.amenities} />
+                <GearAccordion gear={space.gear} amenities={space.amenities} />
               </div>
             </section>
           )}
@@ -192,12 +224,18 @@ export default async function SpacePage({ params, searchParams }: PageProps<"/es
           <section>
             <h2 className="display h3">Antes de reservar</h2>
             <ul className="rules mt-3.5">
+              {space.rules.map((rule) => (
+                <li key={rule}>{rule}</li>
+              ))}
               <li>
                 Reservas por horas completas, con un mínimo de {space.min_hours} {space.min_hours === 1 ? "hora" : "horas"}.
               </li>
               <li>Al precio por hora se suma una tarifa de servicio de 10%.</li>
               <li>Puedes cancelar desde Mis sesiones mientras la reserva no haya comenzado.</li>
-              <li>Después de la sesión, el anfitrión la marca como completada y puedes dejar tu reseña.</li>
+              <li>
+                Después de la sesión, el anfitrión la marca como completada y ambos se califican a ciegas: nadie ve la
+                nota del otro hasta enviar la suya.
+              </li>
             </ul>
           </section>
 
@@ -233,6 +271,9 @@ export default async function SpacePage({ params, searchParams }: PageProps<"/es
               <Link className="btn btn-acc" href="/dashboard">
                 Ir al panel de anfitrión
               </Link>
+              <Link className="btn btn-soft" href={`/espacios/${space.id}/editar`}>
+                Editar ficha
+              </Link>
             </div>
           ) : space.status === "published" ? (
             <BookingPanel
@@ -240,6 +281,10 @@ export default async function SpacePage({ params, searchParams }: PageProps<"/es
               spaceTitle={space.title}
               pricePerHour={space.price_per_hour}
               minHours={space.min_hours}
+              openHour={space.open_hour}
+              closeHour={space.close_hour}
+              hostMinRating={minRating}
+              myClientRating={myStats?.as_client.avg ?? null}
               avgRating={space.avg_rating}
               reviewCount={space.review_count}
               busySlots={busySlots}

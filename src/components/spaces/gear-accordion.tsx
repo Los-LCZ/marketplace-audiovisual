@@ -1,39 +1,56 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
-import type { Amenity, AmenityCategory } from "@/types/database";
-import { AMENITY_CATEGORY_LABELS } from "@/lib/labels";
+import { useState, type ReactNode } from "react";
+import { ChevronDown, Lightbulb, Mic, SlidersHorizontal, Speaker } from "lucide-react";
+import type { Amenity, AmenityCategory, GearGroup } from "@/types/database";
+import { AMENITY_CATEGORY_LABELS, GEAR_CATEGORY_LABELS } from "@/lib/labels";
 import { AmenityIcon } from "@/components/ui/amenity-icon";
 
-const ORDER: AmenityCategory[] = ["audio", "video", "general"];
+const GEAR_ICONS = { microfonos: Mic, consolas: SlidersHorizontal, amplificacion: Speaker, iluminacion: Lightbulb };
+const AMENITY_ORDER: AmenityCategory[] = ["audio", "video", "general"];
 
-// Equipamiento técnico agrupado (audio, video, general) en acordeón; los dos primeros abiertos.
-export function GearAccordion({ amenities }: { amenities: Amenity[] }) {
-  const groups = ORDER.map((c) => [c, amenities.filter((a) => a.category === c)] as const).filter(([, items]) => items.length);
-  const [open, setOpen] = useState<AmenityCategory[]>(groups.slice(0, 2).map(([c]) => c));
+type Group = { key: string; label: string; icon: ReactNode; items: string[] };
+
+/**
+ * Equipamiento técnico en acordeón; los dos primeros grupos abiertos. Primero el
+ * equipamiento detallado del espacio (`gear`) y después las amenities por categoría.
+ */
+export function GearAccordion({ gear, amenities }: { gear: GearGroup[]; amenities: Amenity[] }) {
+  const groups: Group[] = [
+    ...gear
+      .filter((g) => g.items.length)
+      .map((g) => {
+        const Icon = GEAR_ICONS[g.category];
+        return { key: g.category, label: GEAR_CATEGORY_LABELS[g.category], icon: <Icon aria-hidden />, items: g.items };
+      }),
+    ...AMENITY_ORDER.map((c) => ({
+      key: c,
+      label: AMENITY_CATEGORY_LABELS[c],
+      icon: <AmenityIcon category={c} />,
+      items: amenities.filter((a) => a.category === c).map((a) => a.name),
+    })).filter((g) => g.items.length),
+  ];
+  const [open, setOpen] = useState<string[]>(groups.slice(0, 2).map((g) => g.key));
 
   return (
     <div className="acc-list">
-      {groups.map(([category, items]) => {
-        const expanded = open.includes(category);
+      {groups.map(({ key, label, icon, items }) => {
+        const expanded = open.includes(key);
         return (
-          <div key={category} className="acc-item">
+          <div key={key} className="acc-item">
             <button
               type="button"
               aria-expanded={expanded}
-              onClick={() => setOpen((list) => (expanded ? list.filter((c) => c !== category) : [...list, category]))}
+              onClick={() => setOpen((list) => (expanded ? list.filter((k) => k !== key) : [...list, key]))}
             >
-              <span className="ico">
-                <AmenityIcon category={category} />
-              </span>
-              {AMENITY_CATEGORY_LABELS[category]}
+              <span className="ico">{icon}</span>
+              {label}
               <span className="dim font-normal">{items.length}</span>
               <ChevronDown className="chev" aria-hidden />
             </button>
             <ul hidden={!expanded}>
-              {items.map((a) => (
-                <li key={a.id}>{a.name}</li>
+              {items.map((item) => (
+                <li key={item}>{item}</li>
               ))}
             </ul>
           </div>

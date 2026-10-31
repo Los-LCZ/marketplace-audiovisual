@@ -22,7 +22,12 @@ export function HostSpaceRow({ space }: { space: SpaceWithAmenities }) {
         </div>
       </Link>
       <div className="flex items-center justify-between gap-2 border-t border-[var(--line)] px-3.5 py-2.5">
-        <SpaceStatusBadge status={space.status} />
+        <span className="flex items-center gap-2">
+          <SpaceStatusBadge status={space.status} />
+          <Link href={`/espacios/${space.id}/editar`} className="dim text-[13px]">
+            Editar
+          </Link>
+        </span>
         <SpaceStatusControl spaceId={space.id} status={space.status} />
       </div>
     </li>
