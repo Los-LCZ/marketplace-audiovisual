@@ -11,6 +11,7 @@ export type SpaceCategory =
 export type SpaceStatus = "draft" | "published" | "archived";
 export type BookingStatus = "pending_payment" | "confirmed" | "completed" | "cancelled";
 export type AmenityCategory = "audio" | "video" | "general";
+export type ReactionKind = "like" | "pass";
 export type GearCategory = "microfonos" | "consolas" | "amplificacion" | "iluminacion";
 /** Equipamiento técnico del espacio, agrupado por categoría (columna `spaces.gear`). */
 export type GearGroup = { category: GearCategory; items: string[] };
@@ -314,6 +315,21 @@ export type Database = {
           },
         ];
       };
+      /** Me gusta / descarte de un usuario sobre un espacio (Descubrir). */
+      space_reactions: {
+        Row: { user_id: string; space_id: string; kind: ReactionKind; created_at: string };
+        Insert: { user_id?: string; space_id: string; kind: ReactionKind; created_at?: string };
+        Update: { kind?: ReactionKind; created_at?: string };
+        Relationships: [
+          {
+            foreignKeyName: "space_reactions_space_id_fkey";
+            columns: ["space_id"];
+            isOneToOne: false;
+            referencedRelation: "spaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       /** Perfil público (sin teléfono). */
@@ -365,6 +381,15 @@ export type Database = {
           created_at: string;
           author_name: string | null;
           author_avatar: string | null;
+        }[];
+      };
+      get_discover_deck: {
+        Args: { p_categories?: SpaceCategory[] | null; p_limit?: number };
+        Returns: {
+          space_id: string;
+          is_match: boolean;
+          host_min_client_rating: number | null;
+          my_client_rating: number | null;
         }[];
       };
       get_booking_reviews: {

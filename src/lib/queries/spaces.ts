@@ -198,6 +198,74 @@ export async function getCategoryStats(): Promise<Record<SpaceCategory, Category
   return stats;
 }
 
+export type LikedSpace = SpaceWithAmenities & { liked_at: string };
+
+/** Espacios a los que el usuario dio me gusta, más recientes primero (solo publicados). */
+export async function listLikedSpaces(userId: string): Promise<LikedSpace[]> {
+  const supabase = await createClient();
+  const { data: likes, error } = await supabase
+    .from("space_reactions")
+    .select("space_id, created_at")
+    .eq("user_id", userId)
+    .eq("kind", "like")
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(`Error al listar me gusta: ${error.message}`);
+  if (!likes?.length) return [];
+
+  const { data: cards, error: cardsError } = await supabase
+    .from("space_cards")
+    .select("*")
+    .in("id", likes.map((l) => l.space_id));
+  if (cardsError) throw new Error(`Error al listar me gusta: ${cardsError.message}`);
+
+  const byId = new Map((await attachAmenities(supabase, cards ?? [])).map((s) => [s.id, s]));
+  return likes.flatMap(({ space_id, created_at }) => {
+    const space = byId.get(space_id);
+    return space ? [{ ...space, liked_at: created_at }] : [];
+  });
+}
+
+export type DeckCard = SpaceWithAmenities & {
+  host: PublicProfile | null;
+  /** El usuario cumple la nota mínima del anfitrión: su reserva se confirma sin aprobación. */
+  is_match: boolean;
+  host_min_client_rating: number | null;
+  my_client_rating: number | null;
+};
+
+/**
+ * Mazo de Descubrir para el usuario autenticado: espacios publicados que no son
+ * suyos y que aún no marcó (me gusta / descarte). Destacados y mejor valorados primero.
+ */
+export async function listDiscoverDeck(categories?: SpaceCategory[], limit = 20): Promise<DeckCard[]> {
+  const supabase = await createClient();
+  const { data: deck, error } = await supabase.rpc("get_discover_deck", {
+    p_categories: categories?.length ? categories : null,
+    p_limit: limit,
+  });
+  if (error) throw new Error(`Error al obtener el mazo: ${error.message}`);
+  if (!deck?.length) return [];
+
+  const { data: cards, error: cardsError } = await supabase
+    .from("space_cards")
+    .select("*")
+    .in("id", deck.map((d) => d.space_id));
+  if (cardsError) throw new Error(`Error al obtener el mazo: ${cardsError.message}`);
+
+  const spaces = await attachAmenities(supabase, cards ?? []);
+  const { data: hosts } = await supabase
+    .from("public_profiles")
+    .select("*")
+    .in("id", [...new Set(spaces.map((s) => s.host_id))]);
+
+  const byId = new Map(spaces.map((s) => [s.id, s]));
+  const hostById = new Map((hosts ?? []).map((h) => [h.id, h]));
+  return deck.flatMap(({ space_id, ...match }) => {
+    const space = byId.get(space_id);
+    return space ? [{ ...space, ...match, host: hostById.get(space.host_id) ?? null }] : [];
+  });
+}
+
 export async function getSpaceById(id: string): Promise<SpaceDetail | null> {
   const supabase = await createClient();
 
