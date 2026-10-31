@@ -107,6 +107,14 @@ export async function createSpace(
   redirect(`/espacios/${spaceId}`);
 }
 
+/**
+ * Publica, archiva o pasa a borrador un espacio propio.
+ * No recibe FormData: úsala con `useTransition` o con `.bind` en un `<form action>`.
+ *
+ * @example
+ * startTransition(async () => { const res = await updateSpaceStatus(space.id, "archived"); });
+ * // o: <form action={updateSpaceStatus.bind(null, space.id, "published")}>
+ */
 export async function updateSpaceStatus(spaceId: string, status: SpaceStatus): Promise<ActionState> {
   if (!STATUSES.includes(status)) return fail("Estado inválido");
   const user = await getCurrentUser();
@@ -129,7 +137,10 @@ export async function updateSpaceStatus(spaceId: string, status: SpaceStatus): P
   return { ok: true };
 }
 
-// Agrega fotos a un espacio existente.
+/**
+ * Agrega fotos (campo `images`) a un espacio existente. Compatible con
+ * useActionState vía `.bind`: `useActionState(addSpaceImages.bind(null, space.id), null)`.
+ */
 export async function addSpaceImages(
   spaceId: string,
   _prev: ActionState,
@@ -170,6 +181,11 @@ export async function addSpaceImages(
   return { ok: true };
 }
 
+/**
+ * Quita una foto del espacio y la borra de Storage. `imageUrl` debe ser una de
+ * las URLs de `space.images`.
+ * No recibe FormData: úsala con `useTransition` o con `.bind`.
+ */
 export async function removeSpaceImage(spaceId: string, imageUrl: string): Promise<ActionState> {
   const user = await getCurrentUser();
   if (!user) return fail("Debes iniciar sesión");

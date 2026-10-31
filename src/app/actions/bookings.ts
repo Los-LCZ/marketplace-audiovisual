@@ -75,15 +75,30 @@ async function setBookingStatus(bookingId: string, status: BookingStatus): Promi
 
   revalidatePath("/mis-reservas");
   revalidatePath("/dashboard");
+  // Liberar o cerrar la reserva cambia los horarios ocupados del espacio.
+  revalidatePath(`/espacios/${data[0].space_id}`);
   return { ok: true };
 }
 
-export async function cancelBooking(bookingId: string) {
+/**
+ * Cancela una reserva (cliente dueño o anfitrión del espacio).
+ * No recibe FormData: úsala con `useTransition` o con `.bind` en un `<form action>`.
+ *
+ * @example
+ * const [pending, startTransition] = useTransition();
+ * startTransition(async () => { const res = await cancelBooking(booking.id); });
+ * // o: <form action={cancelBooking.bind(null, booking.id)}>
+ */
+export async function cancelBooking(bookingId: string): Promise<ActionState> {
   return setBookingStatus(bookingId, "cancelled");
 }
 
-// Solo el anfitrión del espacio puede marcar una reserva como completada.
-export async function completeBooking(bookingId: string) {
+/**
+ * Marca una reserva como completada. Solo el anfitrión del espacio puede hacerlo
+ * (lo valida el trigger guard_booking_update). Habilita que el cliente la reseñe.
+ * No recibe FormData: úsala con `useTransition` o con `.bind`.
+ */
+export async function completeBooking(bookingId: string): Promise<ActionState> {
   return setBookingStatus(bookingId, "completed");
 }
 
@@ -100,6 +115,14 @@ export async function createReview(_prev: ActionState, formData: FormData): Prom
     return fail("La calificación debe ser entre 1 y 5", { rating: "Entre 1 y 5" });
 
   const supabase = await createClient();
+  // RLS: el usuario solo ve sus reservas (o las de sus espacios).
+  const { data: booking } = await supabase
+    .from("bookings")
+    .select("space_id")
+    .eq("id", bookingId)
+    .maybeSingle();
+  if (!booking) return fail("Reserva no encontrada");
+
   const { error } = await supabase
     .from("reviews")
     .insert({ booking_id: bookingId, rating, comment: comment || null });
@@ -111,5 +134,6 @@ export async function createReview(_prev: ActionState, formData: FormData): Prom
   }
 
   revalidatePath("/mis-reservas");
+  revalidatePath(`/espacios/${booking.space_id}`);
   return { ok: true, message: "¡Gracias por tu reseña!" };
 }
