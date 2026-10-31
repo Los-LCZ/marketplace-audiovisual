@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import type {
   Amenity,
+  CommuneCount,
   PublicProfile,
   Space,
   SpaceCategory,
@@ -148,6 +149,53 @@ export async function listPublishedSpaces(filters: SpaceFilters = {}) {
     page,
     pageSize,
   };
+}
+
+/** Espacios destacados (featured), opcionalmente de ciertas categorías; mejor valorados primero. */
+export async function listFeaturedSpaces(categories?: SpaceCategory[], limit = 8) {
+  const supabase = await createClient();
+  let query = supabase
+    .from("space_cards")
+    .select("*")
+    .eq("featured", true)
+    .order("avg_rating", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .limit(Math.min(Math.max(1, limit), 50));
+  if (categories?.length) query = query.in("category", categories);
+
+  const { data, error } = await query;
+  if (error) throw new Error(`Error al listar destacados: ${error.message}`);
+  return attachAmenities(supabase, data ?? []);
+}
+
+/** Comunas con espacios publicados, de más a menos espacios. */
+export async function listCommunes(): Promise<CommuneCount[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("list_communes");
+  if (error) throw new Error(`Error al listar comunas: ${error.message}`);
+  return data ?? [];
+}
+
+export type CategoryStats = { space_count: number; min_price: number | null };
+
+/** Cantidad de espacios y precio mínimo por categoría (todas las categorías, 0 si no hay). */
+export async function getCategoryStats(): Promise<Record<SpaceCategory, CategoryStats>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_category_stats");
+  if (error) throw new Error(`Error al obtener categorías: ${error.message}`);
+
+  const empty: CategoryStats = { space_count: 0, min_price: null };
+  const stats: Record<SpaceCategory, CategoryStats> = {
+    recording_studio: empty,
+    rehearsal_room: empty,
+    filming_set: empty,
+    photo_studio: empty,
+    outdoor_location: empty,
+  };
+  for (const { category, space_count, min_price } of data ?? []) {
+    stats[category] = { space_count, min_price };
+  }
+  return stats;
 }
 
 export async function getSpaceById(id: string): Promise<SpaceDetail | null> {

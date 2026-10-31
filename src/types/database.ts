@@ -281,6 +281,14 @@ export type Database = {
           author_avatar: string | null;
         }[];
       };
+      list_communes: {
+        Args: Record<string, never>;
+        Returns: { commune: string; space_count: number }[];
+      };
+      get_category_stats: {
+        Args: Record<string, never>;
+        Returns: { category: SpaceCategory; space_count: number; min_price: number }[];
+      };
       get_available_space_ids: {
         Args: { p_date: string; p_categories?: SpaceCategory[] | null };
         Returns: string[];
@@ -317,4 +325,5 @@ export type Booking = Tables<"bookings">;
 export type Review = Tables<"reviews">;
 export type PublicProfile = PublicSchema["Views"]["public_profiles"]["Row"];
 export type SpaceRatingStats = PublicSchema["Views"]["space_rating_stats"]["Row"];
+export type CommuneCount = PublicSchema["Functions"]["list_communes"]["Returns"][number];
 export type SpaceReview = PublicSchema["Functions"]["get_space_reviews"]["Returns"][number];
