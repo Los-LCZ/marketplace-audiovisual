@@ -1,0 +1,22 @@
+/* Señal · Perfil. Portado del prototipo senal-prototipo.html. */
+
+/* ---------- Perfil ---------- */
+.cover { height: 170px; border-bottom: 1px solid var(--line); position: relative; overflow: hidden; }
+[data-world="av"] .cover { background: radial-gradient(60% 120% at 80% 0%, var(--acc-soft), transparent 70%), linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 48px 48px, linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 48px 48px; }
+[data-world="mu"] .cover { background: radial-gradient(60% 120% at 80% 0%, var(--acc-soft), transparent 70%), repeating-linear-gradient(90deg, rgba(255,220,170,.05) 0 2px, transparent 2px 22px); }
+.prof-head { margin-top: -52px; display: flex; flex-wrap: wrap; gap: 18px; align-items: end; justify-content: space-between; }
+.prof-head .who { display: flex; flex-wrap: wrap; gap: 18px; align-items: end; }
+.rcards { display: grid; gap: 14px; margin-top: 34px; }
+@media (min-width: 800px) { .rcards { grid-template-columns: 1fr 1fr; } }
+.rcard { padding: 24px; display: grid; gap: 18px; }
+.rcard .num { font: 600 56px/1 var(--font-mono); color: var(--fg); }
+.dist { display: grid; gap: 5px; flex: 1; }
+.dist div { display: flex; align-items: center; gap: 8px; font: 500 10px var(--font-mono); color: var(--dim); }
+.dist span.bar { flex: 1; height: 6px; border-radius: 3px; background: var(--s3); overflow: hidden; }
+.dist span.bar i { display: block; height: 100%; background: var(--acc); }
+.reviews { display: grid; gap: 12px; margin-top: 20px; }
+@media (min-width: 800px) { .reviews { grid-template-columns: 1fr 1fr; } }
+.review { padding: 18px; display: grid; gap: 10px; }
+.review .top { display: flex; align-items: center; gap: 10px; }
+.review .top a { font-weight: 700; text-decoration: none; }
+

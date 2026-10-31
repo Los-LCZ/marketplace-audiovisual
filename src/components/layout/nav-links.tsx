@@ -2,45 +2,61 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import {
+  CalendarDays,
+  Compass,
+  LayoutDashboard,
+  Plus,
+  Search,
+  UserRound,
+  type LucideIcon,
+} from "lucide-react";
 
-export type NavItem = { href: string; label: string };
+export type NavItem = { href: string; label: string; icon: keyof typeof ICONS };
+
+const ICONS = {
+  compass: Compass,
+  search: Search,
+  calendar: CalendarDays,
+  dashboard: LayoutDashboard,
+  plus: Plus,
+  user: UserRound,
+} satisfies Record<string, LucideIcon>;
 
 export function isActivePath(pathname: string, href: string) {
-  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+  return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function NavLinks({
-  items,
-  vertical = false,
-  onNavigate,
-}: {
-  items: NavItem[];
-  vertical?: boolean;
-  onNavigate?: () => void;
-}) {
+// Navegación principal de escritorio (.nav).
+export function NavLinks({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
+  return (
+    <nav className="nav" aria-label="Principal">
+      {items.map((item) => (
+        <Link key={item.href} href={item.href} aria-current={isActivePath(pathname, item.href) ? "page" : undefined}>
+          {item.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+// Barra inferior de la app en móvil (.tabbar). Se oculta en la ficha, que tiene su propia barra de reserva.
+export function TabBar({ items }: { items: NavItem[] }) {
+  const pathname = usePathname();
+  if (/^\/espacios\/(?!nuevo)[^/]+$/.test(pathname)) return null;
 
   return (
-    <ul className={cn("flex gap-1", vertical && "flex-col")}>
+    <nav className="tabbar" aria-label="Navegación de la app">
       {items.map((item) => {
-        const active = isActivePath(pathname, item.href);
+        const Icon = ICONS[item.icon];
         return (
-          <li key={item.href}>
-            <Link
-              href={item.href}
-              onClick={onNavigate}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "block rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted",
-                active ? "font-medium text-foreground" : "text-muted-foreground",
-              )}
-            >
-              {item.label}
-            </Link>
-          </li>
+          <Link key={item.href} href={item.href} aria-current={isActivePath(pathname, item.href) ? "page" : undefined}>
+            <Icon aria-hidden />
+            {item.label}
+          </Link>
         );
       })}
-    </ul>
+    </nav>
   );
 }

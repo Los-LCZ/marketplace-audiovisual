@@ -1,0 +1,13 @@
+/* Señal · Ajustes finales y movimiento reducido. Portado del prototipo senal-prototipo.html. */
+
+/* ---------- Ajustes tras la revisión ---------- */
+.detail > *, .book, .book > *, .host-grid > *, .discover > * { min-width: 0; }
+.pill { white-space: nowrap; }
+.topbar .role-btn { display: inline-flex; }
+@media (max-width: 899px) { .topbar .role-btn .rl { display: none; } .topbar .role-btn { padding: 8px; } .topbar-in { gap: 10px; } }
+.strip { flex: 1 0 104px; }
+.daw { height: 176px; }
+.daw-info .meta { font-size: 13px; color: var(--dim); max-width: 60ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#rdeck .deck { height: 640px; }
+.req { gap: 10px; }
+.req blockquote { font-size: 13px; }

@@ -1,55 +1,37 @@
 @import "tailwindcss";
 
-:root {
-  --background: #fafaf9;
-  --foreground: #1c1917;
-  --surface: #ffffff;
-  --muted: #f5f5f4;
-  --muted-foreground: #78716c;
-  --border: #e7e5e4;
-  --primary: #e11d48;
-  --primary-hover: #be123c;
-  --primary-foreground: #ffffff;
-  --success: #15803d;
-  --warning: #b45309;
-  --danger: #dc2626;
-}
+/*
+ * Sistema visual Señal: fondo oscuro, líneas finas, lecturas en monoespaciada y un
+ * solo neón por mundo. El mundo activo se elige con <html data-world="av|mu">.
+ * Las clases del diseño viven en la capa `components` para que las utilidades de
+ * Tailwind puedan ajustarlas puntualmente.
+ */
+@import "../styles/senal/tokens.css" layer(components);
+@import "../styles/senal/base.css" layer(components);
+@import "../styles/senal/controls.css" layer(components);
+@import "../styles/senal/chrome.css" layer(components);
+@import "../styles/senal/cards.css" layer(components);
+@import "../styles/senal/home.css" layer(components);
+@import "../styles/senal/explore.css" layer(components);
+@import "../styles/senal/detail.css" layer(components);
+@import "../styles/senal/deck.css" layer(components);
+@import "../styles/senal/host.css" layer(components);
+@import "../styles/senal/profile.css" layer(components);
+@import "../styles/senal/overrides.css" layer(components);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0c0a09;
-    --foreground: #f5f5f4;
-    --surface: #1c1917;
-    --muted: #292524;
-    --muted-foreground: #a8a29e;
-    --border: #44403c;
-    --primary: #f43f5e;
-    --primary-hover: #fb7185;
-    --primary-foreground: #ffffff;
-    --success: #4ade80;
-    --warning: #fbbf24;
-    --danger: #f87171;
-  }
-}
-
+/* Tokens de Tailwind apuntando a los de Señal: los componentes con utilidades heredan el mundo activo. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-surface: var(--surface);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-border: var(--border);
-  --color-primary: var(--primary);
-  --color-primary-hover: var(--primary-hover);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-danger: var(--danger);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --color-surface: var(--s1);
+  --color-muted: var(--s2);
+  --color-muted-foreground: var(--dim);
+  --color-border: var(--line2);
+  --color-primary: var(--acc);
+  --color-primary-hover: color-mix(in oklab, var(--acc) 85%, white);
+  --color-primary-foreground: var(--acc-ink);
+  --color-success: var(--ok);
+  --color-warning: #fbbf24;
+  --color-danger: var(--rec);
+  --font-sans: var(--font-body);
 }

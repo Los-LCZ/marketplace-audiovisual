@@ -1,0 +1,25 @@
+/* Señal · Panel de anfitrión. Portado del prototipo senal-prototipo.html. */
+
+/* ---------- Panel anfitrión ---------- */
+.kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 900px) { .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.kpi { padding: 16px; }
+.kpi dt { font: 500 10px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
+.kpi dd { margin: 8px 0 0; font: 600 clamp(20px, 2.4vw, 28px) var(--font-mono); }
+.host-grid { display: grid; gap: 40px; margin-top: 44px; }
+@media (min-width: 1000px) { .host-grid { grid-template-columns: minmax(0, 1fr) 360px; } }
+.toggle { display: inline-flex; align-items: center; gap: 10px; border: 1px solid var(--line2); border-radius: 999px; padding: 6px 8px 6px 14px; background: var(--s1); font-size: 14px; }
+.toggle .sw { width: 40px; height: 22px; border-radius: 99px; background: var(--s3); position: relative; border: 0; padding: 0; }
+.toggle .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--fg); transition: translate .2s; }
+.toggle .sw[aria-checked="true"] { background: var(--ok); }
+.toggle .sw[aria-checked="true"]::after { translate: 18px 0; }
+.req { background: var(--s1); height: 100%; display: flex; flex-direction: column; padding: 20px; gap: 14px; overflow: hidden; }
+.req .proj { font: 600 11px var(--font-mono); color: var(--acc); text-transform: uppercase; letter-spacing: .06em; }
+.req .who { display: flex; gap: 14px; align-items: center; }
+.req .who .t { font: 600 22px/1.05 var(--font-display); letter-spacing: -0.02em; }
+.req .score { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
+.req .score b { font: 600 32px var(--font-mono); color: var(--acc); }
+.req blockquote { margin: 0; padding-left: 12px; border-left: 2px solid var(--acc); font-size: 14px; }
+.req .msg { margin-top: auto; padding: 12px; border-radius: 10px; background: var(--bg); font-size: 14px; }
+.req .when { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; }
+

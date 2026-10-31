@@ -1,0 +1,99 @@
+/* Señal · Botones, chips, paneles, rangos, avatares, pestañas, diálogos y avisos. Portado del prototipo senal-prototipo.html. */
+
+/* ---------- Botones y controles ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; border-radius: 10px; padding: 11px 18px; font-weight: 600; font-size: 14px; text-decoration: none; transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s; white-space: nowrap; }
+.btn:active { transform: scale(0.98); }
+.btn-acc { background: var(--acc); color: var(--acc-ink); box-shadow: var(--glow); }
+.btn-acc:hover { filter: brightness(1.08); }
+.btn-line { border-color: var(--line2); background: transparent; color: var(--fg); }
+.btn-line:hover { background: var(--s2); }
+.btn-soft { background: var(--s2); color: var(--fg); }
+.btn-soft:hover { background: var(--s3); }
+.btn-sm { padding: 7px 12px; font-size: 13px; border-radius: 8px; }
+.btn-lg { padding: 14px 22px; font-size: 15px; }
+.btn[disabled] { opacity: 0.4; pointer-events: none; }
+.btn svg { width: 18px; height: 18px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line2); background: transparent; border-radius: 999px; padding: 6px 12px; font-size: 13px; color: var(--dim); }
+.chip:hover { color: var(--fg); }
+.chip[aria-pressed="true"] { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
+.tag { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; font-size: 12px; color: var(--dim); }
+.pill { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line2); border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 600; }
+.pill .star { color: var(--acc); }
+.stars { display: inline-flex; gap: 1px; color: var(--acc); letter-spacing: 0; }
+.stars .off { color: var(--line2); }
+
+.panel { background: var(--s1); border: 1px solid var(--line); border-radius: var(--radius); }
+.section { padding-top: 88px; }
+.sec-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 26px; }
+
+/* Rango doble y simple */
+.range { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; background: var(--s3); border-radius: 4px; outline: none; }
+.range::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 22px; border-radius: 3px; background: var(--fg); border: 2px solid var(--acc); cursor: grab; box-shadow: var(--glow); }
+.range::-moz-range-thumb { width: 14px; height: 22px; border-radius: 3px; background: var(--fg); border: 2px solid var(--acc); cursor: grab; }
+.dual { position: relative; height: 26px; }
+.dual input { position: absolute; inset: 0; margin: 0; pointer-events: none; background: none; }
+.dual input::-webkit-slider-thumb { pointer-events: auto; }
+.dual input::-moz-range-thumb { pointer-events: auto; }
+.dual .track { position: absolute; left: 0; right: 0; top: 11px; height: 4px; border-radius: 4px; background: var(--s3); }
+.dual .fill { position: absolute; top: 11px; height: 4px; background: var(--acc); border-radius: 4px; }
+
+
+/* ---------- Avatares ---------- */
+.av { display: inline-grid; place-items: center; border-radius: 50%; font: 700 13px var(--font-display); color: var(--acc-ink); background: conic-gradient(from 210deg, var(--acc), color-mix(in oklab, var(--acc) 40%, #fff), var(--acc)); flex: none; position: relative; width: 40px; height: 40px; }
+[data-world="mu"] .av { border-radius: 10px; }
+.av.sm { width: 30px; height: 30px; font-size: 10px; }
+.av.lg { width: 60px; height: 60px; font-size: 18px; }
+.av.xl { width: 104px; height: 104px; font-size: 32px; }
+.av .ver { position: absolute; right: -2px; bottom: -2px; width: 34%; height: 34%; min-width: 14px; min-height: 14px; border-radius: 50%; background: var(--ok); border: 2px solid var(--bg); }
+
+
+/* ---------- Pestañas / listas ---------- */
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.tabs button { border: 0; background: transparent; padding: 12px 16px; color: var(--dim); font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -1px; display: inline-flex; gap: 8px; align-items: center; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-color: var(--acc); }
+.tabs .n { min-width: 20px; height: 20px; border-radius: 99px; background: var(--s3); font-size: 11px; display: grid; place-items: center; padding: 0 6px; }
+.tabs .n.alert { background: var(--rec); color: #fff; }
+.list { display: grid; gap: 10px; }
+.li { display: flex; align-items: center; gap: 14px; padding: 12px; }
+.li .thumb { width: 64px; height: 64px; border-radius: 10px; overflow: hidden; flex: none; background: var(--s2); }
+.li .thumb img { width: 100%; height: 100%; object-fit: cover; }
+.li .grow { flex: 1; min-width: 0; }
+.li .grow b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.date-box { width: 62px; flex: none; text-align: center; border-radius: 10px; padding: 8px 0; background: var(--acc); color: var(--acc-ink); }
+.date-box b { display: block; font: 600 22px/1 var(--font-mono); }
+.reveal { margin-top: 12px; padding: 12px; border-radius: 10px; background: var(--bg); font-size: 14px; }
+
+
+/* ---------- Diálogo, hoja, aviso ---------- */
+.dialog { width: min(460px, 100%); max-height: 92svh; overflow-y: auto; padding: 26px; position: relative; text-align: center; display: grid; gap: 14px; justify-items: center; animation: pop .25s ease; }
+@keyframes pop { from { transform: scale(.96); opacity: 0; } }
+.close { position: absolute; right: 12px; top: 12px; width: 34px; height: 34px; border-radius: 50%; border: 0; background: transparent; color: var(--dim); display: grid; place-items: center; }
+.close svg { width: 20px; height: 20px; }
+.big-stars { display: flex; gap: 6px; }
+.big-stars button { border: 0; background: transparent; font-size: 40px; line-height: 1; color: var(--line2); padding: 0 2px; transition: transform .12s, color .12s; }
+.big-stars button.on { color: var(--acc); text-shadow: var(--glow); }
+.big-stars button:hover { transform: scale(1.12); }
+.dialog textarea { width: 100%; min-height: 80px; resize: vertical; border-radius: 10px; border: 1px solid var(--line2); background: var(--bg); padding: 10px; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 85; max-height: 92svh; overflow-y: auto; background: var(--s1); border-top: 1px solid var(--line2); border-radius: 20px 20px 0 0; padding: 20px max(16px, env(safe-area-inset-left, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)); animation: up .3s cubic-bezier(.2,.8,.2,1); }
+@keyframes up { from { transform: translateY(40px); opacity: 0; } }
+.sheet-bg { position: fixed; inset: 0; z-index: 84; background: rgba(0,0,0,.6); }
+.toasts { position: fixed; z-index: 95; left: 50%; translate: -50% 0; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 8px; width: min(380px, calc(100% - 32px)); }
+@media (min-width: 900px) { .toasts { bottom: 24px; } }
+.toast { padding: 14px 16px; border-radius: 12px; background: var(--s2); border: 1px solid var(--line2); display: flex; gap: 10px; box-shadow: 0 20px 40px -10px rgba(0,0,0,.7); animation: up .25s ease; }
+.toast svg { width: 20px; height: 20px; color: var(--ok); flex: none; }
+.toast.info svg { color: var(--acc); }
+.toast b { display: block; font-size: 14px; }
+.toast span { font-size: 13px; color: var(--dim); }
+
+/* Imagen que no cargó */
+.imgfail { background: linear-gradient(135deg, var(--s3), var(--s1)) !important; }
+
+/* Transición entre mundos: iris de cámara */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+::view-transition-new(root) { animation: iris .7s cubic-bezier(.7,0,.2,1); }
+@keyframes iris { from { clip-path: circle(0 at var(--ix, 50%) var(--iy, 0%)); } to { clip-path: circle(150vmax at var(--ix, 50%) var(--iy, 0%)); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+

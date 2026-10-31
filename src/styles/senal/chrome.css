@@ -1,0 +1,52 @@
+/* Señal · Barra superior, interruptor de mundos, barra móvil y pie. Portado del prototipo senal-prototipo.html. */
+
+/* ---------- Barra superior ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  background: color-mix(in oklab, var(--bg) 78%, transparent);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-in { display: flex; align-items: center; gap: 16px; height: 62px; }
+.logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: 0.02em; }
+.logo-led { width: 10px; height: 10px; border-radius: 50%; background: var(--rec); box-shadow: 0 0 10px var(--rec); animation: blink 1.6s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0.25; } }
+.nav { display: none; gap: 4px; margin-left: 12px; }
+.nav a { text-decoration: none; padding: 8px 12px; border-radius: 8px; color: var(--dim); font-size: 14px; }
+.nav a:hover, .nav a[aria-current="page"] { color: var(--fg); background: var(--s2); }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.role-btn { display: none; }
+.me { display: none; align-items: center; gap: 8px; text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 3px 12px 3px 3px; font-size: 12px; line-height: 1.2; }
+@media (min-width: 900px) { .nav, .role-btn, .me { display: inline-flex; } }
+
+/* Interruptor de mundos */
+.worlds { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--line2); border-radius: 999px; background: var(--s1); }
+.worlds button { border: 0; background: transparent; padding: 7px 12px; border-radius: 999px; color: var(--dim); display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; }
+.worlds button[aria-checked="true"] { background: var(--acc); color: var(--acc-ink); box-shadow: var(--glow); }
+.worlds .w-label { display: none; }
+@media (min-width: 560px) { .worlds .w-label { display: inline; } }
+.worlds svg { width: 16px; height: 16px; }
+
+/* Barra inferior móvil */
+.tabbar { position: fixed; z-index: 45; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-around; background: color-mix(in oklab, var(--bg) 88%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-top: 1px solid var(--line); padding: 6px max(8px, env(safe-area-inset-left, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)); }
+.tabbar a { flex: 1; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; color: var(--dim); padding: 4px 0; position: relative; }
+.tabbar a[aria-current="page"] { color: var(--fg); }
+.tabbar a[aria-current="page"] svg { color: var(--acc); }
+.tabbar svg { width: 22px; height: 22px; }
+.tabbar .badge { position: absolute; top: 0; left: calc(50% + 6px); background: var(--rec); color: #fff; border-radius: 99px; font-size: 10px; padding: 0 5px; }
+@media (min-width: 900px) { .tabbar { display: none; } }
+
+
+/* ---------- Footer ---------- */
+.foot { margin-top: 110px; border-top: 1px solid var(--line); padding: 50px 0 30px; }
+.foot-grid { display: grid; gap: 30px; }
+@media (min-width: 900px) { .foot-grid { grid-template-columns: 1.4fr repeat(3, 1fr); } }
+.foot h4 { margin: 0 0 12px; font-size: 13px; }
+.foot ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.foot a { color: var(--dim); text-decoration: none; font-size: 14px; }
+.foot a:hover { color: var(--fg); }
+.foot-bottom { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--dim); }
+

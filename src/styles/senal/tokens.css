@@ -1,0 +1,43 @@
+/* Señal · Tokens de los dos mundos: Visor (audiovisual) y Consola (música). Portado del prototipo senal-prototipo.html. */
+
+:root {
+  --font-display: var(--font-unbounded), var(--font-hanken), system-ui, sans-serif;
+  --font-body: var(--font-hanken), system-ui, sans-serif;
+  --font-mono: var(--font-martian), ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --bg: #090b0e;
+  --s1: #10131a;
+  --s2: #171b23;
+  --s3: #20252f;
+  --line: rgba(226, 236, 255, 0.09);
+  --line2: rgba(226, 236, 255, 0.2);
+  --fg: #eaf0f7;
+  --dim: #8b96a6;
+  --acc: #ff3ec8;
+  --acc-soft: rgba(255, 62, 200, 0.14);
+  --acc-ink: #160111;
+  --rec: #ff3b30;
+  --ok: #6ff0c1;
+  --glow: 0 0 24px rgba(255, 62, 200, 0.45);
+  --radius: 14px;
+  --radius-sm: 8px;
+  color-scheme: dark;
+}
+[data-world="mu"] {
+  --bg: #0d0906;
+  --s1: #16100b;
+  --s2: #1f1710;
+  --s3: #2a1f16;
+  --line: rgba(255, 232, 200, 0.09);
+  --line2: rgba(255, 232, 200, 0.2);
+  --fg: #f6ede1;
+  --dim: #a8977f;
+  --acc: #ffb020;
+  --acc-soft: rgba(255, 176, 32, 0.14);
+  --acc-ink: #1b1000;
+  --rec: #ff4a2e;
+  --ok: #9be38b;
+  --glow: 0 0 24px rgba(255, 176, 32, 0.45);
+  --radius: 10px;
+  --radius-sm: 6px;
+}

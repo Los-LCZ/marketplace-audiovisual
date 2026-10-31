@@ -1,9 +1,64 @@
+import Link from "next/link";
+import { SPACE_CATEGORIES, SPACE_CATEGORY_LABELS } from "@/lib/labels";
+import { Logo } from "./navbar";
+
+const YEAR = new Date().getFullYear();
+
 export function Footer() {
   return (
-    <footer className="border-t border-border">
-      <div className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:justify-between sm:px-6">
-        <p>Estudios CL · Arriendo de espacios audiovisuales por hora</p>
-        <p>Precios en CLP · Horarios en hora de Chile</p>
+    <footer className="foot">
+      <div className="wrap">
+        <div className="foot-grid">
+          <div>
+            <Logo />
+            <p className="dim mt-3.5 max-w-[34ch] text-sm">
+              Estudios, salas de ensayo, sets y locaciones por hora en Santiago, con ficha técnica completa antes de
+              reservar.
+            </p>
+          </div>
+          <div>
+            <h4>Explora</h4>
+            <ul>
+              {SPACE_CATEGORIES.map((c) => (
+                <li key={c}>
+                  <Link href={`/explorar?category=${c}`}>{SPACE_CATEGORY_LABELS[c]}</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4>Anfitriones</h4>
+            <ul>
+              <li>
+                <Link href="/espacios/nuevo">Publica tu espacio</Link>
+              </li>
+              <li>
+                <Link href="/dashboard">Panel de anfitrión</Link>
+              </li>
+              <li>
+                <Link href="/#anfitriones">Cómo se calcula tu pago</Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4>Tu cuenta</h4>
+            <ul>
+              <li>
+                <Link href="/mis-reservas">Mis sesiones</Link>
+              </li>
+              <li>
+                <Link href="/login">Iniciar sesión</Link>
+              </li>
+              <li>
+                <Link href="/registro">Crear cuenta</Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div className="foot-bottom">
+          <span>© {YEAR} Señal. Hecho en Santiago de Chile.</span>
+          <span>Precios en pesos chilenos. Horarios en hora de Chile.</span>
+        </div>
       </div>
     </footer>
   );
