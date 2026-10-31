@@ -449,6 +449,10 @@ export type Database = {
         Args: { p_client_ids: string[] };
         Returns: ClientSummaryRow[];
       };
+      reset_passes: {
+        Args: { p_categories?: SpaceCategory[] | null };
+        Returns: number;
+      };
       get_discover_deck: {
         Args: { p_categories?: SpaceCategory[] | null; p_limit?: number };
         Returns: {
