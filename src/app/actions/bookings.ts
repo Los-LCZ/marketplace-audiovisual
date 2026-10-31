@@ -53,7 +53,7 @@ export async function createBooking(
 
   if (error) return fail(bookingErrorMessage(error));
 
-  revalidatePath("/reservas");
+  revalidatePath("/mis-reservas");
   revalidatePath(`/espacios/${spaceId}`);
   return { ok: true, data, message: "Reserva confirmada" };
 }
@@ -73,7 +73,7 @@ async function setBookingStatus(bookingId: string, status: BookingStatus): Promi
   if (error) return fail(error.code === "P0001" ? error.message : `Error: ${error.message}`);
   if (!data?.length) return fail("Reserva no encontrada");
 
-  revalidatePath("/reservas");
+  revalidatePath("/mis-reservas");
   revalidatePath("/dashboard");
   return { ok: true };
 }
@@ -110,6 +110,6 @@ export async function createReview(_prev: ActionState, formData: FormData): Prom
     return fail(error.message);
   }
 
-  revalidatePath("/reservas");
+  revalidatePath("/mis-reservas");
   return { ok: true, message: "¡Gracias por tu reseña!" };
 }
