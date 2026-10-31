@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CalendarClock, ClipboardCheck, Clapperboard, History, Store } from "lucide-react";
+import { CalendarClock, ClipboardCheck, Clapperboard, History, Plus, Store } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { listMySpaces } from "@/lib/queries/spaces";
 import { listHostBookings } from "@/lib/queries/bookings";
@@ -57,9 +57,14 @@ export default async function DashboardPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-4 py-8 sm:px-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-3xl font-semibold tracking-tight">Panel de anfitrión</h1>
-        <p className="text-muted-foreground">Hola, {user.profile.full_name ?? "anfitrión"}. Gestiona tus espacios y reservas.</p>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-semibold tracking-tight">Panel de anfitrión</h1>
+          <p className="text-muted-foreground">Hola, {user.profile.full_name ?? "anfitrión"}. Gestiona tus espacios y reservas.</p>
+        </div>
+        <Link href="/espacios/nuevo" className={buttonClasses()}>
+          <Plus className="size-4" aria-hidden /> Publicar espacio
+        </Link>
       </header>
 
       <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -77,7 +82,16 @@ export default async function DashboardPage() {
             ))}
           </ul>
         ) : (
-          <EmptyState icon={Store} title="Aún no tienes espacios" description="Cuando publiques un espacio aparecerá aquí." />
+          <EmptyState
+            icon={Store}
+            title="Aún no tienes espacios"
+            description="Publica tu estudio, sala o locación para empezar a recibir reservas."
+            action={
+              <Link href="/espacios/nuevo" className={buttonClasses()}>
+                Publicar mi primer espacio
+              </Link>
+            }
+          />
         )}
       </Section>
 
