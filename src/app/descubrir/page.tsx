@@ -10,6 +10,7 @@ import { WORLDS } from "@/lib/world";
 import { getWorld } from "@/lib/world-server";
 import { DiscoverDeck } from "@/components/deck/discover-deck";
 import { Avatar } from "@/components/ui/avatar";
+import { CategoryIcon } from "@/components/ui/category-icon";
 import { RatingPill } from "@/components/ui/rating";
 
 export const metadata: Metadata = { title: "Descubrir" };
@@ -64,7 +65,11 @@ export default async function DescubrirPage() {
                 liked.slice(0, LIKED_SHOWN).map((space) => (
                   <Link key={space.id} className="li panel p-2.5 no-underline" href={`/espacios/${space.id}`}>
                     <div className="thumb size-11">
-                      {space.images[0] && <Image src={space.images[0]} alt="" width={44} height={44} />}
+                      {space.images[0] ? (
+                        <Image src={space.images[0]} alt="" width={44} height={44} />
+                      ) : (
+                        <CategoryIcon category={space.category} />
+                      )}
                     </div>
                     <div className="grow">
                       <b className="text-sm">{space.title}</b>

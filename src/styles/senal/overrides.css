@@ -18,3 +18,7 @@
 .book form > * { min-width: 0; }
 /* Panel fijo más alto que la ventana (campos opcionales abiertos): se desplaza por dentro. */
 .book.desk { max-height: calc(100svh - 96px); overflow-y: auto; scrollbar-width: thin; }
+
+/* Miniatura sin fotos: ícono de la categoría al centro. */
+.li .thumb { display: grid; place-items: center; color: var(--dim); }
+.li .thumb > svg { width: 40%; height: 40%; }

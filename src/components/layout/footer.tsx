@@ -1,10 +1,13 @@
 import Link from "next/link";
+import { getCurrentUser } from "@/lib/auth";
 import { SPACE_CATEGORIES, SPACE_CATEGORY_LABELS } from "@/lib/labels";
 import { Logo } from "./navbar";
 
 const YEAR = new Date().getFullYear();
 
-export function Footer() {
+export async function Footer() {
+  const user = await getCurrentUser();
+
   return (
     <footer className="foot">
       <div className="wrap">
@@ -46,12 +49,25 @@ export function Footer() {
               <li>
                 <Link href="/mis-reservas">Mis sesiones</Link>
               </li>
-              <li>
-                <Link href="/login">Iniciar sesión</Link>
-              </li>
-              <li>
-                <Link href="/registro">Crear cuenta</Link>
-              </li>
+              {user ? (
+                <>
+                  <li>
+                    <Link href="/descubrir">Descubrir</Link>
+                  </li>
+                  <li>
+                    <Link href={`/u/${user.id}`}>Mi perfil</Link>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li>
+                    <Link href="/login">Iniciar sesión</Link>
+                  </li>
+                  <li>
+                    <Link href="/registro">Crear cuenta</Link>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
         </div>

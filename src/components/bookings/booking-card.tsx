@@ -5,6 +5,7 @@ import type { BookingWithSpace } from "@/lib/queries/bookings";
 import { formatCLP, formatTimeRange } from "@/lib/utils";
 import { dayLabel, dayOfMonth, zonedDateString } from "@/lib/zoned-time";
 import { BookingStatusBadge } from "@/components/ui/badge";
+import { CategoryIcon } from "@/components/ui/category-icon";
 import { Stars } from "@/components/ui/rating";
 import { BlindReviews } from "@/components/bookings/blind-reviews";
 import type { BookingReviews } from "@/types/database";
@@ -36,7 +37,11 @@ export function BookingCard({
           <b>{dayOfMonth(date)}</b>
         </div>
         <div className="thumb hidden sm:block">
-          {space?.images[0] && <Image src={space.images[0]} alt="" width={64} height={64} />}
+          {space?.images[0] ? (
+            <Image src={space.images[0]} alt="" width={64} height={64} />
+          ) : (
+            space && <CategoryIcon category={space.category} />
+          )}
         </div>
         <div className="grow">
           {space ? (

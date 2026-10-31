@@ -153,7 +153,20 @@ export function SwipeDeck<T>(props: Props<T>) {
     setStamps(card, 0, 0);
   }
 
-  if (!top) return <div className="deck-wrap">{empty}</div>;
+  if (!top)
+    return (
+      <div className="deck-wrap">
+        {empty}
+        {/* La última tarjeta se puede recuperar aunque el mazo quede vacío. */}
+        {onUndo && last && (
+          <div className="deck-btns">
+            <button type="button" className="dbtn" aria-label="Deshacer" title="Deshacer" onClick={undo}>
+              <Undo2 aria-hidden />
+            </button>
+          </div>
+        )}
+      </div>
+    );
 
   return (
     <div className="deck-wrap">
