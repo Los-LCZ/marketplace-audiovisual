@@ -22,3 +22,8 @@
 /* Miniatura sin fotos: ícono de la categoría al centro. */
 .li .thumb { display: grid; place-items: center; color: var(--dim); }
 .li .thumb > svg { width: 40%; height: 40%; }
+
+/* Foco visible en controles que quitan el outline por diseño. */
+.range:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--acc); outline-offset: 3px; }
+.range:focus-visible::-moz-range-thumb { outline: 2px solid var(--acc); outline-offset: 3px; }
+.field:has(select:focus-visible) { border-color: var(--acc); box-shadow: 0 0 0 2px var(--acc-soft); }
