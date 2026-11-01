@@ -5,6 +5,7 @@ import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/toaster";
 import { getWorld } from "@/lib/world-server";
 import { WORLDS } from "@/lib/world";
+import { BASE_OPEN_GRAPH, DEFAULT_OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const unbounded = Unbounded({ variable: "--font-unbounded", subsets: ["latin"], weight: ["500", "600"] });
@@ -12,12 +13,25 @@ const hanken = Hanken_Grotesk({ variable: "--font-hanken", subsets: ["latin"], w
 const martian = Martian_Mono({ variable: "--font-martian", subsets: ["latin"], weight: ["400", "500", "600"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Señal · Estudios, salas, sets y locaciones por hora",
+    default: SITE_TITLE,
     template: "%s · Señal",
   },
-  description:
-    "Marketplace de estudios de grabación, salas de ensayo, sets de filmación y locaciones por hora en Santiago, con ficha técnica completa antes de reservar.",
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  openGraph: {
+    ...BASE_OPEN_GRAPH,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE.url],
+  },
 };
 
 export async function generateViewport(): Promise<Viewport> {
