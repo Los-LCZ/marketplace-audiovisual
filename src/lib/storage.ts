@@ -47,14 +47,53 @@ export async function uploadSpaceImages(
 }
 
 // Convierte una URL pública en la ruta del objeto dentro del bucket.
-export function storagePathFromPublicUrl(url: string): string | null {
-  const marker = `/storage/v1/object/public/${SPACE_IMAGES_BUCKET}/`;
+export function storagePathFromPublicUrl(url: string, bucket = SPACE_IMAGES_BUCKET): string | null {
+  const marker = `/storage/v1/object/public/${bucket}/`;
   const index = url.indexOf(marker);
   return index === -1 ? null : decodeURIComponent(url.slice(index + marker.length));
 }
 
 export async function removeSpaceImages(supabase: Client, urls: string[]) {
-  const paths = urls.map(storagePathFromPublicUrl).filter((p): p is string => p !== null);
+  const paths = urls.map((url) => storagePathFromPublicUrl(url)).filter((p): p is string => p !== null);
   if (!paths.length) return { error: null };
   return supabase.storage.from(SPACE_IMAGES_BUCKET).remove(paths);
+}
+
+// -----------------------------------------------------------------------------
+// Foto de perfil: avatars/{userId}/{archivo}
+// -----------------------------------------------------------------------------
+export const AVATARS_BUCKET = "avatars";
+export const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+export const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+export function validateAvatar(file: File): string | null {
+  if (!ALLOWED_AVATAR_TYPES.includes(file.type)) return "Usa una imagen JPG, PNG o WebP";
+  if (file.size > MAX_AVATAR_BYTES) return "La foto supera los 2 MB";
+  return null;
+}
+
+/** Sube la foto con un nombre nuevo (evita la caché del CDN) y devuelve su URL pública. */
+export async function uploadAvatar(
+  supabase: Client,
+  userId: string,
+  file: File,
+): Promise<{ url?: string; error?: string }> {
+  const invalid = validateAvatar(file);
+  if (invalid) return { error: invalid };
+
+  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+  const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage
+    .from(AVATARS_BUCKET)
+    .upload(path, file, { contentType: file.type, cacheControl: "31536000", upsert: false });
+  if (error) return { error: `No se pudo subir la foto: ${error.message}` };
+
+  return { url: supabase.storage.from(AVATARS_BUCKET).getPublicUrl(path).data.publicUrl };
+}
+
+/** Borra una foto de perfil a partir de su URL pública (ignora URLs de otros buckets). */
+export async function removeAvatarFile(supabase: Client, url: string | null | undefined) {
+  const path = url ? storagePathFromPublicUrl(url, AVATARS_BUCKET) : null;
+  if (!path) return { error: null };
+  return supabase.storage.from(AVATARS_BUCKET).remove([path]);
 }
