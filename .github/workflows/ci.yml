@@ -28,6 +28,7 @@ jobs:
       - run: npx next typegen
       - run: npx tsc --noEmit
       - run: npm run lint
+      - run: npm run test:unit
 
   sql:
     name: Tests SQL (PGlite)

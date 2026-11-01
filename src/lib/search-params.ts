@@ -1,5 +1,6 @@
 import type { SpaceFilters } from "@/lib/queries/spaces";
 import { isSpaceCategory } from "@/lib/labels";
+import { isValidIsoDate } from "@/lib/iso-date";
 
 export type RawSearchParams = Record<string, string | string[] | undefined>;
 
@@ -66,5 +67,6 @@ export function parseSort(params: RawSearchParams): SortKey {
 /** Fecha buscada (`?fecha=YYYY-MM-DD`): se usa para preseleccionar el día en la ficha. */
 export function parseDateParam(params: RawSearchParams) {
   const fecha = firstParam(params.fecha);
-  return fecha && /^\d{4}-\d{2}-\d{2}$/.test(fecha) ? fecha : undefined;
+  // Formato y fecha real: 2026-02-30 o 2026-13-01 se ignoran (E-04).
+  return isValidIsoDate(fecha) ? fecha : undefined;
 }
