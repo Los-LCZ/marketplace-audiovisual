@@ -55,6 +55,8 @@ Ejecutar las migraciones de `supabase/migrations/` **en orden** (SQL Editor o `s
 | `20261101100000_reset_passes.sql` | Descubrir: volver a ver los descartados |
 | `20261101110000_bookings_reviews_batch.sql` | Reseñas de varias reservas en una llamada |
 | `20261101120000_host_response_stats.sql` | `requested_at` y KPI de respuesta del anfitrión |
+| `20261101130000_booking_expired_status.sql` | Estado `expired` (**ejecutar sola**) |
+| `20261101130100_expire_requests.sql` | Vencimiento automático de solicitudes (pg_cron cada 15 min) |
 
 `init.sql` no se edita: cada cambio de esquema va en una migración nueva `<timestamp>_<descripcion>.sql`.
 
@@ -108,6 +110,7 @@ Las rutas protegidas se definen en `PROTECTED_PREFIXES` de `src/utils/supabase/m
 | `completed` | Completada | El anfitrión la marcó como realizada (solo cuando terminó); ambas partes pueden calificarse |
 | `cancelled` | Cancelada | Libera el horario |
 | `rejected` | Rechazada | El anfitrión rechazó la solicitud |
+| `expired` | Vencida | La solicitud no tuvo respuesta antes de que empezara el horario (lo marca pg_cron cada 15 min) |
 
 `space_status`: `draft` → Borrador, `published` → Publicado, `archived` → Archivado.
 

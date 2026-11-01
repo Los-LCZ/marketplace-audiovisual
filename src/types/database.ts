@@ -12,6 +12,7 @@ export type SpaceStatus = "draft" | "published" | "archived";
 /**
  * requested: espera aprobación del anfitrión (no bloquea el horario).
  * rejected: el anfitrión rechazó la solicitud.
+ * expired: la solicitud no tuvo respuesta antes de que empezara el horario.
  */
 export type BookingStatus =
   | "requested"
@@ -19,7 +20,8 @@ export type BookingStatus =
   | "confirmed"
   | "completed"
   | "cancelled"
-  | "rejected";
+  | "rejected"
+  | "expired";
 export type AmenityCategory = "audio" | "video" | "general";
 export type ReactionKind = "like" | "pass";
 export type GearCategory = "microfonos" | "consolas" | "amplificacion" | "iluminacion";
