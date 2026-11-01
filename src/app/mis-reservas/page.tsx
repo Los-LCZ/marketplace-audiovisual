@@ -217,12 +217,19 @@ export default async function MisReservasPage() {
                         <Link className="btn btn-soft btn-sm" href="/explorar">
                           Buscar otro espacio
                         </Link>
+                      ) : b.status === "expired" ? (
+                        <div className="flex flex-wrap items-center gap-3">
+                          <p className="dim text-sm">El anfitrión no respondió antes del horario.</p>
+                          <Link className="btn btn-soft btn-sm" href="/explorar">
+                            Buscar otro espacio
+                          </Link>
+                        </div>
                       ) : null}
                     </BookingCard>
                   ))}
                 </div>
               ) : (
-                <Empty title="Sin historial todavía" text="Tus sesiones pasadas, canceladas y rechazadas aparecerán aquí." href="/explorar" cta="Explorar espacios" />
+                <Empty title="Sin historial todavía" text="Tus sesiones pasadas, canceladas, rechazadas y vencidas aparecerán aquí." href="/explorar" cta="Explorar espacios" />
               ),
             },
           ]}

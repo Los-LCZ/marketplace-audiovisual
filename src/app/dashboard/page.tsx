@@ -28,7 +28,7 @@ const HISTORY_LIMIT = 20;
 const OCC_SEGMENTS = 16;
 // Ingresos: sesiones reservadas que siguen en pie (no solicitudes, canceladas ni rechazadas).
 const INCOME_STATUSES: BookingStatus[] = ["pending_payment", "confirmed", "completed"];
-const HISTORY_STATUSES: BookingStatus[] = ["completed", "cancelled", "rejected"];
+const HISTORY_STATUSES: BookingStatus[] = ["completed", "cancelled", "rejected", "expired"];
 
 /** Mediana de respuesta legible: "25 min", "3 h", "2 d". */
 function formatMinutes(minutes: number) {
@@ -248,7 +248,7 @@ export default async function DashboardPage() {
           </Section>
 
           {history.length > 0 && (
-            <Section title="Historial" description={`Últimas ${HISTORY_LIMIT} sesiones completadas, canceladas o rechazadas.`}>
+            <Section title="Historial" description={`Últimas ${HISTORY_LIMIT} sesiones completadas, canceladas, rechazadas o vencidas.`}>
               <div className="list">
                 {history.map((b) => (
                   <BookingCard key={b.id} booking={b} today={today} subtitle={<ClientLine booking={b} />} reviews={blind(b)} />
