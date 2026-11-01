@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { ProfileForm } from "@/components/profile/profile-form";
+import { AvatarEditor } from "@/components/profile/avatar-editor";
 
 export const metadata: Metadata = { title: "Editar perfil" };
 
@@ -22,6 +23,7 @@ export default async function PerfilPage() {
           Ver perfil público
         </Link>
       </header>
+      <AvatarEditor name={user.profile.full_name ?? user.email ?? "Tú"} avatarUrl={user.profile.avatar_url} />
       <ProfileForm profile={user.profile} />
     </div>
   );

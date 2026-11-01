@@ -9,7 +9,7 @@ export function ReviewList({ reviews }: { reviews: SpaceReview[] }) {
       {reviews.map((review) => (
         <article key={review.id} className="review panel">
           <div className="top">
-            <Avatar name={review.author_name} size="sm" />
+            <Avatar name={review.author_name} src={review.author_avatar} size="sm" />
             <div className="min-w-0 flex-1">
               <b>{review.author_name ?? "Usuario"}</b>
               <br />

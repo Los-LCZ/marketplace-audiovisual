@@ -18,7 +18,7 @@ function RequestCard({ request }: { request: HostBooking }) {
     <div className="req">
       <span className="proj">{request.project ?? request.space?.title ?? "Solicitud"}</span>
       <div className="who">
-        <Avatar name={name} size="lg" verified={client?.verified} />
+        <Avatar name={name} src={client?.avatar_url} size="lg" verified={client?.verified} />
         <div>
           <div className="t">{name}</div>
           {client && (
