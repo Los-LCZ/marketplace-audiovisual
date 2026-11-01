@@ -70,6 +70,7 @@ La vista `space_cards` usa `spaces.*`: si agregas columnas a `spaces`, recrea la
 
 - `seed_demo.sql` carga 3 anfitriones, 3 clientes, 12 espacios (sin fotos), 10 reservas, una solicitud pendiente y reseñas reveladas en ambos sentidos. Antes de ejecutarlo, reemplaza `CAMBIAME` por la contraseña de las cuentas demo (mínimo 10 caracteres) y **no la subas al repo**.
 - `unseed_demo.sql` borra todo lo demo (usuarios `@senal-demo.test`), incluidas las reservas que usuarios reales hayan hecho en espacios demo.
+  - **Fotos:** Supabase no permite borrar archivos de Storage con SQL. Si un anfitrión demo subió fotos, el script avisa con un *warning* qué carpetas quedan. Bórralas a mano en **Dashboard → Storage → `space-images`**: cada carpeta lleva el id del anfitrión demo (empieza con `de000000-`). Hazlo **antes o después** del unseed; no afecta a los datos.
 
 Cuentas demo: `ana.rojas`, `diego.fuentes` y `valentina.soto` (anfitriones; Diego exige nota mínima 4); `matias.perez`, `camila.munoz` y `joaquin.herrera` (clientes; Joaquín no tiene reseñas). Todas con `@senal-demo.test`.
 

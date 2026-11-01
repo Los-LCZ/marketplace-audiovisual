@@ -63,7 +63,13 @@ await db.exec(`alter table public.bookings disable trigger bookings_compute_amou
   values ('de5ace00-0000-4000-8000-000000000002', '99999999-9999-9999-9999-999999999999', now() + interval '20 days', now() + interval '20 days 1 hour', 1, 1, 0, 1);
   alter table public.bookings enable trigger bookings_compute_amounts;`);
 
-await db.exec(readFileSync(join(repo, "supabase/demo/unseed_demo.sql"), "utf8"));
+// Una foto de un anfitrión demo en Storage: el unseed debe avisar, sin fallar.
+await db.exec(`insert into storage.objects (bucket_id, name) values
+  ('space-images', 'de000000-0000-4000-8000-000000000001/de5ace00-0000-4000-8000-000000000001/foto.jpg')`);
+const notices = [];
+const unseedSql = readFileSync(join(repo, "supabase/demo/unseed_demo.sql"), "utf8");
+await db.query(unseedSql, [], { onNotice: (n) => notices.push(n.message) });
+check(notices.some((m) => m.includes("de000000-0000-4000-8000-000000000001")), "unseed avisa qué carpetas de Storage borrar a mano", JSON.stringify(notices));
 check((await n(`select count(*) n from auth.users where email like '%@senal-demo.test'`)) === 0, "unseed borra usuarios demo");
 check((await n(`select count(*) n from public.spaces where id::text like 'de5ace00%'`)) === 0, "unseed borra espacios demo");
 check((await n(`select count(*) n from public.bookings`)) === 0, "unseed borra reservas demo y las de reales en espacios demo");
