@@ -12,6 +12,16 @@ npm run dev
 
 Variables en `.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y, en producción, `NEXT_PUBLIC_SITE_URL` (para el enlace de confirmación de correo).
 
+### Tests
+
+```bash
+npm run test:sql   # migraciones, RLS, triggers y RPC sobre PGlite (ver tests/sql/README.md)
+npm run lint
+npx tsc --noEmit
+```
+
+GitHub Actions (`.github/workflows/ci.yml`) corre los tres en cada PR y en cada push a `main`. Cada migración nueva debe traer sus pruebas en `tests/sql/`.
+
 ### Entornos
 
 | Entorno | Supabase | Quién lo usa |
