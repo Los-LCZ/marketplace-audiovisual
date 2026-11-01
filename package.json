@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:sql": "node tests/sql/run.mjs"
+    "test:sql": "node tests/sql/run.mjs",
+    "test:unit": "node --experimental-strip-types --test tests/unit/"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

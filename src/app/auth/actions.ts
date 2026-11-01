@@ -5,18 +5,15 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { fail, getString, type ActionState } from "@/lib/action-state";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-// Solo se permiten redirecciones internas (evita open redirects).
-function safeNext(next: string) {
-  return next.startsWith("/") && !next.startsWith("//") ? next : "/";
-}
 
 export async function login(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const email = getString(formData, "email");
   const password = getString(formData, "password");
-  const next = safeNext(getString(formData, "next"));
+  // Solo redirecciones internas (evita open redirects, ver src/lib/safe-redirect.ts).
+  const next = safeRedirectPath(getString(formData, "next"));
 
   if (!EMAIL_RE.test(email) || !password) {
     return fail("Ingresa un correo y contraseña válidos");
