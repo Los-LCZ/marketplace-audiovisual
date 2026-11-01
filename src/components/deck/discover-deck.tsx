@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,6 +13,7 @@ import { formatCLP, formatRating } from "@/lib/utils";
 import { WORLDS, type World } from "@/lib/world";
 import { applyWorld } from "@/components/layout/world-switch";
 import { Avatar } from "@/components/ui/avatar";
+import { useLayer } from "@/components/ui/layer";
 import { RatingPill } from "@/components/ui/rating";
 import { toast } from "@/components/ui/toaster";
 import { SwipeDeck, type SwipeDir } from "@/components/deck/swipe-deck";
@@ -124,16 +125,13 @@ function MatchOverlay({
   me: { name: string; rating: number | null; verified: boolean };
   onClose: () => void;
 }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  // Escape, Tab dentro del aviso y foco de vuelta al mazo al cerrar.
+  const ref = useLayer(true, onClose);
 
   const hostName = card.host?.full_name ?? "El anfitrión";
   return createPortal(
     <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="match-title">
-      <div className="match">
+      <div className="match" ref={ref}>
         {world === "av" ? (
           <div className="clap" aria-hidden>
             <div className="top" />
