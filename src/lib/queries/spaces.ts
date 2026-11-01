@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { escapeLike } from "@/lib/like";
 import { isValidIsoDate } from "@/lib/iso-date";
+import { zonedDateString } from "@/lib/zoned-time";
 import type {
   Amenity,
   CommuneCount,
@@ -9,6 +10,7 @@ import type {
   SpaceCategory,
   SpaceRatingStats,
   SpaceReview,
+  SpaceBlackout,
 } from "@/types/database";
 
 export type SpaceSort = "recent" | "price_asc" | "price_desc" | "rating";
@@ -397,5 +399,34 @@ export async function getSpaceReviews(spaceId: string, page = 1): Promise<SpaceR
     p_offset: (Math.max(1, page) - 1) * REVIEWS_PAGE_SIZE,
   });
   if (error) throw new Error(`Error al obtener reseñas: ${error.message}`);
+  return data ?? [];
+}
+
+/** Días cerrados de un espacio propio, desde hoy, con su motivo (solo el dueño los ve). */
+export async function listSpaceBlackouts(spaceId: string): Promise<SpaceBlackout[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("space_blackouts")
+    .select("*")
+    .eq("space_id", spaceId)
+    .gte("date", zonedDateString(Date.now()))
+    .order("date");
+  if (error) throw new Error(`Error al listar días cerrados: ${error.message}`);
+  return data ?? [];
+}
+
+/**
+ * Días cerrados de un espacio publicado entre `from` y `to` (YYYY-MM-DD, inclusive), sin motivo.
+ * Para calendarios públicos; la ficha no lo necesita porque getSpaceBusySlots ya los incluye
+ * como bloques de día completo.
+ */
+export async function getSpaceBlackoutDates(spaceId: string, from: string, to: string): Promise<string[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_space_blackout_dates", {
+    p_space_id: spaceId,
+    p_from: from,
+    p_to: to,
+  });
+  if (error) throw new Error(`Error al obtener días cerrados: ${error.message}`);
   return data ?? [];
 }
