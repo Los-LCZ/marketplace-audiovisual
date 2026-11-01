@@ -1,4 +1,4 @@
-import type { ComponentProps, ReactNode } from "react";
+import { Children, cloneElement, isValidElement, type ComponentProps, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const CONTROL =
@@ -22,12 +22,22 @@ export function Label({ className, ...props }: ComponentProps<"label">) {
   return <label className={cn("text-sm font-medium", className)} {...props} />;
 }
 
-export function FieldError({ children }: { children?: ReactNode }) {
+export function FieldError({ id, children }: { id?: string; children?: ReactNode }) {
   if (!children) return null;
-  return <p className="text-sm text-danger">{children}</p>;
+  return (
+    <p id={id} className="text-sm text-danger">
+      {children}
+    </p>
+  );
 }
 
-// Etiqueta + control + error de un campo de formulario.
+type ControlProps = { id?: string; "aria-invalid"?: unknown; "aria-describedby"?: string };
+
+/**
+ * Etiqueta + control + error de un campo de formulario. Al control con id `htmlFor`
+ * le agrega aria-invalid y le enlaza el error con aria-describedby, para que el lector
+ * de pantalla lea el motivo al enfocarlo.
+ */
 export function Field({
   label,
   htmlFor,
@@ -41,11 +51,20 @@ export function Field({
   children: ReactNode;
   className?: string;
 }) {
+  const errorId = `${htmlFor}-error`;
+  const linked = error
+    ? Children.map(children, (child) => {
+        if (!isValidElement<ControlProps>(child) || child.props.id !== htmlFor) return child;
+        const describedBy = [child.props["aria-describedby"], errorId].filter(Boolean).join(" ");
+        return cloneElement(child, { "aria-invalid": true, "aria-describedby": describedBy });
+      })
+    : children;
+
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       <Label htmlFor={htmlFor}>{label}</Label>
-      {children}
-      <FieldError>{error}</FieldError>
+      {linked}
+      <FieldError id={errorId}>{error}</FieldError>
     </div>
   );
 }
