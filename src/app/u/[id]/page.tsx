@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CalendarDays, MapPin, Pencil, ShieldCheck } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
+import { BASE_OPEN_GRAPH, DEFAULT_OG_IMAGE, excerpt } from "@/lib/site";
 import { getProfileRatingStats, getProfileReviews, getPublicProfile } from "@/lib/queries/profiles";
 import { listHostPublicSpaces } from "@/lib/queries/spaces";
 import { Avatar } from "@/components/ui/avatar";
@@ -19,8 +20,23 @@ const getProfile = cache(async (id: string) => (UUID_RE.test(id) ? getPublicProf
 
 export async function generateMetadata({ params }: PageProps<"/u/[id]">): Promise<Metadata> {
   const profile = await getProfile((await params).id);
-  if (!profile) return { title: "Perfil no encontrado" };
-  return { title: profile.full_name ?? "Perfil", description: profile.headline ?? undefined };
+  if (!profile) notFound();
+
+  const path = `/u/${profile.id}`;
+  const title = profile.full_name ?? "Perfil";
+  const description = profile.headline
+    ? excerpt(profile.headline)
+    : profile.bio
+      ? excerpt(profile.bio)
+      : `Perfil de ${title} en Señal: calificaciones como cliente y como anfitrión.`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: path },
+    openGraph: { ...BASE_OPEN_GRAPH, type: "profile", url: path, title, description, images: [DEFAULT_OG_IMAGE] },
+    twitter: { card: "summary_large_image", title, description, images: [DEFAULT_OG_IMAGE.url] },
+  };
 }
 
 /** Perfil público con calificación de ida y vuelta: como cliente y como anfitrión. */
