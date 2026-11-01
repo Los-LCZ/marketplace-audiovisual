@@ -23,6 +23,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getSpaceBusySlots, getSpaceById, getSpaceReviews, REVIEWS_PAGE_SIZE } from "@/lib/queries/spaces";
 import { getProfileRatingStats } from "@/lib/queries/profiles";
 import { SPACE_CATEGORY_LABELS } from "@/lib/labels";
+import { BASE_OPEN_GRAPH, excerpt } from "@/lib/site";
 import { firstParam, parseDateParam } from "@/lib/search-params";
 import { formatCLP, formatRating } from "@/lib/utils";
 import { worldOf } from "@/lib/world";
@@ -55,11 +56,28 @@ const getSpace = cache(async (id: string) => (UUID_RE.test(id) ? getSpaceById(id
 
 export async function generateMetadata({ params }: PageProps<"/espacios/[id]">): Promise<Metadata> {
   const space = await getSpace((await params).id);
-  if (!space) return { title: "Espacio no encontrado" };
+  if (!space) notFound();
+
+  const path = `/espacios/${space.id}`;
+  const title = space.title;
+  const description = space.summary
+    ? excerpt(space.summary)
+    : space.description
+      ? excerpt(space.description)
+      : `${SPACE_CATEGORY_LABELS[space.category]} en ${space.commune} por ${formatCLP(space.price_per_hour)} la hora.`;
+  // Primera foto; sin fotos, la tarjeta generada en /espacios/[id]/og.
+  const image = space.images[0]
+    ? { url: space.images[0], alt: space.title }
+    : { url: `${path}/og`, width: 1200, height: 630, alt: space.title };
+
   return {
-    title: space.title,
-    description:
-      space.summary ?? space.description?.slice(0, 160) ?? `${SPACE_CATEGORY_LABELS[space.category]} en ${space.commune}`,
+    title,
+    description,
+    alternates: { canonical: path },
+    // Un borrador o archivado solo lo ve su dueño: nunca se indexa.
+    robots: space.status === "published" ? undefined : { index: false, follow: false },
+    openGraph: { ...BASE_OPEN_GRAPH, url: path, title, description, images: [image] },
+    twitter: { card: "summary_large_image", title, description, images: [image.url] },
   };
 }
 
@@ -72,6 +90,8 @@ export default async function SpacePage({ params, searchParams }: PageProps<"/es
   if (!space) notFound();
 
   const isOwner = user?.id === space.host_id;
+  // Un borrador o archivado solo existe para su dueño (que lo revisa antes de publicar).
+  if (space.status !== "published" && !isOwner) notFound();
   const world = worldOf(space.category);
   const { now, today } = currentTime();
 
