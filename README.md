@@ -12,6 +12,18 @@ npm run dev
 
 Variables en `.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y, en producción, `NEXT_PUBLIC_SITE_URL` (para el enlace de confirmación de correo).
 
+### Entornos
+
+| Entorno | Supabase | Quién lo usa |
+|---|---|---|
+| **Producción** | `tskhtlbpbvfuvqguypkh` | Solo el deploy de producción de Vercel (`main`) |
+| **Staging** | `lyrwiuqpwgvwjlfmsvfj` | Desarrollo local (`.env.local`) y los previews de Vercel de cada PR |
+
+- En Vercel, `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` tienen un valor para **Production** y otro para **Preview**, ambos de tipo *Config* (Vercel no permite `NEXT_PUBLIC_*` como *Secret*; la anon/publishable key es pública por diseño y la protección la dan las políticas RLS).
+- **Regla:** cada migración nueva se aplica **primero en staging**, se prueba en local o en el preview del PR, y recién **al mergear** se aplica en producción.
+- Staging tiene *Confirm email* desactivado para crear cuentas de prueba al instante; producción lo mantiene activo.
+- Nunca pongas la `service_role` / secret key en variables `NEXT_PUBLIC_*`.
+
 ### Base de datos
 
 Ejecutar las migraciones de `supabase/migrations/` **en orden** (SQL Editor o `supabase db push`):
@@ -39,6 +51,15 @@ Ejecutar las migraciones de `supabase/migrations/` **en orden** (SQL Editor o `s
 En el SQL Editor, ejecuta **cada archivo por separado**. Postgres no permite usar un valor nuevo de un enum en la misma transacción en que se agrega, así que `..._booking_request_status.sql` tiene que terminar antes de correr `..._booking_requests.sql`.
 
 La vista `space_cards` usa `spaces.*`: si agregas columnas a `spaces`, recrea la vista en la misma migración.
+
+### Datos demo
+
+`supabase/demo/` **no son migraciones**: se ejecutan a mano en el SQL Editor.
+
+- `seed_demo.sql` carga 3 anfitriones, 3 clientes, 12 espacios (sin fotos), 10 reservas, una solicitud pendiente y reseñas reveladas en ambos sentidos. Antes de ejecutarlo, reemplaza `CAMBIAME` por la contraseña de las cuentas demo (mínimo 10 caracteres) y **no la subas al repo**.
+- `unseed_demo.sql` borra todo lo demo (usuarios `@senal-demo.test`), incluidas las reservas que usuarios reales hayan hecho en espacios demo.
+
+Cuentas demo: `ana.rojas`, `diego.fuentes` y `valentina.soto` (anfitriones; Diego exige nota mínima 4); `matias.perez`, `camila.munoz` y `joaquin.herrera` (clientes; Joaquín no tiene reseñas). Todas con `@senal-demo.test`.
 
 ## Rutas
 
