@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { listMySpaces } from "@/lib/queries/spaces";
 import { listHostBookings, listHostRequests, type HostBooking } from "@/lib/queries/bookings";
-import { getProfileRatingStats } from "@/lib/queries/profiles";
+import { getHostResponseStats, getProfileRatingStats } from "@/lib/queries/profiles";
 import { canCancel, canComplete, isUpcoming } from "@/lib/booking-rules";
 import { loadBookingReviews } from "@/lib/booking-reviews";
 import { isOpenBooking } from "@/lib/labels";
@@ -29,6 +29,13 @@ const OCC_SEGMENTS = 16;
 // Ingresos: sesiones reservadas que siguen en pie (no solicitudes, canceladas ni rechazadas).
 const INCOME_STATUSES: BookingStatus[] = ["pending_payment", "confirmed", "completed"];
 const HISTORY_STATUSES: BookingStatus[] = ["completed", "cancelled", "rejected"];
+
+/** Mediana de respuesta legible: "25 min", "3 h", "2 d". */
+function formatMinutes(minutes: number) {
+  if (minutes < 60) return `${Math.max(1, Math.round(minutes))} min`;
+  if (minutes < 60 * 24) return `${Math.round(minutes / 60)} h`;
+  return `${Math.round(minutes / 60 / 24)} d`;
+}
 
 function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
@@ -71,11 +78,12 @@ export default async function DashboardPage() {
     );
   }
 
-  const [spaces, bookings, requests, stats] = await Promise.all([
+  const [spaces, bookings, requests, stats, response] = await Promise.all([
     listMySpaces(user.id),
     listHostBookings(user.id),
     listHostRequests(user.id),
     getProfileRatingStats(user.id),
+    getHostResponseStats(user.id),
   ]);
   const { now, today } = currentTime();
   const reviews = await loadBookingReviews(bookings);
@@ -139,13 +147,22 @@ export default async function DashboardPage() {
       <dl className="kpis mt-7">
         {[
           ["Ingresos del mes", formatCLP(monthIncome)],
-          ["Solicitudes por revisar", String(openRequests.length)],
+          ["Solicitudes por revisar", String(openRequests.length), `${toComplete.length} por completar`],
           ["Tu nota como anfitrión", hostRating != null ? formatRating(hostRating) : "—"],
-          ["Por completar", String(toComplete.length)],
-        ].map(([label, value]) => (
+          [
+            "Tiempo de respuesta",
+            response.median_response_minutes != null ? formatMinutes(response.median_response_minutes) : "Sin datos",
+            response.response_rate != null
+              ? `Respondes el ${Math.round(response.response_rate * 100)}% a tiempo`
+              : response.request_count
+                ? "Aún no decides ninguna solicitud"
+                : "Aún no recibes solicitudes",
+          ],
+        ].map(([label, value, hint]) => (
           <div key={label} className="kpi panel">
             <dt>{label}</dt>
             <dd>{value}</dd>
+            {hint && <p className="dim mt-1 text-xs">{hint}</p>}
           </div>
         ))}
       </dl>

@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useOptimistic, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ImagePlus, X } from "lucide-react";
-import { addSpaceImages, removeSpaceImage } from "@/app/actions/spaces";
+import { ChevronLeft, ChevronRight, ImagePlus, X } from "lucide-react";
+import { addSpaceImages, removeSpaceImage, reorderSpaceImages } from "@/app/actions/spaces";
 import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_SPACE, validateImage } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/ui/layer";
@@ -17,7 +17,8 @@ function formatMB(bytes: number) {
 
 /**
  * Fotos de un espacio ya creado: cada cambio se guarda al tiro (addSpaceImages /
- * removeSpaceImage), sin esperar a "Guardar cambios". Va dentro del formulario de
+ * removeSpaceImage / reorderSpaceImages), sin esperar a "Guardar cambios". La primera
+ * foto es la portada. Va dentro del formulario de
  * edición, así que no usa <form> propio: el <input type="file"> no tiene `name` y
  * no viaja con updateSpace.
  */
@@ -26,6 +27,9 @@ export function SpaceImagesManager({ spaceId, images }: { spaceId: string; image
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, startUpload] = useTransition();
   const [removing, startRemove] = useTransition();
+  const [reordering, startReorder] = useTransition();
+  // Orden optimista mientras se guarda; al terminar manda el que devuelve el servidor.
+  const [shown, setShown] = useOptimistic(images);
   const [toRemove, setToRemove] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const free = MAX_IMAGES_PER_SPACE - images.length;
@@ -60,6 +64,23 @@ export function SpaceImagesManager({ spaceId, images }: { spaceId: string; image
     });
   }
 
+  function move(from: number, to: number) {
+    if (to < 0 || to >= shown.length || from === to) return;
+    const next = [...shown];
+    const [url] = next.splice(from, 1);
+    next.splice(to, 0, url);
+    startReorder(async () => {
+      setShown(next);
+      // La action revalida /espacios/[id]/editar: las props llegan con el orden guardado.
+      const result = await reorderSpaceImages(spaceId, next);
+      if (result && !result.ok) setError(result.error);
+      else {
+        setError(null);
+        if (to === 0) toast("Portada actualizada", undefined, "ok");
+      }
+    });
+  }
+
   function remove(url: string) {
     startRemove(async () => {
       const result = await removeSpaceImage(spaceId, url);
@@ -74,13 +95,44 @@ export function SpaceImagesManager({ spaceId, images }: { spaceId: string; image
   return (
     <div className="flex flex-col gap-3">
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {images.map((url, i) => (
-          <li key={url} className="relative aspect-[4/3] overflow-hidden rounded-xl bg-muted">
+        {shown.map((url, i) => (
+          <li key={url} className="group relative aspect-[4/3] overflow-hidden rounded-xl bg-muted">
             <Image src={url} alt={`Foto ${i + 1}`} fill sizes="200px" className="object-cover" />
-            {i === 0 && (
+            {i === 0 ? (
               <span className="absolute bottom-2 left-2 rounded-full bg-surface/90 px-2 py-0.5 text-xs font-medium">
                 Portada
               </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => move(i, 0)}
+                disabled={reordering}
+                className="absolute bottom-2 left-2 rounded-full bg-surface/90 px-2 py-0.5 text-xs opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+              >
+                Usar de portada
+              </button>
+            )}
+            {shown.length > 1 && (
+              <div className="absolute right-2 bottom-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                <button
+                  type="button"
+                  onClick={() => move(i, i - 1)}
+                  disabled={reordering || i === 0}
+                  aria-label={`Mover foto ${i + 1} a la izquierda`}
+                  className="flex size-7 items-center justify-center rounded-full bg-surface/90 hover:bg-surface disabled:opacity-40"
+                >
+                  <ChevronLeft className="size-4" aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => move(i, i + 1)}
+                  disabled={reordering || i === shown.length - 1}
+                  aria-label={`Mover foto ${i + 1} a la derecha`}
+                  className="flex size-7 items-center justify-center rounded-full bg-surface/90 hover:bg-surface disabled:opacity-40"
+                >
+                  <ChevronRight className="size-4" aria-hidden />
+                </button>
+              </div>
             )}
             <button
               type="button"
@@ -125,7 +177,7 @@ export function SpaceImagesManager({ spaceId, images }: { spaceId: string; image
 
       <p className="text-xs text-muted-foreground">
         Se guardan al tiro, sin apretar Guardar cambios. JPG, PNG, WebP o AVIF · hasta {formatMB(MAX_IMAGE_BYTES)} cada
-        una · {images.length}/{MAX_IMAGES_PER_SPACE} fotos. La primera es la portada.
+        una · {images.length}/{MAX_IMAGES_PER_SPACE} fotos. La primera es la portada; usa las flechas para ordenarlas.
       </p>
       {error && <p className="text-sm text-danger">{error}</p>}
 
