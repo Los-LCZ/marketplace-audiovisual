@@ -6,14 +6,12 @@ import { updatePassword } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
 import { Field, FormMessage, Input } from "@/components/ui/form-controls";
 
-// Mensaje de la action cuando no hay sesión de recuperación (contrato con backend).
-const EXPIRED_ERROR = "El enlace expiró o ya se usó: pide uno nuevo";
-
 /** Nueva contraseña con la sesión de recuperación. Si sale bien, la action redirige a "/". */
 export function NewPasswordForm({ email }: { email?: string }) {
   const [state, action, pending] = useActionState(updatePassword, null);
   const fieldErrors = state && !state.ok ? state.fieldErrors : undefined;
-  const expired = state && !state.ok && state.error === EXPIRED_ERROR;
+  // Sin sesión de recuperación reciente la action marca fieldErrors.link = "expired".
+  const expired = fieldErrors?.link === "expired";
 
   return (
     <form
