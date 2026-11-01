@@ -17,6 +17,7 @@
 @import "../styles/senal/deck.css" layer(components);
 @import "../styles/senal/host.css" layer(components);
 @import "../styles/senal/profile.css" layer(components);
+@import "../styles/senal/legal.css" layer(components);
 @import "../styles/senal/overrides.css" layer(components);
 
 /* Tokens de Tailwind apuntando a los de Señal: los componentes con utilidades heredan el mundo activo. */
