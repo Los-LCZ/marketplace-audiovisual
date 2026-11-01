@@ -38,3 +38,7 @@
 [data-world="av"] .dbtn.yes.big[data-icon="check"] { border-color: color-mix(in oklab, var(--ok) 55%, transparent); color: var(--ok); }
 [data-world="av"] .dbtn.yes.big[data-icon="check"]::after { content: none; }
 [data-world="av"] .dbtn.yes.big[data-icon="check"] svg { display: block; }
+
+/* Avatar con foto de perfil */
+.av.has-img { background: var(--s2); }
+.av > img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }

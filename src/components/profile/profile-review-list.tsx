@@ -11,7 +11,7 @@ export function ProfileReviewList({ reviews }: { reviews: ProfileReview[] }) {
       {reviews.map((review) => (
         <article key={review.id} className="review panel">
           <div className="top">
-            <Avatar name={review.author_name} size="sm" />
+            <Avatar name={review.author_name} src={review.author_avatar} size="sm" />
             <div className="min-w-0 flex-1">
               <Link href={`/u/${review.author_id}`}>{review.author_name ?? "Usuario"}</Link>
               <br />

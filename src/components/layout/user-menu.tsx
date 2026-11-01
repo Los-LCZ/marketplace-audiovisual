@@ -12,12 +12,14 @@ const ITEM = "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:
 export function UserMenu({
   userId,
   name,
+  avatarUrl,
   email,
   roleLabel,
   isHost,
 }: {
   userId: string;
   name: string;
+  avatarUrl?: string | null;
   email?: string;
   roleLabel: string;
   isHost: boolean;
@@ -53,7 +55,7 @@ export function UserMenu({
         aria-label={`Menú de ${name}`}
         className="me !inline-flex bg-transparent text-left"
       >
-        <Avatar name={name} size="sm" />
+        <Avatar name={name} src={avatarUrl} size="sm" />
         <span className="hidden sm:inline">
           <b className="block max-w-32 truncate">{name.split(" ")[0]}</b>
           <span className="dim">{roleLabel}</span>
