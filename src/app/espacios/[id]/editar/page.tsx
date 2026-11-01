@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { getSpaceById, listAmenities } from "@/lib/queries/spaces";
+import { getSpaceById, listAmenities, listSpaceBlackouts } from "@/lib/queries/spaces";
+import { currentTime } from "@/lib/zoned-time";
 import { SpaceForm } from "@/components/forms/space-form";
+import { SpaceBlackouts } from "@/components/forms/space-blackouts";
 
 export const metadata: Metadata = { title: "Editar espacio" };
 
@@ -17,7 +19,8 @@ export default async function EditarEspacioPage({ params }: PageProps<"/espacios
   // Solo el dueño edita; para el resto la ruta no existe.
   if (!space || space.host_id !== user.id) notFound();
 
-  const amenities = await listAmenities();
+  const [amenities, blackouts] = await Promise.all([listAmenities(), listSpaceBlackouts(space.id)]);
+  const { today } = currentTime();
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-8 sm:px-6">
@@ -28,6 +31,22 @@ export default async function EditarEspacioPage({ params }: PageProps<"/espacios
         </p>
       </header>
       <SpaceForm amenities={amenities} space={space} />
+      {/* Fuera del formulario: cada cierre o reapertura se guarda al tiro, sin "Guardar cambios". */}
+      <section
+        id="dias-cerrados"
+        aria-labelledby="dias-cerrados-h"
+        className="grid gap-4 border-b border-border pb-8 md:grid-cols-[220px_1fr] md:gap-8"
+      >
+        <div>
+          <h2 id="dias-cerrados-h" className="font-semibold">
+            Días cerrados
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Bloquea días completos. Se guardan al instante y la ficha los muestra como ocupados.
+          </p>
+        </div>
+        <SpaceBlackouts spaceId={space.id} blackouts={blackouts} today={today} />
+      </section>
     </div>
   );
 }
