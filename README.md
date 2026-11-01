@@ -60,6 +60,7 @@ Ejecutar las migraciones de `supabase/migrations/` **en orden** (SQL Editor o `s
 | `20261101140000_cancel_before_start.sql` | Solo se cancela antes de que empiece la reserva |
 | `20261101140100_host_response_stats_public.sql` | Documenta que el KPI de respuesta es público |
 | `20261101140200_available_space_ids_setbased.sql` | Disponibilidad por día en una sola consulta (rendimiento) |
+| `20261101150000_space_blackouts.sql` | Días cerrados a elección del anfitrión |
 | `20261101160000_avatars.sql` | Foto de perfil: bucket `avatars` y validación de `avatar_url` |
 
 `init.sql` no se edita: cada cambio de esquema va en una migración nueva `<timestamp>_<descripcion>.sql`.
@@ -125,6 +126,7 @@ Las rutas protegidas se definen en `PROTECTED_PREFIXES` de `src/utils/supabase/m
 
 - **Montos:** los calcula el trigger `compute_booking_amounts` (horas completas × `price_per_hour`, comisión de plataforma de 10%). El cliente nunca envía montos.
 - **Horario:** cada espacio tiene `open_hour`–`close_hour` (hora de Chile); las reservas fuera de ese rango se rechazan.
+- **Días cerrados:** el anfitrión puede cerrar días completos a su elección (por defecto todo está abierto, feriados incluidos). En un día cerrado no se crean ni aceptan reservas, no aparece en el filtro por fecha y la ficha lo muestra ocupado. No se puede cerrar un día que ya tiene reservas o solicitudes activas.
 - **Solicitudes:** la reserva nace `confirmed` si el anfitrión no exige nota mínima o el cliente la cumple. Si no, nace `requested` y el anfitrión la acepta (`acceptBooking`) o rechaza (`rejectBooking`). Un cliente sin reseñas reveladas no cumple ningún mínimo. Al aceptar, la restricción de solape valida que el horario siga libre.
 - **`pending_payment` (integración de pago futura):** hoy ninguna reserva nace así. Cuando se integre una pasarela de pago (p. ej. Webpay/Flow/Mercado Pago):
   1. El trigger `compute_booking_amounts` pondrá `pending_payment` en vez de `confirmed`. Ese estado ya bloquea el horario.

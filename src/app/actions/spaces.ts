@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { fail, getString, getStringList, type ActionState } from "@/lib/action-state";
 import { MAX_IMAGES_PER_SPACE, removeSpaceImages, uploadSpaceImages } from "@/lib/storage";
+import { isValidIsoDate } from "@/lib/iso-date";
 import type { GearCategory, GearGroup, SpaceCategory, SpaceStatus } from "@/types/database";
 
 const CATEGORIES: SpaceCategory[] = [
@@ -353,6 +354,70 @@ export async function reorderSpaceImages(spaceId: string, urls: string[]): Promi
     .eq("id", spaceId)
     .eq("host_id", user.id);
   if (error) return fail(error.message);
+
+  revalidateSpace(spaceId);
+  return { ok: true };
+}
+
+const MAX_BLACKOUTS_PER_CALL = 62;
+
+/**
+ * Cierra días de un espacio propio (hora de Chile). Todos o ninguno: si un día ya pasó,
+ * está a más de un año o tiene reservas/solicitudes activas, no se cierra ninguno y se
+ * devuelve el motivo. Los días ya cerrados se ignoran. `reason` es una nota privada.
+ * No recibe FormData: úsala con `useTransition` o con `.bind`.
+ */
+export async function addSpaceBlackouts(
+  spaceId: string,
+  dates: string[],
+  reason?: string,
+): Promise<ActionState<{ count: number }>> {
+  const user = await getCurrentUser();
+  if (!user) return fail("Debes iniciar sesión");
+
+  const unique = [...new Set(Array.isArray(dates) ? dates : [])];
+  if (!unique.length) return fail("Elige al menos un día");
+  if (unique.length > MAX_BLACKOUTS_PER_CALL) return fail(`Máximo ${MAX_BLACKOUTS_PER_CALL} días a la vez`);
+  if (!unique.every((d) => isValidIsoDate(d))) return fail("Hay una fecha inválida");
+  const note = typeof reason === "string" ? reason.trim().slice(0, 120) : "";
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("space_blackouts")
+    .upsert(
+      unique.map((date) => ({ space_id: spaceId, date, reason: note || null })),
+      { onConflict: "space_id,date", ignoreDuplicates: true },
+    )
+    .select("id");
+
+  if (error) {
+    if (error.code === "P0001") return fail(error.message);
+    if (error.code === "42501") return fail("Espacio no encontrado");
+    return fail(`No se pudieron cerrar los días: ${error.message}`);
+  }
+
+  revalidateSpace(spaceId);
+  return { ok: true, data: { count: data?.length ?? 0 } };
+}
+
+/**
+ * Reabre un día cerrado de un espacio propio (`date` en YYYY-MM-DD).
+ * No recibe FormData: úsala con `useTransition` o con `.bind`.
+ */
+export async function removeSpaceBlackout(spaceId: string, date: string): Promise<ActionState> {
+  const user = await getCurrentUser();
+  if (!user) return fail("Debes iniciar sesión");
+  if (!isValidIsoDate(date)) return fail("Fecha inválida");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("space_blackouts")
+    .delete()
+    .eq("space_id", spaceId)
+    .eq("date", date)
+    .select("id");
+  if (error) return fail(error.message);
+  if (!data?.length) return fail("Ese día no estaba cerrado");
 
   revalidateSpace(spaceId);
   return { ok: true };

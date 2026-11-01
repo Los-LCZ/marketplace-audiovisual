@@ -388,6 +388,21 @@ export type Database = {
           },
         ];
       };
+      /** Días cerrados por el anfitrión (hora de Chile). `reason` es privado. */
+      space_blackouts: {
+        Row: { id: string; space_id: string; date: string; reason: string | null; created_at: string };
+        Insert: { id?: string; space_id: string; date: string; reason?: string | null; created_at?: string };
+        Update: { reason?: string | null };
+        Relationships: [
+          {
+            foreignKeyName: "space_blackouts_space_id_fkey";
+            columns: ["space_id"];
+            isOneToOne: false;
+            referencedRelation: "spaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       /** Perfil público (sin teléfono). */
@@ -501,6 +516,10 @@ export type Database = {
         Args: Record<string, never>;
         Returns: { category: SpaceCategory; space_count: number; min_price: number }[];
       };
+      get_space_blackout_dates: {
+        Args: { p_space_id: string; p_from: string; p_to: string };
+        Returns: string[];
+      };
       get_available_space_ids: {
         Args: { p_date: string; p_categories?: SpaceCategory[] | null };
         Returns: string[];
@@ -536,6 +555,7 @@ export type Amenity = Tables<"amenities">;
 export type Booking = Tables<"bookings">;
 export type Review = Tables<"reviews">;
 export type ClientReview = Tables<"client_reviews">;
+export type SpaceBlackout = Tables<"space_blackouts">;
 export type PublicProfile = PublicSchema["Views"]["public_profiles"]["Row"];
 export type SpaceRatingStats = PublicSchema["Views"]["space_rating_stats"]["Row"];
 export type ProfileReview = PublicSchema["Functions"]["get_profile_reviews"]["Returns"][number];
