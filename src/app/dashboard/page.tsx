@@ -161,7 +161,7 @@ export default async function DashboardPage() {
         ].map(([label, value, hint]) => (
           <div key={label} className="kpi panel">
             <dt>{label}</dt>
-            <dd>{value}</dd>
+            <dd className={value === "Sin datos" ? "na" : undefined}>{value}</dd>
             {hint && <p className="dim mt-1 text-xs">{hint}</p>}
           </div>
         ))}
@@ -184,7 +184,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="host-grid">
-        <div className="grid content-start gap-10">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-10">
           <section aria-labelledby="sol-t">
             <h2 className="display h3" id="sol-t">
               Solicitudes
@@ -258,7 +258,7 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        <aside className="grid content-start gap-[34px]">
+        <aside className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-[34px]">
           <section>
             <b>{spaces.length === 1 ? "Tu espacio" : "Tus espacios"}</b>
             {spaces.length ? (

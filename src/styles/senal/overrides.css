@@ -27,3 +27,14 @@
 .range:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--acc); outline-offset: 3px; }
 .range:focus-visible::-moz-range-thumb { outline: 2px solid var(--acc); outline-offset: 3px; }
 .field:has(select:focus-visible) { border-color: var(--acc); box-shadow: 0 0 0 2px var(--acc-soft); }
+
+/* Tarjeta de solicitud: la fecha y el monto no se pegan en pantallas angostas. */
+.req .when { gap: 10px; flex-wrap: wrap; }
+/* Las listas de tarjetas no crecen más que su contenedor en móvil. */
+.list { grid-template-columns: minmax(0, 1fr); }
+/* KPI sin dato: texto en vez de cifra, más chico para no partirse en dos líneas. */
+.kpi dd.na { font-size: 18px; color: var(--dim); }
+/* El botón REC del mundo Audiovisual es para "me gusta"; "Aceptar" (check) muestra su ícono. */
+[data-world="av"] .dbtn.yes.big[data-icon="check"] { border-color: color-mix(in oklab, var(--ok) 55%, transparent); color: var(--ok); }
+[data-world="av"] .dbtn.yes.big[data-icon="check"]::after { content: none; }
+[data-world="av"] .dbtn.yes.big[data-icon="check"] svg { display: block; }
