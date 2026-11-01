@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { escapeLike } from "@/lib/like";
+import { isValidIsoDate } from "@/lib/iso-date";
 import type {
   Amenity,
   CommuneCount,
@@ -38,8 +39,6 @@ export type SpaceWithAmenities = Space & RatingFields & { amenities: Amenity[] }
 export type SpaceDetail = SpaceWithAmenities & { host: PublicProfile | null };
 
 type Client = Awaited<ReturnType<typeof createClient>>;
-
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Agrega `amenities` a una lista de espacios con una sola query. */
 async function attachAmenities<T extends { id: string }>(
@@ -104,14 +103,18 @@ export async function listPublishedSpaces(filters: SpaceFilters = {}) {
     spaceIds = [...new Set((links ?? []).map((l) => l.space_id))];
     if (!spaceIds.length) return empty;
   }
-  if (filters.availableOn && DATE_RE.test(filters.availableOn)) {
+  if (isValidIsoDate(filters.availableOn)) {
     const { data: available, error } = await supabase.rpc("get_available_space_ids", {
       p_date: filters.availableOn,
       p_categories: categories.length ? categories : null,
     });
-    if (error) throw new Error(`Error al filtrar por disponibilidad: ${error.message}`);
-    spaceIds = intersect(spaceIds, available ?? []);
-    if (!spaceIds.length) return empty;
+    if (error) {
+      // Defensa en profundidad (E-04): sin disponibilidad se lista igual, sin ese filtro.
+      console.error(`listPublishedSpaces: disponibilidad ignorada: ${error.message}`);
+    } else {
+      spaceIds = intersect(spaceIds, available ?? []);
+      if (!spaceIds.length) return empty;
+    }
   }
 
   // Filtros comunes a la página y al conteo.
