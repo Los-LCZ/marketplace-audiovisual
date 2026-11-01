@@ -19,7 +19,7 @@ export function LoginForm({ next, callbackError }: { next?: string; callbackErro
         <p className="text-sm text-muted-foreground">Ingresa para reservar o gestionar tus espacios.</p>
       </div>
       {callbackError && !state && (
-        <FormMessage state={{ ok: false, error: "El enlace de confirmación no es válido o expiró" }} />
+        <FormMessage state={{ ok: false, error: "El enlace no es válido o expiró. Si querías cambiar tu contraseña, pide uno nuevo." }} />
       )}
       <input type="hidden" name="next" value={next ?? "/"} />
       <Field label="Correo" htmlFor="email">
@@ -27,6 +27,9 @@ export function LoginForm({ next, callbackError }: { next?: string; callbackErro
       </Field>
       <Field label="Contraseña" htmlFor="password">
         <Input id="password" name="password" type="password" autoComplete="current-password" required />
+        <Link href="/recuperar" className="self-end text-sm text-muted-foreground hover:text-primary hover:underline">
+          ¿Olvidaste tu contraseña?
+        </Link>
       </Field>
       <FormMessage state={state} />
       <Button type="submit" disabled={pending}>
