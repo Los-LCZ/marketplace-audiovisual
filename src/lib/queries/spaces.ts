@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { escapeLike } from "@/lib/like";
 import type {
   Amenity,
   CommuneCount,
@@ -68,15 +69,15 @@ const SEARCH_COLUMNS = ["title", "description", "city", "commune"] as const;
 
 /**
  * Arma el filtro `.or()` de PostgREST para una búsqueda ilike en varias columnas.
- * - Escapa los comodines de LIKE (`%`, `_`, `\`) para que se busquen literalmente.
+ * - Escapa los comodines de LIKE con escapeLike para que se busquen literalmente.
  * - Envuelve el valor entre comillas dobles, lo que neutraliza `,` y paréntesis
  *   (reservados en la sintaxis de `or`), escapando `"` y `\` dentro de ellas.
- * - Quita `*`, que PostgREST trata como alias de `%`.
+ * - Cambia `*` (alias de `%` en PostgREST) por un espacio.
  */
 function buildSearchFilter(q: string) {
   const term = q.replace(/\*/g, " ").replace(/\s+/g, " ").trim().slice(0, 100);
   if (!term) return null;
-  const likePattern = `%${term.replace(/[\\%_]/g, "\\$&")}%`;
+  const likePattern = `%${escapeLike(term)}%`;
   const quoted = `"${likePattern.replace(/["\\]/g, "\\$&")}"`;
   return SEARCH_COLUMNS.map((column) => `${column}.ilike.${quoted}`).join(",");
 }
@@ -120,8 +121,9 @@ export async function listPublishedSpaces(filters: SpaceFilters = {}) {
     const search = filters.q ? buildSearchFilter(filters.q) : null;
     if (search) query = query.or(search);
     if (categories.length) query = query.in("category", categories);
-    if (filters.city) query = query.ilike("city", filters.city);
-    if (filters.commune) query = query.ilike("commune", filters.commune);
+    // ilike sin comodines: igualdad sin distinguir mayúsculas (E-02: `%` y `_` van literales).
+    if (filters.city) query = query.ilike("city", escapeLike(filters.city));
+    if (filters.commune) query = query.ilike("commune", escapeLike(filters.commune));
     if (filters.minPrice != null) query = query.gte("price_per_hour", filters.minPrice);
     if (filters.maxPrice != null) query = query.lte("price_per_hour", filters.maxPrice);
     return query;
