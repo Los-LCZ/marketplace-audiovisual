@@ -213,7 +213,7 @@ export function SwipeDeck<T>(props: Props<T>) {
             <Zap aria-hidden />
           </button>
         )}
-        <button type="button" className="dbtn big yes" aria-label={labels.right} title={labels.right} onClick={() => commit("right")}>
+        <button type="button" className="dbtn big yes" data-icon={rightIcon} aria-label={labels.right} title={labels.right} onClick={() => commit("right")}>
           <RightIcon aria-hidden />
         </button>
       </div>

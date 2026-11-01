@@ -4,22 +4,42 @@ import { useEffect, useEffectEvent, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
-// Cierra con Escape y enfoca el primer control al abrir. El efecto depende solo de
-// `open`: si dependiera de `onClose` (una función nueva en cada render del padre),
-// cada cambio de estado dentro de la capa devolvería el foco al botón de cerrar.
-function useLayer(open: boolean, onClose: () => void) {
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+// Capa modal: cierra con Escape, enfoca el primer control al abrir, mantiene el Tab
+// dentro de la capa y al cerrar devuelve el foco a lo que la abrió. El efecto depende
+// solo de `open`: si dependiera de `onClose` (una función nueva en cada render del
+// padre), cada cambio de estado dentro de la capa devolvería el foco al botón de cerrar.
+export function useLayer(open: boolean, onClose: () => void) {
   const ref = useRef<HTMLDivElement>(null);
-  const onEscape = useEffectEvent((e: KeyboardEvent) => {
-    if (e.key === "Escape") onClose();
+  const onKey = useEffectEvent((e: KeyboardEvent) => {
+    if (e.key === "Escape") return onClose();
+    if (e.key !== "Tab" || !ref.current) return;
+    const items = [...ref.current.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => el.offsetParent !== null);
+    if (!items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    const active = document.activeElement;
+    if (e.shiftKey && (active === first || !ref.current.contains(active))) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && (active === last || !ref.current.contains(active))) {
+      e.preventDefault();
+      first.focus();
+    }
   });
   useEffect(() => {
     if (!open) return;
-    const onKeyDown = (e: KeyboardEvent) => onEscape(e);
+    const opener = document.activeElement as HTMLElement | null;
+    const onKeyDown = (e: KeyboardEvent) => onKey(e);
     document.addEventListener("keydown", onKeyDown);
-    ref.current
-      ?.querySelector<HTMLElement>("button, [href], input, select, textarea")
-      ?.focus({ preventScroll: true });
-    return () => document.removeEventListener("keydown", onKeyDown);
+    ref.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus({ preventScroll: true });
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      // Si el que abrió la capa sigue en la página (no se desmontó al revalidar), recupera el foco.
+      if (opener?.isConnected) opener.focus({ preventScroll: true });
+    };
   }, [open]);
   return ref;
 }
