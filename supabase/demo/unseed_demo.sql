@@ -2,13 +2,27 @@
 -- Borra los datos demo cargados con seed_demo.sql (usuarios @senal-demo.test).
 -- También borra las reservas que usuarios reales hayan hecho en espacios demo.
 -- Se ejecuta a mano en el SQL Editor.
+--
+-- Fotos: Supabase no permite borrar archivos de Storage con SQL (y borrar solo la
+-- fila de storage.objects dejaría el archivo huérfano). Este script AVISA qué
+-- carpetas de space-images tienen fotos de anfitriones demo; bórralas desde
+-- Dashboard → Storage → space-images (ver README, "Datos demo").
 -- =============================================================================
 
 do $$
 declare
   v_users    int;
   v_bookings int;
+  v_folders  text;
 begin
+  select string_agg(distinct (storage.foldername(o.name))[1], ', ')
+  into v_folders
+  from storage.objects o
+  where o.bucket_id = 'space-images'
+    and (storage.foldername(o.name))[1] in (
+      select id::text from auth.users where email like '%@senal-demo.test'
+    );
+
   -- Las reservas tienen FK "on delete restrict" hacia espacios y perfiles:
   -- primero se borran (sus reseñas caen en cascada).
   delete from public.bookings b
@@ -26,5 +40,8 @@ begin
   get diagnostics v_users = row_count;
 
   raise notice 'Datos demo borrados: % usuarios y % reservas.', v_users, v_bookings;
+  if v_folders is not null then
+    raise warning 'Quedan fotos de anfitriones demo en Storage. Borra estas carpetas de space-images desde el Dashboard: %', v_folders;
+  end if;
 end;
 $$;

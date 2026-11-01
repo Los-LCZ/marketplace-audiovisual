@@ -1,4 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
+import { escapeLike } from "@/lib/like";
+import { isValidIsoDate } from "@/lib/iso-date";
 import type {
   Amenity,
   CommuneCount,
@@ -38,8 +40,6 @@ export type SpaceDetail = SpaceWithAmenities & { host: PublicProfile | null };
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-
 /** Agrega `amenities` a una lista de espacios con una sola query. */
 async function attachAmenities<T extends { id: string }>(
   supabase: Client,
@@ -68,15 +68,15 @@ const SEARCH_COLUMNS = ["title", "description", "city", "commune"] as const;
 
 /**
  * Arma el filtro `.or()` de PostgREST para una búsqueda ilike en varias columnas.
- * - Escapa los comodines de LIKE (`%`, `_`, `\`) para que se busquen literalmente.
+ * - Escapa los comodines de LIKE con escapeLike para que se busquen literalmente.
  * - Envuelve el valor entre comillas dobles, lo que neutraliza `,` y paréntesis
  *   (reservados en la sintaxis de `or`), escapando `"` y `\` dentro de ellas.
- * - Quita `*`, que PostgREST trata como alias de `%`.
+ * - Cambia `*` (alias de `%` en PostgREST) por un espacio.
  */
 function buildSearchFilter(q: string) {
   const term = q.replace(/\*/g, " ").replace(/\s+/g, " ").trim().slice(0, 100);
   if (!term) return null;
-  const likePattern = `%${term.replace(/[\\%_]/g, "\\$&")}%`;
+  const likePattern = `%${escapeLike(term)}%`;
   const quoted = `"${likePattern.replace(/["\\]/g, "\\$&")}"`;
   return SEARCH_COLUMNS.map((column) => `${column}.ilike.${quoted}`).join(",");
 }
@@ -103,27 +103,36 @@ export async function listPublishedSpaces(filters: SpaceFilters = {}) {
     spaceIds = [...new Set((links ?? []).map((l) => l.space_id))];
     if (!spaceIds.length) return empty;
   }
-  if (filters.availableOn && DATE_RE.test(filters.availableOn)) {
+  if (isValidIsoDate(filters.availableOn)) {
     const { data: available, error } = await supabase.rpc("get_available_space_ids", {
       p_date: filters.availableOn,
       p_categories: categories.length ? categories : null,
     });
-    if (error) throw new Error(`Error al filtrar por disponibilidad: ${error.message}`);
-    spaceIds = intersect(spaceIds, available ?? []);
-    if (!spaceIds.length) return empty;
+    if (error) {
+      // Defensa en profundidad (E-04): sin disponibilidad se lista igual, sin ese filtro.
+      console.error(`listPublishedSpaces: disponibilidad ignorada: ${error.message}`);
+    } else {
+      spaceIds = intersect(spaceIds, available ?? []);
+      if (!spaceIds.length) return empty;
+    }
   }
 
-  let query = supabase.from("space_cards").select("*", { count: "exact" });
+  // Filtros comunes a la página y al conteo.
+  const filtered = (head = false) => {
+    let query = supabase.from("space_cards").select("*", { count: "exact", head });
+    if (spaceIds) query = query.in("id", spaceIds);
+    const search = filters.q ? buildSearchFilter(filters.q) : null;
+    if (search) query = query.or(search);
+    if (categories.length) query = query.in("category", categories);
+    // ilike sin comodines: igualdad sin distinguir mayúsculas (E-02: `%` y `_` van literales).
+    if (filters.city) query = query.ilike("city", escapeLike(filters.city));
+    if (filters.commune) query = query.ilike("commune", escapeLike(filters.commune));
+    if (filters.minPrice != null) query = query.gte("price_per_hour", filters.minPrice);
+    if (filters.maxPrice != null) query = query.lte("price_per_hour", filters.maxPrice);
+    return query;
+  };
 
-  if (spaceIds) query = query.in("id", spaceIds);
-  const search = filters.q ? buildSearchFilter(filters.q) : null;
-  if (search) query = query.or(search);
-  if (categories.length) query = query.in("category", categories);
-  if (filters.city) query = query.ilike("city", filters.city);
-  if (filters.commune) query = query.ilike("commune", filters.commune);
-  if (filters.minPrice != null) query = query.gte("price_per_hour", filters.minPrice);
-  if (filters.maxPrice != null) query = query.lte("price_per_hour", filters.maxPrice);
-
+  let query = filtered();
   switch (filters.sort) {
     case "price_asc":
       query = query.order("price_per_hour", { ascending: true });
@@ -141,6 +150,12 @@ export async function listPublishedSpaces(filters: SpaceFilters = {}) {
   query = query.order("created_at", { ascending: false }).order("id").range(from, from + pageSize - 1);
 
   const { data, error, count } = await query;
+  if (error?.code === "PGRST103") {
+    // Página fuera de rango (PostgREST responde 416): lista vacía con el total real.
+    const { count: total, error: countError } = await filtered(true);
+    if (countError) throw new Error(`Error al contar espacios: ${countError.message}`);
+    return { ...empty, total: total ?? 0 };
+  }
   if (error) throw new Error(`Error al listar espacios: ${error.message}`);
 
   return {

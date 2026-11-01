@@ -26,6 +26,7 @@ export const SPACE_CATEGORY_LABELS: Record<SpaceCategory, string> = {
 export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
   requested: "Solicitada",
   rejected: "Rechazada",
+  expired: "Vencida",
   pending_payment: "Pendiente de pago",
   confirmed: "Confirmada",
   completed: "Completada",

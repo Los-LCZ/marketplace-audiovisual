@@ -38,6 +38,7 @@ export function Badge({
 const BOOKING_TONES: Record<BookingStatus, BadgeTone> = {
   requested: "warning",
   rejected: "neutral",
+  expired: "neutral",
   pending_payment: "warning",
   confirmed: "primary",
   completed: "success",

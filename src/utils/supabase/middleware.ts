@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 
 // Rutas que requieren sesión iniciada (por prefijo: también protege sus subrutas).
 // `/perfil` es la edición del perfil propio; un perfil público debe vivir en otra ruta.
@@ -40,7 +41,9 @@ export async function updateSession(request: NextRequest) {
   if (!isAuthenticated && PROTECTED_PREFIXES.some((p) => pathname.startsWith(p))) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("next", pathname);
+    url.search = "";
+    // Conserva también los parámetros (p. ej. /explorar?fecha=...), validados como ruta interna.
+    url.searchParams.set("next", safeRedirectPath(pathname + request.nextUrl.search, request.nextUrl.origin));
     return redirectWithCookies(url, response);
   }
 
