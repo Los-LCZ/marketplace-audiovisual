@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:sql": "node tests/sql/run.mjs",
-    "test:unit": "node --experimental-strip-types --test tests/unit/"
+    "test:unit": "node --experimental-strip-types --test \"tests/unit/*.test.mjs\""
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
