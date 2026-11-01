@@ -57,6 +57,9 @@ Ejecutar las migraciones de `supabase/migrations/` **en orden** (SQL Editor o `s
 | `20261101120000_host_response_stats.sql` | `requested_at` y KPI de respuesta del anfitrión |
 | `20261101130000_booking_expired_status.sql` | Estado `expired` (**ejecutar sola**) |
 | `20261101130100_expire_requests.sql` | Vencimiento automático de solicitudes (pg_cron cada 15 min) |
+| `20261101140000_cancel_before_start.sql` | Solo se cancela antes de que empiece la reserva |
+| `20261101140100_host_response_stats_public.sql` | Documenta que el KPI de respuesta es público |
+| `20261101140200_available_space_ids_setbased.sql` | Disponibilidad por día en una sola consulta (rendimiento) |
 
 `init.sql` no se edita: cada cambio de esquema va en una migración nueva `<timestamp>_<descripcion>.sql`.
 
