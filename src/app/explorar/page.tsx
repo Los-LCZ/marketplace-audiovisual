@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { listAmenities, listCommunes, listLikedSpaces, listPublishedSpaces, type SpaceSort } from "@/lib/queries/spaces";
 import { buildQueryString, parseDateParam, parseSort, parseSpaceFilters, type SortKey } from "@/lib/search-params";
@@ -37,6 +38,12 @@ export default async function ExplorarPage({ searchParams }: PageProps<"/explora
     listCommunes(),
     user ? listLikedSpaces(user.id) : null,
   ]);
+  // Página fuera de rango (p. ej. ?page=9 con 13 resultados): ir a la última, sin perder los filtros.
+  const lastPage = Math.ceil(total / PAGE_SIZE);
+  if (total > 0 && page > lastPage) {
+    redirect(`/explorar${buildQueryString(params, { page: lastPage > 1 ? String(lastPage) : undefined })}`);
+  }
+
   const likedIds = liked ? new Set(liked.map((s) => s.id)) : null;
   const communeNames = communes.length ? communes.slice(0, MAX_COMMUNES).map((c) => c.commune) : SUGGESTED_COMMUNES;
 

@@ -113,17 +113,21 @@ export async function listPublishedSpaces(filters: SpaceFilters = {}) {
     if (!spaceIds.length) return empty;
   }
 
-  let query = supabase.from("space_cards").select("*", { count: "exact" });
+  // Filtros comunes a la página y al conteo.
+  const filtered = (head = false) => {
+    let query = supabase.from("space_cards").select("*", { count: "exact", head });
+    if (spaceIds) query = query.in("id", spaceIds);
+    const search = filters.q ? buildSearchFilter(filters.q) : null;
+    if (search) query = query.or(search);
+    if (categories.length) query = query.in("category", categories);
+    if (filters.city) query = query.ilike("city", filters.city);
+    if (filters.commune) query = query.ilike("commune", filters.commune);
+    if (filters.minPrice != null) query = query.gte("price_per_hour", filters.minPrice);
+    if (filters.maxPrice != null) query = query.lte("price_per_hour", filters.maxPrice);
+    return query;
+  };
 
-  if (spaceIds) query = query.in("id", spaceIds);
-  const search = filters.q ? buildSearchFilter(filters.q) : null;
-  if (search) query = query.or(search);
-  if (categories.length) query = query.in("category", categories);
-  if (filters.city) query = query.ilike("city", filters.city);
-  if (filters.commune) query = query.ilike("commune", filters.commune);
-  if (filters.minPrice != null) query = query.gte("price_per_hour", filters.minPrice);
-  if (filters.maxPrice != null) query = query.lte("price_per_hour", filters.maxPrice);
-
+  let query = filtered();
   switch (filters.sort) {
     case "price_asc":
       query = query.order("price_per_hour", { ascending: true });
@@ -141,6 +145,12 @@ export async function listPublishedSpaces(filters: SpaceFilters = {}) {
   query = query.order("created_at", { ascending: false }).order("id").range(from, from + pageSize - 1);
 
   const { data, error, count } = await query;
+  if (error?.code === "PGRST103") {
+    // Página fuera de rango (PostgREST responde 416): lista vacía con el total real.
+    const { count: total, error: countError } = await filtered(true);
+    if (countError) throw new Error(`Error al contar espacios: ${countError.message}`);
+    return { ...empty, total: total ?? 0 };
+  }
   if (error) throw new Error(`Error al listar espacios: ${error.message}`);
 
   return {
