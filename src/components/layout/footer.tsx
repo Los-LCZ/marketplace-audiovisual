@@ -73,6 +73,11 @@ export async function Footer() {
         </div>
         <div className="foot-bottom">
           <span>© {YEAR} Señal. Hecho en Santiago de Chile.</span>
+          <nav aria-label="Legal" className="flex flex-wrap gap-x-4 gap-y-1">
+            <Link href="/terminos">Términos</Link>
+            <Link href="/privacidad">Privacidad</Link>
+            <Link href="/cancelaciones">Cancelaciones</Link>
+          </nav>
           <span>Precios en pesos chilenos. Horarios en hora de Chile.</span>
         </div>
       </div>

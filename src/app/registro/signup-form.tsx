@@ -76,6 +76,17 @@ export function SignupForm() {
       <Button type="submit" disabled={pending}>
         {pending ? "Creando cuenta..." : "Registrarme"}
       </Button>
+      <p className="text-center text-xs text-muted-foreground">
+        Al registrarte aceptas los{" "}
+        <Link href="/terminos" className="text-primary hover:underline">
+          Términos
+        </Link>{" "}
+        y la{" "}
+        <Link href="/privacidad" className="text-primary hover:underline">
+          Política de privacidad
+        </Link>
+        .
+      </p>
       <p className="text-center text-sm text-muted-foreground">
         ¿Ya tienes cuenta?{" "}
         <Link href="/login" className="font-medium text-primary hover:underline">
