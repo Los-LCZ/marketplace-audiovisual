@@ -60,6 +60,7 @@ Ejecutar las migraciones de `supabase/migrations/` **en orden** (SQL Editor o `s
 | `20261101140000_cancel_before_start.sql` | Solo se cancela antes de que empiece la reserva |
 | `20261101140100_host_response_stats_public.sql` | Documenta que el KPI de respuesta es público |
 | `20261101140200_available_space_ids_setbased.sql` | Disponibilidad por día en una sola consulta (rendimiento) |
+| `20261101160000_avatars.sql` | Foto de perfil: bucket `avatars` y validación de `avatar_url` |
 
 `init.sql` no se edita: cada cambio de esquema va en una migración nueva `<timestamp>_<descripcion>.sql`.
 
@@ -130,4 +131,5 @@ Las rutas protegidas se definen en `PROTECTED_PREFIXES` de `src/utils/supabase/m
   2. El webhook de la pasarela, con `service_role`, guardará `payment_id` y pasará la reserva a `confirmed`.
   3. Habrá que expirar las `pending_payment` sin pagar (cron). El anfitrión ya no puede confirmarlas por su cuenta.
 - **Calificación de ida y vuelta, a ciegas:** el cliente califica el espacio (`reviews`) y el anfitrión al cliente (`client_reviews`), una vez por reserva `completed`. Ninguna parte ve la reseña de la otra hasta que ambas existan o pasen 14 días desde que se completó. Promedios, listados y el orden por rating solo cuentan reseñas reveladas. Una reseña no se puede editar ni borrar después de revelada.
+- **Foto de perfil:** bucket público `avatars` (`avatars/{uid}/…`, máx. 2 MB, JPG/PNG/WebP). `profiles.avatar_url` solo acepta URLs de ese bucket, porque `next/image` solo permite imágenes de Supabase.
 - **Destacados y verificados:** `spaces.featured` y `profiles.verified` solo los cambia un admin (o el SQL Editor).

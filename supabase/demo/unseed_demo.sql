@@ -5,8 +5,8 @@
 --
 -- Fotos: Supabase no permite borrar archivos de Storage con SQL (y borrar solo la
 -- fila de storage.objects dejaría el archivo huérfano). Este script AVISA qué
--- carpetas de space-images tienen fotos de anfitriones demo; bórralas desde
--- Dashboard → Storage → space-images (ver README, "Datos demo").
+-- carpetas de space-images y avatars tienen fotos de usuarios demo; bórralas desde
+-- Dashboard → Storage (ver README, "Datos demo").
 -- =============================================================================
 
 do $$
@@ -18,7 +18,7 @@ begin
   select string_agg(distinct (storage.foldername(o.name))[1], ', ')
   into v_folders
   from storage.objects o
-  where o.bucket_id = 'space-images'
+  where o.bucket_id in ('space-images', 'avatars')
     and (storage.foldername(o.name))[1] in (
       select id::text from auth.users where email like '%@senal-demo.test'
     );
@@ -41,7 +41,7 @@ begin
 
   raise notice 'Datos demo borrados: % usuarios y % reservas.', v_users, v_bookings;
   if v_folders is not null then
-    raise warning 'Quedan fotos de anfitriones demo en Storage. Borra estas carpetas de space-images desde el Dashboard: %', v_folders;
+    raise warning 'Quedan fotos de usuarios demo en Storage. Borra estas carpetas de space-images y avatars desde el Dashboard: %', v_folders;
   end if;
 end;
 $$;

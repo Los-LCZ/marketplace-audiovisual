@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { fail, getString, getStringList, type ActionState } from "@/lib/action-state";
+import { removeAvatarFile, uploadAvatar } from "@/lib/storage";
 
 const MAX_TAGS = 12;
 
@@ -55,4 +56,54 @@ export async function updateProfile(_prev: ActionState, formData: FormData): Pro
   revalidatePath("/perfil");
   revalidatePath("/", "layout");
   return { ok: true, message: "Perfil actualizado" };
+}
+
+function revalidateProfile(userId: string) {
+  revalidatePath("/perfil");
+  revalidatePath(`/u/${userId}`);
+  revalidatePath("/", "layout");
+}
+
+/**
+ * Sube o reemplaza la foto de perfil. Campo: `avatar` (JPG, PNG o WebP, máx. 2 MB).
+ * Borra la foto anterior. Con useActionState: `useActionState(updateAvatar, null)`.
+ */
+export async function updateAvatar(_prev: ActionState<{ url: string }>, formData: FormData): Promise<ActionState<{ url: string }>> {
+  const user = await getCurrentUser();
+  if (!user) return fail("Debes iniciar sesión");
+
+  const file = formData.get("avatar");
+  if (!(file instanceof File) || file.size === 0) return fail("Elige una foto", { avatar: "Elige una foto" });
+
+  const supabase = await createClient();
+  const upload = await uploadAvatar(supabase, user.id, file);
+  if (!upload.url) return fail(upload.error ?? "No se pudo subir la foto", { avatar: upload.error ?? "Error" });
+
+  const { error } = await supabase.from("profiles").update({ avatar_url: upload.url }).eq("id", user.id);
+  if (error) {
+    await removeAvatarFile(supabase, upload.url);
+    return fail(`No se pudo guardar la foto: ${error.message}`);
+  }
+
+  await removeAvatarFile(supabase, user.profile.avatar_url);
+  revalidateProfile(user.id);
+  return { ok: true, data: { url: upload.url }, message: "Foto actualizada" };
+}
+
+/**
+ * Quita la foto de perfil (y borra el archivo).
+ * No recibe FormData: úsala con `useTransition` o con `.bind`.
+ */
+export async function removeAvatar(): Promise<ActionState> {
+  const user = await getCurrentUser();
+  if (!user) return fail("Debes iniciar sesión");
+  if (!user.profile.avatar_url) return { ok: true };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("profiles").update({ avatar_url: null }).eq("id", user.id);
+  if (error) return fail(`No se pudo quitar la foto: ${error.message}`);
+
+  await removeAvatarFile(supabase, user.profile.avatar_url);
+  revalidateProfile(user.id);
+  return { ok: true, message: "Foto eliminada" };
 }
