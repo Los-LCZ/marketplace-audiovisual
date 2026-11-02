@@ -34,7 +34,7 @@
 .batt { display: inline-flex; align-items: center; gap: 2px; }
 .batt b { width: 4px; height: 10px; background: #fff; display: inline-block; }
 .batt b.off { opacity: .25; }
-.vf-peak { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; opacity: 0; transition: opacity .3s; background: radial-gradient(circle at var(--px,50%) var(--py,50%), rgba(255,62,200,.35), transparent 22%); }
+.vf-peak { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; opacity: 0; transition: opacity .3s; background: radial-gradient(circle at var(--px,50%) var(--py,50%), color-mix(in oklab, var(--acc) 35%, transparent), transparent 22%); }
 .vf.focused .vf-peak { opacity: 1; }
 .vf-zoom { position: absolute; right: 22px; top: 50%; translate: 0 -50%; display: flex; flex-direction: column; align-items: center; gap: 8px; color: #fff; font: 500 10px var(--font-mono); pointer-events: auto; }
 .vf-zoom input { writing-mode: vertical-lr; direction: rtl; height: 120px; width: 4px; }

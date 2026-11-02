@@ -5,20 +5,26 @@
   --font-body: var(--font-hanken), system-ui, sans-serif;
   --font-mono: var(--font-martian), ui-monospace, "SFMono-Regular", Menlo, monospace;
 
-  --bg: #090b0e;
-  --s1: #10131a;
-  --s2: #171b23;
-  --s3: #20252f;
-  --line: rgba(226, 236, 255, 0.09);
-  --line2: rgba(226, 236, 255, 0.2);
-  --fg: #eaf0f7;
-  --dim: #8b96a6;
-  --acc: #ff3ec8;
-  --acc-soft: rgba(255, 62, 200, 0.14);
-  --acc-ink: #160111;
+  --bg: #090c10;
+  --s1: #161b22;
+  --s2: #1a212b;
+  --s3: #1e293b;
+  --line: rgba(148, 163, 184, 0.1);
+  --line2: #30363d;
+  --fg: #f8fafc;
+  --dim: #94a3b8;
+  --acc: #38bdf8;
+  --acc-soft: rgba(56, 189, 248, 0.14);
+  --acc-ink: #04131c;
   --rec: #ff3b30;
   --ok: #6ff0c1;
-  --glow: 0 0 24px rgba(255, 62, 200, 0.45);
+  --glow: 0 0 24px rgba(56, 189, 248, 0.45);
+  /* Estudio: superficie de vidrio, luz cenital del softbox y rebote de los focos sobre el contenido. */
+  --glass: rgba(22, 27, 34, 0.7);
+  --glass-blur: blur(12px) saturate(1.15);
+  --panel-line: var(--line2);
+  --key: rgba(248, 250, 252, 0.14);
+  --spill: 0 28px 80px -28px rgba(56, 189, 248, 0.38);
   --radius: 14px;
   --radius-sm: 8px;
   color-scheme: dark;
@@ -38,6 +44,11 @@
   --rec: #ff4a2e;
   --ok: #9be38b;
   --glow: 0 0 24px rgba(255, 176, 32, 0.45);
+  --glass: var(--s1);
+  --glass-blur: none;
+  --panel-line: var(--line);
+  --key: transparent;
+  --spill: 0 30px 80px -30px rgba(0, 0, 0, 0.9);
   --radius: 10px;
   --radius-sm: 6px;
 }
