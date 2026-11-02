@@ -28,8 +28,12 @@
   --key: rgba(248, 250, 252, 0.14);
   --key-at: 50% 0%;
   --spill: 0 28px 80px -28px rgba(56, 189, 248, 0.38);
-  /* Foto del set: tinte azul medianoche (multiply) y velo oscuro para que el texto se lea encima. */
-  --photo-tint: #5677b3;
+  /* Set dibujado: madera de los paneles, latón del reflector y luz de los focos; tinte azul medianoche
+     (multiply) y velo oscuro encima para que el texto se lea. */
+  --wood: #b9ad99;
+  --brass: #b08a52;
+  --lamp: #e8f1ff;
+  --scene-tint: #5677b3;
   --veil-top: rgba(9, 12, 16, 0.4);
   --veil: rgba(9, 12, 16, 0.5);
   --radius: 14px;
