@@ -90,6 +90,15 @@
 .bd-box-hole { fill: #000; fill-opacity: 0.7; }
 .bd-sandbag { fill: color-mix(in oklab, var(--wood) 35%, var(--s3)); stroke: #000; stroke-opacity: 0.5; }
 .bd-lens-glass { fill: color-mix(in oklab, var(--acc) 40%, var(--s3)); }
+.bd-leg.thick { stroke-width: 6; }
+.bd-spreader { fill: none; stroke: var(--dim); stroke-opacity: 0.55; stroke-width: 2.5; }
+.bd-pan-bar { fill: none; stroke: var(--dim); stroke-opacity: 0.7; stroke-width: 5; stroke-linecap: round; }
+.bd-pan-bar.thin { stroke-width: 3; }
+.bd-cam-body { stroke: var(--line2); stroke-width: 1.5; }
+.bd-lens-ring { fill: var(--s2); stroke: var(--dim); stroke-opacity: 0.45; stroke-width: 1.5; }
+.bd-cam-screen { fill: color-mix(in oklab, var(--acc) 45%, var(--s1)); }
+.bd-tally { fill: var(--rec); }
+.bd-tally-bloom { fill: var(--rec); fill-opacity: 0.6; }
 
 /* Estudio de Música (MusicStudio) */
 .bd-stop-ink { stop-color: #000; }

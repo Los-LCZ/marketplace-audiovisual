@@ -3,7 +3,8 @@
  * Unsplash): cortinas, parrilla con barras rotuladas y focos, octabox cenital encendido, ciclorama de papel,
  * paneles con puerta y espejo, softboxes de espalda, flashes, disco reflector, cinta en el piso, bolso y cables.
  * En los bordes (lo que queda a los costados del contenido en pantallas anchas) hay tubos LED, un fresnel en
- * C-stand, un strip softbox, apple boxes y un slider con cámara, con luz cian que enmarca la interfaz.
+ * C-stand, un strip softbox, cámaras de cine sobre trípode, apple boxes y un slider, con luz cian que enmarca
+ * la interfaz.
  * El realismo sale del bloom de las luces, el haz con polvo, la profundidad de campo en el fondo, las sombras
  * de contacto, la textura del concreto, los metales sombreados, la viñeta y el grano. Los pliegues y el polvo
  * se generan con un aleatorio con semilla. Los colores salen de los tokens (clases `bd-*` en studio.css).
@@ -117,7 +118,44 @@ function Cable({ d, width = 3 }: { d: string; width?: number }) {
 
 // Equipos de los bordes: en pantallas anchas quedan a los costados de la columna de contenido y la enmarcan.
 // [x, alto, pie] de los tubos LED verticales
-const TUBES: Array<[number, number, number]> = [[96, 150, 690], [1866, 130, 660]];
+const TUBES: Array<[number, number, number]> = [[60, 150, 690], [1866, 130, 660]];
+// [x, alto del cabezal, piso, apertura, mirando a la derecha] de las cámaras de cine sobre trípode
+const CAMERAS: Array<[number, number, number, number, boolean]> = [[178, 640, 1010, 88, true], [1690, 620, 1000, 84, false]];
+
+// Trípode de cámara: tres patas abiertas desde el cabezal, separador a media altura y sombra de contacto
+function CameraTripod({ x, top, base, spread }: { x: number; top: number; base: number; spread: number }) {
+  const mid = top + (base - top) * 0.72;
+  const at = (dx: number) => x + dx * 0.72;
+  return (
+    <>
+      <ellipse cx={x} cy={base + 8} rx={spread * 1.35} ry={spread * 0.2} fill="url(#av-ao)" />
+      <path d={`M${x} ${top}L${x - spread} ${base}M${x} ${top}L${x + spread} ${base - 4}M${x} ${top}L${x + 10} ${base + 16}`} stroke="url(#av-metal)" className="bd-leg thick" />
+      <path d={`M${at(-spread)} ${mid}L${at(spread)} ${mid - 3}M${at(-spread)} ${mid}L${at(10)} ${mid + 12}M${at(spread)} ${mid - 3}L${at(10)} ${mid + 12}`} className="bd-spreader" />
+      <path d={`M${x - 1} ${top}L${x - spread - 1} ${base}`} className="bd-leg-shine" />
+    </>
+  );
+}
+
+// Cámara de cine con cabezal fluido, matte box, monitor y tally; se dibuja mirando a la derecha y se espeja
+function CinemaCamera({ x, y, right }: { x: number; y: number; right: boolean }) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${right ? 1 : -1} 1)`}>
+      <path d="M-10 -6L-96 -34" className="bd-pan-bar" />
+      <rect x="-20" y="-16" width="40" height="18" rx="4" className="bd-housing" />
+      <rect x="-48" y="-72" width="104" height="58" rx="6" fill="url(#av-cam)" className="bd-cam-body" />
+      <rect x="-40" y="-88" width="70" height="12" rx="5" className="bd-housing" />
+      <rect x="56" y="-62" width="34" height="38" rx="4" fill="url(#av-cam)" className="bd-cam-body" />
+      <rect x="90" y="-58" width="22" height="30" rx="3" className="bd-lens-ring" />
+      <path d="M112 -66L144 -82V-4L112 -20Z" className="bd-housing" />
+      <ellipse cx="116" cy="-43" rx="7" ry="13" className="bd-lens-glass" />
+      <ellipse cx="114" cy="-48" rx="2.5" ry="4" className="bd-spec" />
+      <rect x="-80" y="-104" width="40" height="28" rx="3" className="bd-housing" />
+      <rect x="-76" y="-100" width="32" height="20" className="bd-cam-screen" />
+      <path d="M-44 -90L-40 -78" className="bd-pan-bar thin" />
+      <circle cx="40" cy="-64" r="3.5" className="bd-tally" />
+    </g>
+  );
+}
 
 function EdgeGear() {
   return (
@@ -142,12 +180,20 @@ function EdgeGear() {
       </g>
 
       {/* Apple boxes y saco de arena al pie (izquierda) */}
-      <ellipse cx="210" cy="1062" rx="90" ry="12" fill="url(#av-ao)" />
-      <rect x="140" y="1012" width="140" height="48" rx="3" fill="url(#av-ply)" className="bd-box" />
-      <rect x="160" y="972" width="110" height="40" rx="3" fill="url(#av-ply)" className="bd-box" />
-      <rect x="196" y="1028" width="48" height="12" rx="6" className="bd-box-hole" />
-      <rect x="196" y="985" width="38" height="11" rx="5.5" className="bd-box-hole" />
-      <path d="M22 1004C30 990 70 990 80 1004L84 1022C66 1030 34 1030 18 1022Z" className="bd-sandbag" />
+      <ellipse cx="300" cy="1064" rx="90" ry="12" fill="url(#av-ao)" />
+      <rect x="230" y="1014" width="140" height="48" rx="3" fill="url(#av-ply)" className="bd-box" />
+      <rect x="250" y="974" width="110" height="40" rx="3" fill="url(#av-ply)" className="bd-box" />
+      <rect x="286" y="1030" width="48" height="12" rx="6" className="bd-box-hole" />
+      <rect x="286" y="987" width="38" height="11" rx="5.5" className="bd-box-hole" />
+      <path d="M72 1006C80 992 120 992 130 1006L134 1024C116 1032 84 1032 68 1024Z" className="bd-sandbag" />
+
+      {/* Cámaras de cine sobre trípode, una en cada borde, apuntando al centro del set */}
+      {CAMERAS.map(([x, top, base, spread, right]) => (
+        <g key={x}>
+          <CameraTripod x={x} top={top} base={base} spread={spread} />
+          <CinemaCamera x={x} y={top} right={right} />
+        </g>
+      ))}
 
       {/* Strip softbox (derecha) */}
       <Tripod x={1745} top={670} base={1015} spread={70} />
@@ -183,6 +229,13 @@ function EdgeGlow() {
         <rect x="1680" y="230" width="126" height="460" rx="30" className="bd-tube-bloom wide" filter="url(#av-b40)" />
       </g>
       <circle cx="342" cy="420" r="46" className="bd-tube-bloom" filter="url(#av-b24)" />
+      {/* Brillo de los monitores y el tally de las cámaras */}
+      {CAMERAS.map(([x, top, , , right]) => (
+        <g key={x}>
+          <rect x={right ? x - 80 : x + 40} y={top - 104} width="40" height="28" className="bd-tube-bloom" filter="url(#av-b8)" />
+          <circle cx={right ? x + 40 : x - 40} cy={top - 64} r="10" className="bd-tally-bloom" filter="url(#av-b8)" />
+        </g>
+      ))}
       <circle cx="120" cy="104" r="40" className="bd-tube-bloom" filter="url(#av-b24)" />
       <circle cx="1800" cy="104" r="40" className="bd-tube-bloom" filter="url(#av-b24)" />
     </g>
@@ -310,6 +363,11 @@ export function VideoSet() {
         <filter id="av-b40" x="-80%" y="-80%" width="260%" height="260%">
           <feGaussianBlur stdDeviation="40" />
         </filter>
+        <linearGradient id="av-cam" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" className="bd-stop-s3" />
+          <stop offset="0.35" className="bd-stop-s2" />
+          <stop offset="1" className="bd-stop-ink" />
+        </linearGradient>
         <linearGradient id="av-edge-l" x1="0" x2="1">
           <stop offset="0" className="bd-stop-acc" stopOpacity="0.22" />
           <stop offset="1" className="bd-stop-acc" stopOpacity="0" />
