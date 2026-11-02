@@ -6,7 +6,7 @@ export const OG_SIZE = { width: 1200, height: 630 };
 // Colores de los dos mundos (tokens.css): ImageResponse no lee variables CSS.
 const PALETTE: Record<World, { bg: string; s1: string; acc: string; dim: string }> = {
   av: { bg: "#090c10", s1: "#161b22", acc: "#38bdf8", dim: "#94a3b8" },
-  mu: { bg: "#0d0906", s1: "#16100b", acc: "#ffb020", dim: "#a8977f" },
+  mu: { bg: "#0e0b1d", s1: "#1a1433", acc: "#8b7cc7", dim: "#b3abd6" },
 };
 
 /**

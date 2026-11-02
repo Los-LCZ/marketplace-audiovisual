@@ -1,33 +1,48 @@
 /* Señal · Estudio de cada mundo: escena ilustrada de fondo, luz ambiental, grano y rebote de los focos.
-   Audiovisual es un set con softbox cenital; Música, una sala de control con luz cálida que sube desde la consola. */
+   Audiovisual es un set fotográfico azul medianoche con luz cenital fría; Música, un estudio urbano con LED violeta
+   y neón que sube desde la consola. */
 
 /* ---------- Escena de fondo (StudioBackdrop) ---------- */
-.backdrop { position: fixed; inset: 0; z-index: -2; width: 100%; height: 100%; pointer-events: none; opacity: 0.6; -webkit-mask-image: linear-gradient(180deg, #000 35%, transparent 95%); mask-image: linear-gradient(180deg, #000 35%, transparent 95%); }
+/* La escena ya está dibujada en tonos bajos (equivale a un overlay oscuro sobre una foto); la máscara la funde con
+   el fondo hacia abajo para que las tarjetas y los textos se lean sobre ella. */
+.backdrop { position: fixed; inset: 0; z-index: -2; width: 100%; height: 100%; pointer-events: none; opacity: 0.85; -webkit-mask-image: linear-gradient(180deg, #000 45%, transparent 100%); mask-image: linear-gradient(180deg, #000 45%, transparent 100%); }
 .backdrop-mu, [data-world="mu"] .backdrop-av { display: none; }
 [data-world="mu"] .backdrop-mu { display: block; }
 .bd-stop-bg { stop-color: var(--bg); }
 .bd-stop-s2 { stop-color: var(--s2); }
-.bd-stop-s3 { stop-color: var(--s3); }
+.bd-stop-wall { stop-color: var(--wall); }
 .bd-stop-fg { stop-color: var(--fg); }
 .bd-stop-acc { stop-color: var(--acc); }
+.bd-sidewall { fill: var(--bg); fill-opacity: 0.55; }
 .bd-rig { fill: none; stroke: var(--line2); stroke-width: 2; }
+.bd-seam { fill: none; stroke: var(--line); stroke-width: 2; }
 .bd-stand { fill: none; stroke: var(--line2); stroke-width: 5; stroke-linecap: round; }
+.bd-stand.thin { stroke-width: 3; }
 .bd-gear { fill: var(--bg); stroke: var(--line2); stroke-width: 2; }
 .bd-lens { fill: color-mix(in oklab, var(--acc) 30%, var(--s3)); }
-.bd-led { fill: var(--rec); }
-.bd-softbox { fill: var(--fg); fill-opacity: 0.35; }
-.bd-face { fill: var(--fg); fill-opacity: 0.08; }
-.bd-panel { fill: var(--s3); fill-opacity: 0.5; }
-.bd-panel.deep { fill: var(--s1); }
-.bd-diffuser { opacity: 0.7; }
-.bd-window { fill: var(--s1); }
-.bd-frame { fill: none; stroke: var(--line2); stroke-width: 8; }
-.bd-cone { fill: var(--s2); stroke: var(--line2); stroke-width: 2; }
-.bd-bulb { fill: var(--acc); fill-opacity: 0.6; }
-.bd-desk { stroke: var(--line2); stroke-width: 2; }
+.bd-lamp { fill: var(--fg); fill-opacity: 0.55; }
+.bd-face { fill: var(--fg); fill-opacity: 0.2; }
+.bd-dish { fill: var(--fg); fill-opacity: 0.1; }
+.bd-mesh { fill: none; stroke: var(--fg); stroke-opacity: 0.12; stroke-width: 1; }
+.bd-rim { fill: var(--rim); }
+.bd-head { fill: var(--acc); fill-opacity: 0.7; }
+.bd-ledframe { fill: none; stroke: color-mix(in oklab, var(--acc) 45%, var(--fg)); stroke-width: 6; stroke-opacity: 0.45; }
+.bd-screen { fill: var(--s1); stroke: var(--line2); stroke-width: 3; }
+.bd-bars { fill: var(--acc); fill-opacity: 0.45; }
+.bd-bars.dim { fill-opacity: 0.2; }
+.bd-silver { fill: var(--dim); fill-opacity: 0.5; }
+.bd-keys { fill: var(--fg); fill-opacity: 0.28; }
 .bd-track { fill: var(--bg); }
 .bd-cap { fill: var(--dim); fill-opacity: 0.6; }
-.bd-vu { fill: none; stroke: var(--acc); stroke-width: 10; stroke-opacity: 0.7; }
+.bd-graffiti path { fill: none; stroke-width: 9; stroke-linecap: round; stroke-opacity: 0.4; }
+.bd-graffiti .acc { stroke: var(--acc); }
+.bd-graffiti .rec { stroke: var(--rec); }
+.bd-graffiti .ok { stroke: var(--ok); }
+.bd-rug { stroke: var(--bg); stroke-width: 3; }
+.bd-rug.a { fill: var(--s2); }
+.bd-rug.b { fill: var(--s3); }
+.bd-rug.c { fill: color-mix(in oklab, var(--acc) 35%, var(--s2)); }
+.bd-rug.d { fill: var(--s1); }
 
 /* ---------- Atmósfera del set (Audiovisual) ---------- */
 [data-world="av"] body::before {
@@ -45,19 +60,22 @@
     linear-gradient(180deg, transparent 50%, color-mix(in oklab, var(--s3) 45%, transparent));
 }
 
-/* ---------- Atmósfera de la sala de control (Música) ---------- */
+/* ---------- Atmósfera del estudio urbano (Música) ---------- */
 [data-world="mu"] body::before {
   background:
-    /* Grano cálido, como cinta analógica */
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .85 0 0 0 0 .6 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 160px 160px,
-    /* Lámparas colgantes a los lados */
-    radial-gradient(26% 26% at 18% 0%, var(--key), transparent 72%),
-    radial-gradient(26% 26% at 82% 0%, var(--key), transparent 72%),
-    /* Resplandor ámbar de los vúmetros que sube desde la consola */
+    /* Grano lavanda muy fino */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .85 0 0 0 0 .8 0 0 0 0 1 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 160px 160px,
+    /* LED violeta del techo */
+    radial-gradient(60% 30% at 50% 0%, var(--acc-soft), transparent 75%),
+    radial-gradient(30% 22% at 50% 4%, var(--key), transparent 72%),
+    /* Neón que sube desde el escritorio */
     radial-gradient(70% 45% at 50% 105%, var(--acc-soft), transparent 70%),
-    /* Viñeta de sala tratada: las esquinas se pierden en la madera */
+    /* Viñeta: las esquinas se pierden en los paneles */
     radial-gradient(120% 90% at 50% 40%, transparent 55%, color-mix(in oklab, var(--bg) 80%, transparent));
 }
+
+/* ---------- Buscadores translúcidos sobre la escena ---------- */
+.field, .seg, .worlds { background: var(--glass); border-color: var(--panel-line); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
 
 /* ---------- Rebote de luz detrás del material ---------- */
 [data-world="av"] .vf { box-shadow: var(--spill); }
