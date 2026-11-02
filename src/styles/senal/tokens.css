@@ -60,6 +60,9 @@
   --key-at: 50% 100%;
   --spill: 0 28px 80px -28px rgba(90, 59, 140, 0.75);
   --wall: #151030;
+  /* Estudio dibujado: neón de los LED (emisión) y púrpura profundo de la paleta para la gradación. */
+  --neon: #9b6cff;
+  --deep: #5a3b8c;
   /* Velo sobre el estudio dibujado, con el fondo de la paleta. */
   --veil-top: rgba(14, 11, 29, 0.62);
   --veil: rgba(14, 11, 29, 0.55);

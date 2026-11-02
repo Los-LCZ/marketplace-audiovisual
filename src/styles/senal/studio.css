@@ -16,7 +16,9 @@
 .backdrop::after { background: linear-gradient(180deg, var(--veil-top), var(--veil) 45%, var(--bg) 95%); }
 .backdrop-av::before { background: var(--photo-tint); mix-blend-mode: multiply; }
 
-/* Estudio de Música (SVG) */
+/* Estudio de Música (MusicStudio) */
+.bd-stop-ink { stop-color: #000; }
+.bd-stop-white { stop-color: #fff; }
 .bd-stop-bg { stop-color: var(--bg); }
 .bd-stop-s1 { stop-color: var(--s1); }
 .bd-stop-s2 { stop-color: var(--s2); }
@@ -24,62 +26,86 @@
 .bd-stop-wall { stop-color: var(--wall); }
 .bd-stop-fg { stop-color: var(--fg); }
 .bd-stop-dim { stop-color: var(--dim); }
-.bd-stop-acc { stop-color: var(--acc); }
-.bd-flood-acc { flood-color: var(--acc); }
+.bd-stop-hi { stop-color: var(--acc-text); }
+.bd-stop-neon { stop-color: var(--neon); }
+.bd-flood-neon { flood-color: var(--neon); }
+.bd-flood-dim { flood-color: var(--dim); }
 .bd-flood-fg { flood-color: var(--fg); }
-.bd-flood-bg { flood-color: var(--bg); }
-.bd-sidewall { fill: var(--bg); fill-opacity: 0.55; }
-.bd-foam { opacity: 0.6; }
-.bd-foam-light { fill: var(--s3); fill-opacity: 0.35; }
-.bd-foam-dark { fill: var(--bg); fill-opacity: 0.6; }
-.bd-slat-shade { fill: none; stroke: var(--bg); stroke-opacity: 0.55; stroke-width: 3; }
-.bd-slat-light { fill: none; stroke: var(--fg); stroke-opacity: 0.05; stroke-width: 2; }
-.bd-lattice { fill: none; stroke: var(--dim); stroke-opacity: 0.45; stroke-width: 2; }
+.bd-flood-ink { flood-color: #000; }
+.bd-ink { fill: #000; }
+.bd-ink.shade { fill-opacity: 0.6; }
+.bd-ink.rug-shadow { fill-opacity: 0.5; }
+.bd-sidewall { fill: #000; fill-opacity: 0.6; }
+.bd-slat { fill: var(--wall); }
+.bd-slat-shade { fill: #000; fill-opacity: 0.55; }
+.bd-slat-light { fill: var(--acc-text); fill-opacity: 0.06; }
+.bd-foam.top { fill: var(--s3); fill-opacity: 0.55; }
+.bd-foam.bottom { fill: #000; fill-opacity: 0.6; }
+.bd-foam.side { fill: var(--s1); fill-opacity: 0.6; }
+.bd-lattice { fill: none; stroke: var(--dim); stroke-opacity: 0.5; stroke-width: 2.5; }
+.bd-lattice.shine { stroke: var(--fg); stroke-opacity: 0.25; stroke-width: 1; }
 .bd-tube { fill: none; stroke-width: 5; stroke-linecap: round; }
-.bd-tube.thin { stroke-width: 3; }
-.bd-tube.thick { stroke-width: 7; }
-.bd-yoke { fill: none; stroke: var(--dim); stroke-opacity: 0.6; stroke-width: 3; }
-.bd-stand { fill: none; stroke: var(--dim); stroke-opacity: 0.5; stroke-width: 6; stroke-linecap: round; }
-.bd-edge { stroke: var(--line2); stroke-width: 2; }
-.bd-spec { fill: var(--fg); fill-opacity: 0.85; }
-.bd-spec.dim { fill-opacity: 0.18; }
-.bd-rimlight { fill: var(--fg); fill-opacity: 0.18; }
-.bd-mat { fill: var(--bg); }
-.bd-grooves { fill: none; stroke: var(--bg); stroke-opacity: 0.25; stroke-width: 1.5; }
+.bd-tube.thin { stroke-width: 4; }
+.bd-tube.thick { stroke-width: 8; }
+.bd-yoke { fill: none; stroke-width: 5; }
+.bd-stand { fill: none; stroke-width: 7; stroke-linecap: round; }
+.bd-edge { stroke: #000; stroke-opacity: 0.6; stroke-width: 1.5; }
+.bd-edge.soft { stroke: var(--dim); stroke-opacity: 0.35; }
+.bd-edge.strong { stroke-opacity: 0.7; stroke-width: 2; }
+.bd-spec { fill: #fff; fill-opacity: 0.9; }
+.bd-rimlight { fill: var(--acc-text); fill-opacity: 0.3; }
+.bd-rimlight.strong { fill-opacity: 0.45; }
+.bd-glass { fill: #fff; fill-opacity: 0.1; }
+.bd-glass.faint { fill-opacity: 0.05; }
+.bd-groove { fill: none; stroke: #000; stroke-opacity: 0.25; stroke-width: 1.2; }
 .bd-label { fill: var(--s2); }
-.bd-plaque { fill: var(--dim); fill-opacity: 0.6; }
-.bd-dustcap { fill: var(--s2); }
-.bd-power { fill: var(--ok); fill-opacity: 0.8; }
-.bd-bezel { fill: var(--bg); stroke: var(--s3); stroke-width: 4; }
-.bd-screen { fill: var(--s1); }
-.bd-bars { fill: var(--acc); fill-opacity: 0.75; }
-.bd-bars.dim { fill: var(--fg); fill-opacity: 0.25; }
-.bd-keys { fill: var(--fg); fill-opacity: 0.7; }
-.bd-keys-black { fill: var(--bg); }
-.bd-knob { fill: var(--dim); fill-opacity: 0.55; }
+.bd-plaque { fill: var(--dim); fill-opacity: 0.7; }
+.bd-bezel { fill: var(--bg); stroke: var(--s3); stroke-width: 3; }
 .bd-console { fill: var(--bg); }
-.bd-track { fill: var(--s3); }
-.bd-cap { fill: var(--dim); fill-opacity: 0.8; }
-.bd-led-ok { fill: var(--ok); }
-.bd-ledframe { fill: none; stroke: color-mix(in oklab, var(--acc) 40%, var(--fg)); }
-.bd-ledframe.core { stroke-width: 5; }
-.bd-ledframe.bloom { stroke: var(--acc); stroke-width: 18; stroke-opacity: 0.6; }
-.bd-ledframe.bloom-wide { stroke: var(--acc); stroke-width: 60; stroke-opacity: 0.25; }
-.bd-strip { fill: var(--acc); }
-.bd-strip.core { fill: color-mix(in oklab, var(--acc) 30%, var(--fg)); }
-.bd-reflection { opacity: 0.22; }
-.bd-haze { opacity: 0.5; }
-.bd-grain { opacity: 0.5; }
-.bd-graffiti path { fill: none; stroke-width: 11; stroke-linecap: round; stroke-opacity: 0.6; }
-.bd-graffiti.spray path { stroke-width: 22; stroke-opacity: 0.25; }
-.bd-graffiti .acc { stroke: var(--acc); }
-.bd-graffiti .rec { stroke: var(--rec); }
-.bd-graffiti .ok { stroke: var(--ok); }
-.bd-rug polygon { stroke: var(--bg); stroke-width: 3; }
+.bd-console.framed { stroke: var(--s3); }
+.bd-lane { fill: var(--s1); fill-opacity: 0.55; }
+.bd-lane.alt { fill-opacity: 0.8; }
+.bd-lane.bar { fill: var(--s2); fill-opacity: 1; }
+.bd-clip { fill-opacity: 0.55; }
+.bd-clip.neon { fill: var(--neon); }
+.bd-clip.acc { fill: var(--acc); }
+.bd-clip.ok { fill: var(--ok); }
+.bd-clip.hi { fill: var(--acc-text); }
+.bd-clip.rec { fill: var(--rec); }
+.bd-wave { fill: none; stroke: var(--fg); stroke-opacity: 0.55; stroke-width: 1; }
+.bd-playhead { fill: var(--rec); }
+.bd-led.ok { fill: var(--ok); }
+.bd-led.acc { fill: var(--acc); }
+.bd-led.rec { fill: var(--rec); }
+.bd-pointer { stroke: var(--fg); stroke-width: 1.2; }
+.bd-display { fill: var(--ok); fill-opacity: 0.45; }
+.bd-mesh { stroke: #000; stroke-opacity: 0.35; }
+.bd-cable { fill: none; stroke: #000; stroke-width: 4; }
+.bd-dust { fill: var(--fg); }
+.bd-canvas { fill: var(--bg); stroke: #000; stroke-opacity: 0.6; }
+.bd-graffiti path { fill: none; stroke-linecap: round; }
+.bd-graffiti .spray { stroke-width: 26; stroke-opacity: 0.22; }
+.bd-graffiti .line { stroke-width: 12; stroke-opacity: 0.75; }
+.bd-graffiti .drip { stroke-width: 2.5; stroke-opacity: 0.6; }
+.bd-graffiti.neon path { stroke: var(--neon); }
+.bd-graffiti.ok path { stroke: var(--ok); }
+.bd-graffiti.rec path { stroke: var(--rec); }
+.bd-graffiti path.shine { stroke: #fff; stroke-width: 2; stroke-opacity: 0.35; }
+.bd-ledframe { fill: none; }
+.bd-ledframe.wide { stroke: var(--neon); stroke-width: 70; stroke-opacity: 0.22; }
+.bd-ledframe.bloom { stroke: var(--neon); stroke-width: 22; stroke-opacity: 0.6; }
+.bd-ledframe.halo { stroke: color-mix(in oklab, var(--acc-text) 60%, #fff); stroke-width: 9; stroke-opacity: 0.8; }
+.bd-ledframe.core { stroke: #fff; stroke-width: 3.5; }
+.bd-strip { fill: var(--neon); }
+.bd-strip.halo { fill: color-mix(in oklab, var(--acc-text) 70%, #fff); }
+.bd-strip.core { fill: #fff; }
+.bd-reflect { fill: var(--neon); fill-opacity: 0.35; }
+.bd-rug polygon { stroke: #000; stroke-width: 3; }
 .bd-rug .a { fill: var(--s2); }
 .bd-rug .b { fill: var(--s3); }
-.bd-rug .c { fill: color-mix(in oklab, var(--acc) 45%, var(--s2)); }
+.bd-rug .c { fill: var(--deep); }
 .bd-rug .d { fill: var(--s1); }
+.bd-grade { fill: var(--deep); opacity: 0.14; mix-blend-mode: soft-light; }
 
 /* ---------- Atmósfera del set (Audiovisual) ---------- */
 [data-world="av"] body::before {
