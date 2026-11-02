@@ -185,6 +185,37 @@ export async function listFeaturedSpaces(categories?: SpaceCategory[], limit = 8
   return attachAmenities(supabase, data ?? []);
 }
 
+export type PublishedSpaceId = { id: string; updated_at: string; image: string | null };
+
+// Filas por request (el máximo de PostgREST es 1000) y tope del protocolo sitemap.
+const SPACE_IDS_BATCH = 1000;
+const SPACE_IDS_MAX = 50_000;
+
+/**
+ * Todos los espacios publicados en versión liviana (id, última modificación y primera foto),
+ * para el sitemap. Sin amenities ni ratings; pide de a 1000 hasta 50.000.
+ */
+export async function listPublishedSpaceIds(): Promise<PublishedSpaceId[]> {
+  const supabase = await createClient();
+  const result: PublishedSpaceId[] = [];
+
+  for (let from = 0; from < SPACE_IDS_MAX; from += SPACE_IDS_BATCH) {
+    const { data, error } = await supabase
+      .from("spaces")
+      .select("id, updated_at, images")
+      .eq("status", "published")
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, from + SPACE_IDS_BATCH - 1);
+    if (error) throw new Error(`Error al listar espacios: ${error.message}`);
+
+    for (const s of data ?? []) result.push({ id: s.id, updated_at: s.updated_at, image: s.images[0] ?? null });
+    if (!data || data.length < SPACE_IDS_BATCH) break;
+  }
+
+  return result;
+}
+
 /**
  * Espacios publicados de un anfitrión (para su perfil público), con rating.
  * Nunca incluye borradores ni archivados, aunque quien consulta sea el dueño.
