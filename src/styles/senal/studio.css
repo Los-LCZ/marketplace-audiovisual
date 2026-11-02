@@ -1,6 +1,35 @@
-/* Señal · Estudio del mundo Audiovisual: luz cenital de softbox, parrilla, grano y rebote de los focos. */
+/* Señal · Estudio de cada mundo: escena ilustrada de fondo, luz ambiental, grano y rebote de los focos.
+   Audiovisual es un set con softbox cenital; Música, una sala de control con luz cálida que sube desde la consola. */
 
-/* ---------- Atmósfera del set ---------- */
+/* ---------- Escena de fondo (StudioBackdrop) ---------- */
+.backdrop { position: fixed; inset: 0; z-index: -2; width: 100%; height: 100%; pointer-events: none; opacity: 0.6; -webkit-mask-image: linear-gradient(180deg, #000 35%, transparent 95%); mask-image: linear-gradient(180deg, #000 35%, transparent 95%); }
+.backdrop-mu, [data-world="mu"] .backdrop-av { display: none; }
+[data-world="mu"] .backdrop-mu { display: block; }
+.bd-stop-bg { stop-color: var(--bg); }
+.bd-stop-s2 { stop-color: var(--s2); }
+.bd-stop-s3 { stop-color: var(--s3); }
+.bd-stop-fg { stop-color: var(--fg); }
+.bd-stop-acc { stop-color: var(--acc); }
+.bd-rig { fill: none; stroke: var(--line2); stroke-width: 2; }
+.bd-stand { fill: none; stroke: var(--line2); stroke-width: 5; stroke-linecap: round; }
+.bd-gear { fill: var(--bg); stroke: var(--line2); stroke-width: 2; }
+.bd-lens { fill: color-mix(in oklab, var(--acc) 30%, var(--s3)); }
+.bd-led { fill: var(--rec); }
+.bd-softbox { fill: var(--fg); fill-opacity: 0.35; }
+.bd-face { fill: var(--fg); fill-opacity: 0.08; }
+.bd-panel { fill: var(--s3); fill-opacity: 0.5; }
+.bd-panel.deep { fill: var(--s1); }
+.bd-diffuser { opacity: 0.7; }
+.bd-window { fill: var(--s1); }
+.bd-frame { fill: none; stroke: var(--line2); stroke-width: 8; }
+.bd-cone { fill: var(--s2); stroke: var(--line2); stroke-width: 2; }
+.bd-bulb { fill: var(--acc); fill-opacity: 0.6; }
+.bd-desk { stroke: var(--line2); stroke-width: 2; }
+.bd-track { fill: var(--bg); }
+.bd-cap { fill: var(--dim); fill-opacity: 0.6; }
+.bd-vu { fill: none; stroke: var(--acc); stroke-width: 10; stroke-opacity: 0.7; }
+
+/* ---------- Atmósfera del set (Audiovisual) ---------- */
 [data-world="av"] body::before {
   background:
     /* Grano muy fino para que el negro no se vea plano */
@@ -16,24 +45,39 @@
     linear-gradient(180deg, transparent 50%, color-mix(in oklab, var(--s3) 45%, transparent));
 }
 
+/* ---------- Atmósfera de la sala de control (Música) ---------- */
+[data-world="mu"] body::before {
+  background:
+    /* Grano cálido, como cinta analógica */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .85 0 0 0 0 .6 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 160px 160px,
+    /* Lámparas colgantes a los lados */
+    radial-gradient(26% 26% at 18% 0%, var(--key), transparent 72%),
+    radial-gradient(26% 26% at 82% 0%, var(--key), transparent 72%),
+    /* Resplandor ámbar de los vúmetros que sube desde la consola */
+    radial-gradient(70% 45% at 50% 105%, var(--acc-soft), transparent 70%),
+    /* Viñeta de sala tratada: las esquinas se pierden en la madera */
+    radial-gradient(120% 90% at 50% 40%, transparent 55%, color-mix(in oklab, var(--bg) 80%, transparent));
+}
+
 /* ---------- Rebote de luz detrás del material ---------- */
 [data-world="av"] .vf { box-shadow: var(--spill); }
+[data-world="mu"] .console { box-shadow: inset 0 1px 0 color-mix(in oklab, var(--fg) 6%, transparent), var(--spill); }
 
-[data-world="av"] .scard .ph { transition: border-color .25s, box-shadow .35s, translate .35s cubic-bezier(.2,.8,.2,1); }
-/* Destello cenital sobre la foto al enfocar la tarjeta */
-[data-world="av"] .scard .ph::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(70% 55% at 50% 0%, var(--key), transparent 70%); opacity: 0; transition: opacity .35s; }
-[data-world="av"] .scard:hover .ph, [data-world="av"] .scard:focus-within .ph { border-color: color-mix(in oklab, var(--acc) 45%, var(--line2)); box-shadow: var(--spill); }
-[data-world="av"] .scard:hover .ph::before, [data-world="av"] .scard:focus-within .ph::before { opacity: 1; }
+/* La luz llega desde donde está la fuente de cada mundo (--key-at): arriba en el set, abajo en la consola. */
+.scard .ph { transition: border-color .25s, box-shadow .35s, translate .35s cubic-bezier(.2,.8,.2,1); }
+.scard .ph::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(70% 55% at var(--key-at), var(--key), transparent 70%); opacity: 0; transition: opacity .35s; }
+.scard:hover .ph, .scard:focus-within .ph { border-color: color-mix(in oklab, var(--acc) 45%, var(--line2)); box-shadow: var(--spill); }
+.scard:hover .ph::before, .scard:focus-within .ph::before { opacity: 1; }
 
-[data-world="av"] .cat { isolation: isolate; transition: border-color .2s, transform .2s, box-shadow .3s; }
-[data-world="av"] .cat::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(80% 60% at 50% 0%, var(--key), transparent 70%); opacity: 0; transition: opacity .3s; }
-[data-world="av"] .cat:hover, [data-world="av"] .cat:focus-visible { box-shadow: var(--spill); }
-[data-world="av"] .cat:hover::before, [data-world="av"] .cat:focus-visible::before { opacity: 1; }
+.cat { isolation: isolate; transition: border-color .2s, transform .2s, box-shadow .3s; }
+.cat::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(80% 60% at var(--key-at), var(--key), transparent 70%); opacity: 0; transition: opacity .3s; }
+.cat:hover, .cat:focus-visible { box-shadow: var(--spill); }
+.cat:hover::before, .cat:focus-visible::before { opacity: 1; }
 
 /* ---------- Botones: el foco se enciende al pasar ---------- */
-[data-world="av"] .btn-acc:hover { box-shadow: var(--glow), var(--spill); }
-[data-world="av"] .btn-line:hover { border-color: color-mix(in oklab, var(--acc) 55%, var(--line2)); box-shadow: 0 0 18px -6px var(--acc); }
+.btn-acc:hover { box-shadow: var(--glow), var(--spill); }
+.btn-line:hover { border-color: color-mix(in oklab, var(--acc) 55%, var(--line2)); box-shadow: 0 0 18px -6px var(--acc); }
 
 @media (hover: hover) {
-  [data-world="av"] .scard:hover .ph { translate: 0 -3px; }
+  .scard:hover .ph { translate: 0 -3px; }
 }

@@ -24,6 +24,7 @@
   --glass-blur: blur(12px) saturate(1.15);
   --panel-line: var(--line2);
   --key: rgba(248, 250, 252, 0.14);
+  --key-at: 50% 0%;
   --spill: 0 28px 80px -28px rgba(56, 189, 248, 0.38);
   --radius: 14px;
   --radius-sm: 8px;
@@ -44,11 +45,13 @@
   --rec: #ff4a2e;
   --ok: #9be38b;
   --glow: 0 0 24px rgba(255, 176, 32, 0.45);
-  --glass: var(--s1);
-  --glass-blur: none;
-  --panel-line: var(--line);
-  --key: transparent;
-  --spill: 0 30px 80px -30px rgba(0, 0, 0, 0.9);
+  /* Sala de control: madera bajo vidrio ahumado, luz cálida que sube desde la consola. */
+  --glass: rgba(22, 16, 11, 0.72);
+  --glass-blur: blur(12px) saturate(1.1);
+  --panel-line: var(--line2);
+  --key: rgba(255, 214, 150, 0.12);
+  --key-at: 50% 100%;
+  --spill: 0 28px 80px -28px rgba(255, 176, 32, 0.3);
   --radius: 10px;
   --radius-sm: 6px;
 }
