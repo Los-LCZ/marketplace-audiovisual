@@ -2,6 +2,8 @@
  * Set fotográfico del mundo Audiovisual, dibujado en SVG a partir de una foto de referencia (Alexander Dummer,
  * Unsplash): cortinas, parrilla con barras rotuladas y focos, octabox cenital encendido, ciclorama de papel,
  * paneles con puerta y espejo, softboxes de espalda, flashes, disco reflector, cinta en el piso, bolso y cables.
+ * En los bordes (lo que queda a los costados del contenido en pantallas anchas) hay tubos LED, un fresnel en
+ * C-stand, un strip softbox, apple boxes y un slider con cámara, con luz cian que enmarca la interfaz.
  * El realismo sale del bloom de las luces, el haz con polvo, la profundidad de campo en el fondo, las sombras
  * de contacto, la textura del concreto, los metales sombreados, la viñeta y el grano. Los pliegues y el polvo
  * se generan con un aleatorio con semilla. Los colores salen de los tokens (clases `bd-*` en studio.css).
@@ -110,6 +112,80 @@ function Cable({ d, width = 3 }: { d: string; width?: number }) {
       <path d={d} strokeWidth={width} className="bd-wire" />
       <path d={d} className="bd-wire-shine" transform="translate(0 -1)" />
     </>
+  );
+}
+
+// Equipos de los bordes: en pantallas anchas quedan a los costados de la columna de contenido y la enmarcan.
+// [x, alto, pie] de los tubos LED verticales
+const TUBES: Array<[number, number, number]> = [[96, 150, 690], [1866, 130, 660]];
+
+function EdgeGear() {
+  return (
+    <g className="bd-edge-gear">
+      {/* Tubos LED sobre trípode */}
+      {TUBES.map(([x, top, bottom]) => (
+        <g key={x}>
+          <Tripod x={x + 9} top={bottom} base={bottom + 320} spread={55} />
+          <rect x={x - 3} y={top - 6} width="24" height={bottom - top + 12} rx="12" className="bd-housing" />
+          <rect x={x + 1} y={bottom - 40} width="16" height="22" rx="3" className="bd-strobe" />
+        </g>
+      ))}
+
+      {/* Fresnel en C-stand (izquierda), apuntando al centro del set */}
+      <Tripod x={255} top={420} base={1020} spread={70} />
+      <path d="M255 430L322 394" stroke="url(#av-metal)" className="bd-leg" />
+      <g transform="rotate(28 330 372)">
+        <rect x="292" y="346" width="76" height="54" rx="8" className="bd-housing" />
+        <rect x="300" y="336" width="8" height="74" className="bd-flag" />
+        <rect x="352" y="336" width="8" height="74" className="bd-flag" />
+        <circle cx="368" cy="373" r="20" fill="url(#av-panel)" />
+      </g>
+
+      {/* Apple boxes y saco de arena al pie (izquierda) */}
+      <ellipse cx="210" cy="1062" rx="90" ry="12" fill="url(#av-ao)" />
+      <rect x="140" y="1012" width="140" height="48" rx="3" fill="url(#av-ply)" className="bd-box" />
+      <rect x="160" y="972" width="110" height="40" rx="3" fill="url(#av-ply)" className="bd-box" />
+      <rect x="196" y="1028" width="48" height="12" rx="6" className="bd-box-hole" />
+      <rect x="196" y="985" width="38" height="11" rx="5.5" className="bd-box-hole" />
+      <path d="M22 1004C30 990 70 990 80 1004L84 1022C66 1030 34 1030 18 1022Z" className="bd-sandbag" />
+
+      {/* Strip softbox (derecha) */}
+      <Tripod x={1745} top={670} base={1015} spread={70} />
+      <g transform="rotate(-8 1742 460)">
+        <rect x="1698" y="246" width="90" height="430" rx="6" className="bd-housing" />
+        <rect x="1706" y="256" width="74" height="410" fill="url(#av-panel)" />
+        <path d="M1730 256V666M1756 256V666" className="bd-grid" />
+      </g>
+
+      {/* Slider con cámara en el piso (derecha) */}
+      <path d="M1600 1046L1920 996M1600 1062L1920 1012" stroke="url(#av-metal)" className="bd-leg" />
+      <rect x="1690" y="994" width="70" height="20" rx="4" className="bd-housing" transform="rotate(-9 1725 1004)" />
+      <rect x="1700" y="950" width="64" height="40" rx="6" className="bd-bag" transform="rotate(-9 1732 970)" />
+      <circle cx="1690" cy="972" r="16" className="bd-housing" />
+      <circle cx="1690" cy="972" r="8" className="bd-lens-glass" />
+    </g>
+  );
+}
+
+// Emisión de los equipos de borde: va sobre la viñeta para que no la apague
+function EdgeGlow() {
+  return (
+    <g>
+      {TUBES.map(([x, top, bottom]) => (
+        <g key={x}>
+          <rect x={x - 30} y={top - 30} width="78" height={bottom - top + 60} rx="39" className="bd-tube-bloom wide" filter="url(#av-b40)" />
+          <rect x={x - 6} y={top - 8} width="30" height={bottom - top + 16} rx="15" className="bd-tube-bloom" filter="url(#av-b8)" />
+          <rect x={x + 2} y={top} width="14" height={bottom - top} rx="7" className="bd-tube-core" />
+          <ellipse cx={x + 9} cy="1030" rx="140" ry="22" className="bd-tube-bloom floor" filter="url(#av-b24)" />
+        </g>
+      ))}
+      <g transform="rotate(-8 1742 460)">
+        <rect x="1680" y="230" width="126" height="460" rx="30" className="bd-tube-bloom wide" filter="url(#av-b40)" />
+      </g>
+      <circle cx="342" cy="420" r="46" className="bd-tube-bloom" filter="url(#av-b24)" />
+      <circle cx="120" cy="104" r="40" className="bd-tube-bloom" filter="url(#av-b24)" />
+      <circle cx="1800" cy="104" r="40" className="bd-tube-bloom" filter="url(#av-b24)" />
+    </g>
   );
 }
 
@@ -231,6 +307,17 @@ export function VideoSet() {
         <filter id="av-b24" x="-60%" y="-60%" width="220%" height="220%">
           <feGaussianBlur stdDeviation="24" />
         </filter>
+        <filter id="av-b40" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur stdDeviation="40" />
+        </filter>
+        <linearGradient id="av-edge-l" x1="0" x2="1">
+          <stop offset="0" className="bd-stop-acc" stopOpacity="0.22" />
+          <stop offset="1" className="bd-stop-acc" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="av-edge-r" x1="1" x2="0">
+          <stop offset="0" className="bd-stop-acc" stopOpacity="0.22" />
+          <stop offset="1" className="bd-stop-acc" stopOpacity="0" />
+        </linearGradient>
         <filter id="av-dof" x="-5%" y="-5%" width="110%" height="110%">
           <feGaussianBlur stdDeviation="1.4" />
         </filter>
@@ -267,8 +354,24 @@ export function VideoSet() {
       </g>
       <rect width="168" height="1000" fill="url(#av-vignette)" opacity="0.4" />
 
+      {/* Bordes: luz cian que entra por los costados y haces de los focos del truss exterior */}
+      <rect width="260" height="1080" fill="url(#av-edge-l)" />
+      <rect x="1660" width="260" height="1080" fill="url(#av-edge-r)" />
+      <polygon points="108,110 132,110 300,960 -60,960" fill="url(#av-beam)" filter="url(#av-b24)" />
+      <polygon points="1788,110 1812,110 1980,960 1620,960" fill="url(#av-beam)" filter="url(#av-b24)" />
+      <polygon points="350,400 380,430 820,980 560,1000" fill="url(#av-beam)" filter="url(#av-b24)" opacity="0.7" />
+
       {/* Parrilla del techo: rieles, barras rotuladas, paneles LED y focos */}
       <g filter="url(#av-dof)">
+        {/* Truss exterior a todo el ancho, con un foco en cada extremo */}
+        <path d="M0 40H1920M0 58H1920" stroke="url(#av-pipe)" className="bd-pipe thin" />
+        {[120, 1800].map((x) => (
+          <g key={x}>
+            <path d={`M${x} 58V72`} className="bd-hanger" />
+            <rect x={x - 26} y="72" width="52" height="34" rx="6" className="bd-housing" />
+            <ellipse cx={x} cy="106" rx="16" ry="5" className="bd-lamp" />
+          </g>
+        ))}
         <path d="M330 214C600 196 1100 196 1480 214" stroke="url(#av-pipe)" className="bd-pipe thick" />
         <path d="M330 230H1470" stroke="url(#av-pipe)" className="bd-pipe" />
         <path d="M400 150C620 128 1000 120 1470 150" stroke="url(#av-pipe)" className="bd-pipe thin" />
@@ -385,8 +488,11 @@ export function VideoSet() {
       ))}
       <path d="M1272 1020L1380 1000L1386 1024L1300 1040Z" className="bd-ink" />
 
-      {/* Cámara: viñeta y grano */}
+      <EdgeGear />
+
+      {/* Cámara: viñeta y grano; la emisión de los bordes va encima de la viñeta */}
       <rect width="1920" height="1080" fill="url(#av-vignette)" />
+      <EdgeGlow />
       <rect width="1920" height="1080" filter="url(#av-grain)" opacity="0.7" />
     </svg>
   );

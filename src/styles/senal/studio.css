@@ -14,6 +14,11 @@
 .backdrop::after, .backdrop-av::before { content: ""; position: absolute; inset: 0; z-index: 1; }
 .backdrop::after { background: linear-gradient(180deg, var(--veil-top), var(--veil) 45%, var(--bg) 95%); }
 .backdrop-av::before { background: var(--scene-tint); mix-blend-mode: multiply; }
+/* En pantallas anchas el velo cubre solo la columna de contenido (.wrap, 1240px) y se desvanece hacia los
+   costados, para que las luces del borde del set enmarquen la interfaz con su brillo completo. */
+@media (min-width: 1400px) {
+  .backdrop-av::after { -webkit-mask-image: linear-gradient(90deg, transparent, #000 calc(50% - 620px), #000 calc(50% + 620px), transparent); mask-image: linear-gradient(90deg, transparent, #000 calc(50% - 620px), #000 calc(50% + 620px), transparent); }
+}
 
 /* Set fotográfico (VideoSet) */
 .bd-stop-navy { stop-color: color-mix(in oklab, var(--s3) 55%, var(--bg)); }
@@ -74,6 +79,17 @@
 .bd-bag-seam { stroke: var(--s2); stroke-width: 3; }
 .bd-bowl-rim { fill: color-mix(in oklab, var(--dim) 45%, var(--fg)); }
 .bd-bowl { fill: color-mix(in oklab, var(--dim) 30%, var(--s3)); }
+.bd-stop-acc { stop-color: var(--acc); }
+.bd-tube-core { fill: color-mix(in oklab, var(--acc) 20%, #fff); }
+.bd-tube-bloom { fill: color-mix(in oklab, var(--acc) 55%, var(--lamp)); fill-opacity: 0.7; }
+.bd-tube-bloom.wide { fill-opacity: 0.32; }
+.bd-tube-bloom.floor { fill-opacity: 0.4; }
+.bd-flag { fill: #000; }
+.bd-grid { stroke: var(--dim); stroke-opacity: 0.35; stroke-width: 2; }
+.bd-box { stroke: color-mix(in oklab, var(--wood) 50%, #000); stroke-width: 2; }
+.bd-box-hole { fill: #000; fill-opacity: 0.7; }
+.bd-sandbag { fill: color-mix(in oklab, var(--wood) 35%, var(--s3)); stroke: #000; stroke-opacity: 0.5; }
+.bd-lens-glass { fill: color-mix(in oklab, var(--acc) 40%, var(--s3)); }
 
 /* Estudio de Música (MusicStudio) */
 .bd-stop-ink { stop-color: #000; }
