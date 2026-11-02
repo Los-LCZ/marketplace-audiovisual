@@ -75,7 +75,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; font-weight: 600; }
 .h3 { font-size: 20px; }
 .mono { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
 .dim { color: var(--dim); }
-.acc { color: var(--acc); }
+.acc { color: var(--acc-text); }
 .lede { color: var(--dim); max-width: 60ch; font-size: 17px; margin: 14px 0 0; }
 p { margin: 0; }
 

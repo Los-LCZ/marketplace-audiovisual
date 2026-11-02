@@ -1,250 +1,351 @@
+import Image from "next/image";
+// Foto de Alexander Dummer (unsplash.com/photos/aS4Duj2j7r4), Licencia de Unsplash: uso comercial libre.
+import avSet from "@/assets/senal/av-set.webp";
+
 /**
- * Fondo ilustrado de cada mundo, fijo detrás del contenido. Audiovisual es un set fotográfico
- * azul medianoche (truss con focos, octabox, softbox, beauty dish, cámara en pedestal y piso de
- * concreto). Música es un estudio urbano con LED violeta (truss con cabezas móviles, marcos LED,
- * pantallas del DAW, discos de platino, consola, teclados y alfombra de parches). Se dibujan los
- * dos y el CSS muestra el del mundo activo, así el interruptor de mundos no necesita recargar.
- * Los colores salen de los tokens (clases `bd-*` en studio.css).
+ * Fondo de cada mundo, fijo detrás del contenido. Audiovisual usa una foto real de un set
+ * con un velo azul medianoche encima. Música es un estudio urbano con LED violeta dibujado en SVG:
+ * truss con cabezas móviles, marcos LED, pantallas del DAW, discos de platino, graffiti, monitores,
+ * consola, teclados y alfombra de parches, con haces volumétricos, bloom, reflejos y texturas.
+ * Se renderizan los dos y el CSS muestra el del mundo activo, así el interruptor de mundos no
+ * recarga; la foto es lazy y no se descarga mientras su capa está oculta. Los colores del SVG
+ * salen de los tokens (clases `bd-*` en studio.css).
  */
 export function StudioBackdrop() {
   return (
     <>
-      <svg className="backdrop backdrop-av" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMin slice" aria-hidden="true" focusable="false">
-        <defs>
-          <linearGradient id="av-wall" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" className="bd-stop-bg" />
-            <stop offset="0.55" className="bd-stop-wall" />
-            <stop offset="1" className="bd-stop-wall" />
-          </linearGradient>
-          <linearGradient id="av-floor" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" className="bd-stop-s2" />
-            <stop offset="1" className="bd-stop-bg" />
-          </linearGradient>
-          <radialGradient id="av-shine">
-            <stop offset="0" className="bd-stop-fg" stopOpacity="0.1" />
-            <stop offset="1" className="bd-stop-fg" stopOpacity="0" />
-          </radialGradient>
-          <radialGradient id="av-beam" cx="0.5" cy="0" r="1">
-            <stop offset="0" className="bd-stop-fg" stopOpacity="0.12" />
-            <stop offset="1" className="bd-stop-fg" stopOpacity="0" />
-          </radialGradient>
-          <pattern id="av-truss" width="30" height="16" patternUnits="userSpaceOnUse">
-            <path d="M0 0L15 16L30 0" className="bd-rig" />
-          </pattern>
-          <pattern id="av-dish-grid" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
-            <path d="M0 0H14M0 0V14" className="bd-mesh" />
-          </pattern>
-          <filter id="av-blur" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="14" />
-          </filter>
-          {/* Foco fresnel colgado, apuntando hacia abajo */}
-          <symbol id="av-spot" viewBox="0 0 40 60">
-            <path d="M20 0V10" className="bd-rig" />
-            <rect x="6" y="10" width="28" height="34" rx="5" className="bd-gear" />
-            <ellipse cx="20" cy="46" rx="12" ry="5" className="bd-lamp" />
-          </symbol>
-          <symbol id="av-stand" viewBox="0 0 160 300">
-            <path d="M80 0V240M80 240L10 296M80 240L150 296M80 240L80 296" className="bd-stand" />
-          </symbol>
-        </defs>
+      <div className="backdrop backdrop-av" aria-hidden="true">
+        <Image src={avSet} alt="" fill sizes="100vw" placeholder="blur" className="backdrop-photo" />
+      </div>
 
-        {/* Sala: muro del fondo, muros laterales y piso de concreto pulido */}
-        <rect width="1600" height="900" fill="url(#av-wall)" />
-        <polygon points="0,0 250,70 250,640 0,770" className="bd-sidewall" />
-        <polygon points="1600,0 1350,70 1350,640 1600,770" className="bd-sidewall" />
-        <polygon points="0,770 250,640 1350,640 1600,770 1600,900 0,900" fill="url(#av-floor)" />
-        <ellipse cx="800" cy="760" rx="560" ry="70" fill="url(#av-shine)" />
-        {/* Tira de luz cálida al pie del muro */}
-        <rect x="270" y="626" width="1060" height="16" rx="8" className="bd-rim" filter="url(#av-blur)" />
-
-        {/* Truss cuadrado en perspectiva con focos colgados */}
-        <rect x="250" y="34" width="1100" height="16" fill="url(#av-truss)" />
-        <path d="M250 34H1350M250 50H1350" className="bd-rig" />
-        <rect x="420" y="146" width="760" height="14" fill="url(#av-truss)" />
-        <path d="M420 146H1180M420 160H1180M250 42L420 153M1350 42L1180 153M340 98H1260" className="bd-rig" />
-        <polygon points="760,170 840,170 1000,620 600,620" fill="url(#av-beam)" />
-        {[470, 620, 980, 1130].map((x) => (
-          <use key={x} href="#av-spot" x={x - 16} y="160" width="32" height="48" />
-        ))}
-        {[330, 560, 1040, 1270].map((x) => (
-          <use key={x} href="#av-spot" x={x - 20} y="50" width="40" height="60" />
-        ))}
-        <rect x="770" y="164" width="60" height="26" rx="4" className="bd-gear" />
-        <rect x="776" y="186" width="48" height="8" rx="3" className="bd-lamp" />
-
-        {/* Octabox a la izquierda */}
-        <use href="#av-stand" x="210" y="450" width="160" height="300" />
-        <g transform="rotate(-14 330 360)">
-          <polygon points="268,210 392,210 480,298 480,422 392,510 268,510 180,422 180,298" className="bd-gear" />
-          <polygon points="276,226 384,226 462,304 462,416 384,494 276,494 198,416 198,304" className="bd-face" />
-        </g>
-
-        {/* Softbox rectangular sobre pedestal con ruedas */}
-        <path d="M600 560V700M560 712H640" className="bd-stand" />
-        <circle cx="560" cy="716" r="7" className="bd-gear" />
-        <circle cx="640" cy="716" r="7" className="bd-gear" />
-        <polygon points="520,262 652,240 690,560 560,582" className="bd-gear" />
-        <polygon points="532,276 642,258 676,548 570,566" className="bd-face" />
-
-        {/* Cámara sobre pedestal en el centro del set */}
-        <path d="M1000 470V720M950 730L1000 720L1050 730" className="bd-stand" />
-        <circle cx="950" cy="736" r="7" className="bd-gear" />
-        <circle cx="1050" cy="736" r="7" className="bd-gear" />
-        <rect x="960" y="410" width="96" height="62" rx="8" className="bd-gear" />
-        <rect x="982" y="396" width="34" height="16" rx="3" className="bd-gear" />
-        <circle cx="940" cy="440" r="26" className="bd-gear" />
-        <circle cx="940" cy="440" r="14" className="bd-lens" />
-
-        {/* Beauty dish con grilla a la derecha */}
-        <use href="#av-stand" x="1190" y="440" width="160" height="300" />
-        <circle cx="1270" cy="330" r="128" className="bd-gear" />
-        <circle cx="1270" cy="330" r="116" className="bd-dish" />
-        <circle cx="1270" cy="330" r="116" fill="url(#av-dish-grid)" />
-        <path d="M1440 200V700M1440 700L1400 730M1440 700L1480 730" className="bd-stand" />
-      </svg>
-
-      <svg className="backdrop backdrop-mu" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMin slice" aria-hidden="true" focusable="false">
-        <defs>
-          <linearGradient id="mu-wall" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" className="bd-stop-bg" />
-            <stop offset="0.4" className="bd-stop-wall" />
-            <stop offset="1" className="bd-stop-wall" />
-          </linearGradient>
-          <linearGradient id="mu-floor" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" className="bd-stop-s2" />
-            <stop offset="1" className="bd-stop-bg" />
-          </linearGradient>
-          <radialGradient id="mu-glow">
-            <stop offset="0" className="bd-stop-acc" stopOpacity="0.4" />
-            <stop offset="1" className="bd-stop-acc" stopOpacity="0" />
-          </radialGradient>
-          <pattern id="mu-truss" width="30" height="16" patternUnits="userSpaceOnUse">
-            <path d="M0 0L15 16L30 0" className="bd-rig" />
-          </pattern>
-          {/* Paneles acústicos del muro */}
-          <pattern id="mu-panels" width="104" height="500" patternUnits="userSpaceOnUse">
-            <path d="M0 0V500" className="bd-seam" />
-          </pattern>
-          {/* Pistas del DAW en las pantallas */}
-          <pattern id="mu-daw" width="18" height="120" patternUnits="userSpaceOnUse">
-            <rect x="3" y="40" width="10" height="70" className="bd-bars" />
-            <rect x="3" y="20" width="10" height="12" className="bd-bars dim" />
-          </pattern>
-          <pattern id="mu-keys" width="12" height="40" patternUnits="userSpaceOnUse">
-            <rect x="1" y="0" width="10" height="40" className="bd-keys" />
-          </pattern>
-          <pattern id="mu-faders" width="20" height="30" patternUnits="userSpaceOnUse">
-            <rect x="9" y="4" width="2" height="22" className="bd-track" />
-            <rect x="5" y="12" width="10" height="5" rx="1" className="bd-cap" />
-          </pattern>
-          <filter id="mu-blur" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="12" />
-          </filter>
-          {/* Cabeza móvil colgada del truss */}
-          <symbol id="mu-head" viewBox="0 0 70 90">
-            <rect x="15" y="0" width="40" height="18" rx="4" className="bd-gear" />
-            <path d="M14 22V56M56 22V56M14 22H56" className="bd-stand thin" />
-            <rect x="16" y="34" width="38" height="44" rx="10" className="bd-gear" />
-            <circle cx="35" cy="66" r="12" className="bd-head" />
-          </symbol>
-          <symbol id="mu-disc" viewBox="0 0 120 120">
-            <rect x="2" y="2" width="116" height="116" rx="4" className="bd-gear" />
-            <circle cx="60" cy="54" r="38" className="bd-silver" />
-            <circle cx="60" cy="54" r="10" className="bd-gear" />
-            <rect x="24" y="100" width="72" height="6" rx="2" className="bd-silver" />
-          </symbol>
-          <symbol id="mu-synths" viewBox="0 0 260 340">
-            <path d="M30 330L230 120M230 330L30 120" className="bd-stand" />
-            <polygon points="20,120 240,92 250,124 30,152" className="bd-gear" />
-            <polygon points="36,134 236,108 240,122 40,148" fill="url(#mu-keys)" />
-            <polygon points="40,60 230,36 238,70 48,94" className="bd-gear" />
-            <rect x="70" y="52" width="130" height="18" rx="3" fill="url(#mu-faders)" transform="rotate(-7 135 61)" />
-          </symbol>
-        </defs>
-
-        {/* Sala: muro de paneles acústicos, muros laterales y piso */}
-        <rect width="1600" height="900" fill="url(#mu-wall)" />
-        <rect x="270" y="200" width="1060" height="470" fill="url(#mu-panels)" />
-        <polygon points="0,0 270,160 270,670 0,800" className="bd-sidewall" />
-        <polygon points="1600,0 1330,160 1330,670 1600,800" className="bd-sidewall" />
-        <polygon points="0,800 270,670 1330,670 1600,800 1600,900 0,900" fill="url(#mu-floor)" />
-
-        {/* Graffiti en los muros laterales */}
-        <g className="bd-graffiti">
-          <path d="M40 360C80 330 110 400 150 360S210 330 230 380" className="acc" />
-          <path d="M50 420C90 400 130 460 170 420S220 410 240 440" className="rec" />
-          <path d="M60 470L110 450L150 490L210 460" className="ok" />
-          <path d="M1560 360C1520 330 1490 400 1450 360S1390 330 1370 380" className="acc" />
-          <path d="M1550 420C1510 400 1470 460 1430 420S1380 410 1360 440" className="ok" />
-          <path d="M1540 470L1490 450L1450 490L1390 460" className="rec" />
-        </g>
-
-        {/* Discos de platino enmarcados */}
-        <use href="#mu-disc" x="340" y="300" width="110" height="110" />
-        <use href="#mu-disc" x="1150" y="300" width="110" height="110" />
-        <use href="#mu-disc" x="340" y="450" width="90" height="90" />
-        <use href="#mu-disc" x="1170" y="450" width="90" height="90" />
-
-        {/* Pantallas del DAW sobre el escritorio */}
-        <rect x="560" y="360" width="236" height="140" rx="6" className="bd-screen" />
-        <rect x="572" y="372" width="212" height="116" fill="url(#mu-daw)" />
-        <rect x="804" y="360" width="236" height="140" rx="6" className="bd-screen" />
-        <rect x="816" y="372" width="212" height="116" fill="url(#mu-daw)" />
-
-        {/* Truss con cabezas móviles y marcos LED en el techo */}
-        <rect x="180" y="30" width="1240" height="16" fill="url(#mu-truss)" />
-        <path d="M180 30H1420M180 46H1420" className="bd-rig" />
-        <rect x="380" y="220" width="840" height="14" fill="url(#mu-truss)" />
-        <path d="M380 220H1220M380 234H1220" className="bd-rig" />
-        <g filter="url(#mu-blur)">
-          <polygon points="440,110 640,110 620,176 470,176" className="bd-ledframe" />
-          <polygon points="690,104 910,104 898,182 702,182" className="bd-ledframe" />
-          <polygon points="960,110 1160,110 1130,176 980,176" className="bd-ledframe" />
-        </g>
-        <polygon points="440,110 640,110 620,176 470,176" className="bd-ledframe" />
-        <polygon points="690,104 910,104 898,182 702,182" className="bd-ledframe" />
-        <polygon points="736,120 864,120 858,166 742,166" className="bd-ledframe" />
-        <polygon points="960,110 1160,110 1130,176 980,176" className="bd-ledframe" />
-        {[300, 620, 980, 1300].map((x) => (
-          <g key={x}>
-            <ellipse cx={x} cy="140" rx="70" ry="60" fill="url(#mu-glow)" />
-            <use href="#mu-head" x={x - 35} y="46" width="70" height="90" />
+      <div className="backdrop backdrop-mu" aria-hidden="true">
+        <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMin slice" focusable="false">
+          <defs>
+            {/* Degradados: muro, piso, metal y luz */}
+            <radialGradient id="mu-wall" cx="0.5" cy="0.35" r="0.8">
+              <stop offset="0" className="bd-stop-s2" />
+              <stop offset="0.5" className="bd-stop-wall" />
+              <stop offset="1" className="bd-stop-bg" />
+            </radialGradient>
+            <linearGradient id="mu-floor" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" className="bd-stop-s3" />
+              <stop offset="0.35" className="bd-stop-s1" />
+              <stop offset="1" className="bd-stop-bg" />
+            </linearGradient>
+            <linearGradient id="mu-metal" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" className="bd-stop-dim" />
+              <stop offset="0.5" className="bd-stop-bg" />
+              <stop offset="1" className="bd-stop-s3" />
+            </linearGradient>
+            <linearGradient id="mu-cab" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" className="bd-stop-s3" />
+              <stop offset="0.25" className="bd-stop-s1" />
+              <stop offset="1" className="bd-stop-bg" />
+            </linearGradient>
+            <linearGradient id="mu-beam" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" className="bd-stop-fg" stopOpacity="0.34" />
+              <stop offset="0.25" className="bd-stop-acc" stopOpacity="0.26" />
+              <stop offset="1" className="bd-stop-acc" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="mu-glass" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" className="bd-stop-fg" stopOpacity="0.22" />
+              <stop offset="0.4" className="bd-stop-fg" stopOpacity="0" />
+            </linearGradient>
+            <radialGradient id="mu-lens" cx="0.4" cy="0.35" r="0.7">
+              <stop offset="0" className="bd-stop-fg" />
+              <stop offset="0.45" className="bd-stop-acc" />
+              <stop offset="1" className="bd-stop-s2" />
+            </radialGradient>
+            <radialGradient id="mu-disc" cx="0.4" cy="0.35" r="0.75">
+              <stop offset="0" className="bd-stop-dim" />
+              <stop offset="0.55" className="bd-stop-dim" />
+              <stop offset="1" className="bd-stop-s3" />
+            </radialGradient>
+            <radialGradient id="mu-woofer" cx="0.5" cy="0.45" r="0.6">
+              <stop offset="0" className="bd-stop-s3" />
+              <stop offset="0.7" className="bd-stop-bg" />
+              <stop offset="1" className="bd-stop-dim" />
+            </radialGradient>
+            <radialGradient id="mu-spill">
+              <stop offset="0" className="bd-stop-acc" stopOpacity="0.5" />
+              <stop offset="1" className="bd-stop-acc" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="mu-shadow">
+              <stop offset="0" className="bd-stop-bg" stopOpacity="0.9" />
+              <stop offset="1" className="bd-stop-bg" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="mu-vignette" cx="0.5" cy="0.45" r="0.75">
+              <stop offset="0.55" className="bd-stop-bg" stopOpacity="0" />
+              <stop offset="1" className="bd-stop-bg" stopOpacity="0.85" />
+            </radialGradient>
+  
+            {/* Texturas */}
+            <pattern id="mu-truss" width="34" height="18" patternUnits="userSpaceOnUse">
+              <path d="M0 0L17 18L34 0" className="bd-lattice" />
+            </pattern>
+            <pattern id="mu-slats" width="52" height="10" patternUnits="userSpaceOnUse">
+              <path d="M0 0V10" className="bd-slat-shade" />
+              <path d="M3 0V10" className="bd-slat-light" />
+            </pattern>
+            <pattern id="mu-foam" width="28" height="28" patternUnits="userSpaceOnUse">
+              <path d="M0 0H28L14 14Z" className="bd-foam-light" />
+              <path d="M0 28H28L14 14Z" className="bd-foam-dark" />
+            </pattern>
+            <pattern id="mu-daw" width="16" height="120" patternUnits="userSpaceOnUse">
+              <rect x="2" y="30" width="11" height="80" className="bd-bars" />
+              <rect x="2" y="12" width="11" height="12" className="bd-bars dim" />
+            </pattern>
+            <pattern id="mu-keys" width="12" height="40" patternUnits="userSpaceOnUse">
+              <rect x="1" width="10" height="40" className="bd-keys" />
+              <rect x="8" width="6" height="24" className="bd-keys-black" />
+            </pattern>
+            <pattern id="mu-faders" width="14" height="34" patternUnits="userSpaceOnUse">
+              <rect x="6" y="4" width="2" height="26" className="bd-track" />
+              <rect x="3" y="14" width="8" height="5" rx="1" className="bd-cap" />
+              <circle cx="7" cy="1.5" r="1.3" className="bd-led-ok" />
+            </pattern>
+            <pattern id="mu-knobs" width="18" height="18" patternUnits="userSpaceOnUse">
+              <circle cx="9" cy="9" r="5" className="bd-knob" />
+            </pattern>
+  
+            {/* Filtros: desenfoques para bloom y difusión; ruido coloreado con tokens (flood-color) */}
+            <filter id="mu-b3" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" />
+            </filter>
+            <filter id="mu-b12" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="12" />
+            </filter>
+            <filter id="mu-b30" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="30" />
+            </filter>
+            <filter id="mu-haze" x="0" y="0" width="100%" height="100%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.0035 0.011" numOctaves="3" seed="7" />
+              <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.75 0 0 0 -0.2" result="a" />
+              <feFlood className="bd-flood-acc" />
+              <feComposite in2="a" operator="in" />
+            </filter>
+            <filter id="mu-concrete" x="0" y="0" width="100%" height="100%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.012 0.06" numOctaves="4" seed="3" />
+              <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.35 0 0 0 -0.05" result="a" />
+              <feFlood className="bd-flood-fg" />
+              <feComposite in2="a" operator="in" />
+            </filter>
+            <filter id="mu-grain" x="0" y="0" width="100%" height="100%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" />
+              <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.22 0 0 0 0" result="a" />
+              <feFlood className="bd-flood-fg" />
+              <feComposite in2="a" operator="in" />
+            </filter>
+            <filter id="mu-fabric" x="0" y="0" width="100%" height="100%">
+              <feTurbulence type="turbulence" baseFrequency="0.6 0.25" numOctaves="2" seed="11" />
+              <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.5 0 0 0 0" result="a" />
+              <feFlood className="bd-flood-bg" />
+              <feComposite in2="a" operator="in" />
+            </filter>
+  
+            <clipPath id="mu-floor-clip">
+              <polygon points="0,800 250,670 1350,670 1600,800 1600,900 0,900" />
+            </clipPath>
+            <clipPath id="mu-rug-clip">
+              <polygon points="300,800 1300,800 1370,890 230,890" />
+            </clipPath>
+  
+            {/* Piezas reutilizables */}
+            <symbol id="mu-head" viewBox="0 0 60 92">
+              <rect x="10" y="0" width="40" height="20" rx="4" fill="url(#mu-metal)" className="bd-edge" />
+              <path d="M8 26V62M52 26V62M8 26H52" className="bd-yoke" />
+              <rect x="9" y="34" width="42" height="50" rx="12" fill="url(#mu-cab)" className="bd-edge" />
+              <circle cx="30" cy="72" r="14" fill="url(#mu-lens)" />
+              <circle cx="25" cy="67" r="4" className="bd-spec" />
+            </symbol>
+            <symbol id="mu-record" viewBox="0 0 120 120">
+              <rect x="2" y="2" width="116" height="116" rx="3" fill="url(#mu-cab)" className="bd-edge" />
+              <rect x="8" y="8" width="104" height="104" className="bd-mat" />
+              <circle cx="60" cy="54" r="38" fill="url(#mu-disc)" />
+              <circle cx="60" cy="54" r="30" className="bd-grooves" />
+              <circle cx="60" cy="54" r="21" className="bd-grooves" />
+              <circle cx="60" cy="54" r="10" className="bd-label" />
+              <rect x="26" y="98" width="68" height="6" rx="2" className="bd-plaque" />
+              <rect x="8" y="8" width="104" height="104" fill="url(#mu-glass)" />
+            </symbol>
+            <symbol id="mu-monitor" viewBox="0 0 110 170">
+              <rect x="2" y="2" width="106" height="166" rx="10" fill="url(#mu-cab)" className="bd-edge" />
+              <circle cx="55" cy="46" r="17" fill="url(#mu-woofer)" className="bd-edge" />
+              <circle cx="55" cy="46" r="5" className="bd-spec dim" />
+              <circle cx="55" cy="114" r="38" fill="url(#mu-woofer)" className="bd-edge" />
+              <circle cx="55" cy="114" r="13" className="bd-dustcap" />
+              <circle cx="48" cy="106" r="5" className="bd-spec dim" />
+              <rect x="46" y="156" width="18" height="4" rx="2" className="bd-power" />
+            </symbol>
+            <symbol id="mu-synths" viewBox="0 0 280 360">
+              <path d="M40 350L250 120M250 350L40 120" className="bd-stand" />
+              <polygon points="20,120 262,88 274,128 32,160" fill="url(#mu-cab)" className="bd-edge" />
+              <polygon points="38,132 258,103 264,122 44,152" fill="url(#mu-keys)" />
+              <polygon points="40,52 250,24 260,70 50,98" fill="url(#mu-cab)" className="bd-edge" />
+              <polygon points="56,58 244,33 250,62 62,88" fill="url(#mu-knobs)" />
+              <polygon points="40,52 250,24 252,30 42,58" className="bd-rimlight" />
+            </symbol>
+          </defs>
+  
+          {/* Sala: muro de listones acústicos, muros laterales con espuma, piso de concreto pulido */}
+          <rect width="1600" height="900" fill="url(#mu-wall)" />
+          <rect x="250" y="190" width="1100" height="480" fill="url(#mu-slats)" />
+          <polygon points="0,0 250,150 250,670 0,800" className="bd-sidewall" />
+          <polygon points="1600,0 1350,150 1350,670 1600,800" className="bd-sidewall" />
+          <polygon points="0,90 250,210 250,640 0,750" fill="url(#mu-foam)" className="bd-foam" />
+          <polygon points="1600,90 1350,210 1350,640 1600,750" fill="url(#mu-foam)" className="bd-foam" />
+          <polygon points="0,800 250,670 1350,670 1600,800 1600,900 0,900" fill="url(#mu-floor)" />
+          <rect y="670" width="1600" height="230" filter="url(#mu-concrete)" clipPath="url(#mu-floor-clip)" />
+  
+          {/* Haces volumétricos de las cabezas móviles, con bruma */}
+          <g filter="url(#mu-b12)">
+            <polygon points="296,104 314,104 540,690 100,690" fill="url(#mu-beam)" />
+            <polygon points="611,104 629,104 780,690 460,690" fill="url(#mu-beam)" />
+            <polygon points="971,104 989,104 1140,690 820,690" fill="url(#mu-beam)" />
+            <polygon points="1286,104 1304,104 1500,690 1060,690" fill="url(#mu-beam)" />
           </g>
-        ))}
-        {[640, 960].map((x) => (
-          <g key={x}>
-            <ellipse cx={x} cy="290" rx="50" ry="40" fill="url(#mu-glow)" />
-            <use href="#mu-head" x={x - 24} y="234" width="48" height="62" />
+          <rect width="1600" height="720" filter="url(#mu-haze)" className="bd-haze" />
+  
+          {/* Graffiti sobre lienzos en los muros laterales */}
+          <g transform="skewY(18)">
+            <rect x="50" y="250" width="160" height="200" rx="3" fill="url(#mu-cab)" className="bd-edge" />
+            <g className="bd-graffiti">
+              <path d="M70 300C110 260 140 340 190 290" className="acc" />
+              <path d="M70 360C110 330 150 390 195 350" className="ok" />
+              <path d="M80 410L120 390L160 420L195 400" className="rec" />
+            </g>
+            <g className="bd-graffiti spray" filter="url(#mu-b3)">
+              <path d="M70 300C110 260 140 340 190 290" className="acc" />
+              <path d="M70 360C110 330 150 390 195 350" className="ok" />
+            </g>
           </g>
-        ))}
-
-        {/* Teclados y sintetizadores en atriles */}
-        <use href="#mu-synths" x="60" y="430" width="260" height="340" />
-        <use href="#mu-synths" x="1280" y="430" width="260" height="340" transform="scale(-1 1) translate(-2820 0)" />
-
-        {/* Escritorio con la consola, el laptop, los micrófonos y la tira LED */}
-        <path d="M560 540Q600 470 690 500" className="bd-stand thin" />
-        <rect x="684" y="490" width="34" height="16" rx="8" className="bd-gear" />
-        <path d="M1040 540Q1000 470 910 500" className="bd-stand thin" />
-        <rect x="882" y="490" width="34" height="16" rx="8" className="bd-gear" />
-        <rect x="740" y="540" width="120" height="76" rx="4" className="bd-screen" />
-        <rect x="750" y="550" width="100" height="56" fill="url(#mu-daw)" />
-        <polygon points="530,612 1070,612 1100,660 500,660" className="bd-gear" />
-        <rect x="560" y="618" width="170" height="30" fill="url(#mu-faders)" />
-        <rect x="870" y="618" width="170" height="30" fill="url(#mu-faders)" />
-        <rect x="506" y="668" width="588" height="6" rx="3" className="bd-rim" filter="url(#mu-blur)" />
-        <rect x="506" y="668" width="588" height="4" rx="2" className="bd-rim" />
-        <path d="M540 676L600 780M1060 676L1000 780M600 780H540M1000 780H1060" className="bd-stand" />
-
-        {/* Alfombra de parches en el piso */}
-        <polygon points="300,790 560,790 545,830 270,830" className="bd-rug a" />
-        <polygon points="560,790 800,790 795,830 545,830" className="bd-rug b" />
-        <polygon points="800,790 1050,790 1060,830 795,830" className="bd-rug c" />
-        <polygon points="1050,790 1300,790 1330,830 1060,830" className="bd-rug b" />
-        <polygon points="270,830 600,830 590,880 230,880" className="bd-rug c" />
-        <polygon points="600,830 900,830 905,880 590,880" className="bd-rug a" />
-        <polygon points="900,830 1330,830 1370,880 905,880" className="bd-rug d" />
-      </svg>
+          <g transform="skewY(-18)">
+            <rect x="1390" y="770" width="160" height="200" rx="3" fill="url(#mu-cab)" className="bd-edge" />
+            <g className="bd-graffiti">
+              <path d="M1410 820C1450 780 1480 860 1530 810" className="ok" />
+              <path d="M1410 880C1450 850 1490 910 1535 870" className="rec" />
+              <path d="M1420 930L1460 910L1500 940L1535 920" className="acc" />
+            </g>
+            <g className="bd-graffiti spray" filter="url(#mu-b3)">
+              <path d="M1410 820C1450 780 1480 860 1530 810" className="ok" />
+              <path d="M1410 880C1450 850 1490 910 1535 870" className="rec" />
+            </g>
+          </g>
+  
+          {/* Discos de platino enmarcados */}
+          <use href="#mu-record" x="310" y="290" width="124" height="124" />
+          <use href="#mu-record" x="1166" y="290" width="124" height="124" />
+          <use href="#mu-record" x="326" y="440" width="92" height="92" />
+          <use href="#mu-record" x="1182" y="440" width="92" height="92" />
+  
+          {/* Pantallas del DAW: emisión, reflejo del vidrio y luz sobre el muro */}
+          <ellipse cx="800" cy="425" rx="340" ry="130" fill="url(#mu-spill)" filter="url(#mu-b30)" />
+          <rect x="536" y="346" width="260" height="158" rx="6" className="bd-bezel" />
+          <rect x="548" y="358" width="236" height="134" className="bd-screen" />
+          <rect x="548" y="358" width="236" height="134" fill="url(#mu-daw)" />
+          <rect x="548" y="358" width="236" height="134" fill="url(#mu-glass)" />
+          <rect x="804" y="346" width="260" height="158" rx="6" className="bd-bezel" />
+          <rect x="816" y="358" width="236" height="134" className="bd-screen" />
+          <rect x="816" y="358" width="236" height="134" fill="url(#mu-daw)" />
+          <rect x="816" y="358" width="236" height="134" fill="url(#mu-glass)" />
+  
+          {/* Truss metálico, cabezas móviles y marcos LED con bloom */}
+          <rect x="170" y="30" width="1260" height="18" fill="url(#mu-truss)" />
+          <path d="M170 30H1430M170 48H1430" stroke="url(#mu-metal)" className="bd-tube" />
+          <rect x="360" y="226" width="880" height="16" fill="url(#mu-truss)" />
+          <path d="M360 226H1240M360 242H1240" stroke="url(#mu-metal)" className="bd-tube thin" />
+          <g className="bd-ledframe bloom-wide" filter="url(#mu-b30)">
+            <polygon points="440,110 640,110 620,176 470,176" />
+            <polygon points="690,104 910,104 898,182 702,182" />
+            <polygon points="960,110 1160,110 1130,176 980,176" />
+          </g>
+          <g className="bd-ledframe bloom" filter="url(#mu-b12)">
+            <polygon points="440,110 640,110 620,176 470,176" />
+            <polygon points="690,104 910,104 898,182 702,182" />
+            <polygon points="736,120 864,120 858,166 742,166" />
+            <polygon points="960,110 1160,110 1130,176 980,176" />
+          </g>
+          <g className="bd-ledframe core">
+            <polygon points="440,110 640,110 620,176 470,176" />
+            <polygon points="690,104 910,104 898,182 702,182" />
+            <polygon points="736,120 864,120 858,166 742,166" />
+            <polygon points="960,110 1160,110 1130,176 980,176" />
+          </g>
+          {/* Cabezas del truss delantero cortas, para que el lente quede sobre el texto del encabezado y no detrás */}
+          {[305, 620, 980, 1295].map((x) => (
+            <g key={x}>
+              <circle cx={x} cy="92" r="34" fill="url(#mu-spill)" filter="url(#mu-b12)" />
+              <use href="#mu-head" x={x - 21} y="48" width="42" height="64" />
+            </g>
+          ))}
+          {[640, 960].map((x) => (
+            <g key={x}>
+              <circle cx={x} cy="290" r="30" fill="url(#mu-spill)" filter="url(#mu-b12)" />
+              <use href="#mu-head" x={x - 20} y="242" width="40" height="61" />
+            </g>
+          ))}
+  
+          {/* Sombras de contacto en el piso */}
+          <ellipse cx="170" cy="790" rx="150" ry="18" fill="url(#mu-shadow)" />
+          <ellipse cx="1430" cy="790" rx="150" ry="18" fill="url(#mu-shadow)" />
+          <ellipse cx="800" cy="792" rx="300" ry="22" fill="url(#mu-shadow)" />
+          <ellipse cx="455" cy="768" rx="60" ry="10" fill="url(#mu-shadow)" />
+          <ellipse cx="1145" cy="768" rx="60" ry="10" fill="url(#mu-shadow)" />
+  
+          {/* Teclados y sintetizadores en atriles en X */}
+          <use href="#mu-synths" x="30" y="440" width="280" height="360" />
+          <use href="#mu-synths" x="1290" y="440" width="280" height="360" transform="scale(-1 1) translate(-2860 0)" />
+  
+          {/* Monitores de estudio sobre pedestales a cada lado del escritorio */}
+          <path d="M455 560V762M425 764H485M1145 560V762M1115 764H1175" stroke="url(#mu-metal)" className="bd-tube" />
+          <use href="#mu-monitor" x="400" y="400" width="110" height="170" />
+          <use href="#mu-monitor" x="1090" y="400" width="110" height="170" />
+  
+          {/* Escritorio: micrófonos en brazo, laptop, consola y tira LED */}
+          <path d="M560 560Q600 480 690 506" stroke="url(#mu-metal)" className="bd-tube" />
+          <rect x="684" y="492" width="40" height="20" rx="10" fill="url(#mu-cab)" className="bd-edge" />
+          <path d="M1040 560Q1000 480 910 506" stroke="url(#mu-metal)" className="bd-tube" />
+          <rect x="876" y="492" width="40" height="20" rx="10" fill="url(#mu-cab)" className="bd-edge" />
+          <rect x="734" y="532" width="132" height="84" rx="5" className="bd-bezel" />
+          <rect x="744" y="542" width="112" height="64" className="bd-screen" />
+          <rect x="744" y="542" width="112" height="64" fill="url(#mu-daw)" />
+          <rect x="744" y="542" width="112" height="64" fill="url(#mu-glass)" />
+          <polygon points="520,612 1080,612 1112,664 488,664" fill="url(#mu-cab)" className="bd-edge" />
+          <polygon points="520,612 1080,612 1083,617 517,617" className="bd-rimlight" />
+          <rect x="556" y="620" width="178" height="36" rx="3" className="bd-console" />
+          <rect x="562" y="622" width="166" height="34" fill="url(#mu-faders)" />
+          <rect x="866" y="620" width="178" height="36" rx="3" className="bd-console" />
+          <rect x="872" y="622" width="166" height="34" fill="url(#mu-faders)" />
+          <rect x="488" y="666" width="624" height="16" rx="8" className="bd-strip" filter="url(#mu-b12)" />
+          <rect x="496" y="670" width="608" height="5" rx="2.5" className="bd-strip core" />
+          <path d="M540 680L600 790M1060 680L1000 790" stroke="url(#mu-metal)" className="bd-tube thick" />
+  
+          {/* Reflejo del LED y las pantallas en el concreto pulido */}
+          <g clipPath="url(#mu-floor-clip)">
+            <g transform="translate(0 1350) scale(1 -1)" className="bd-reflection" filter="url(#mu-b12)">
+              <rect x="496" y="670" width="608" height="8" rx="4" className="bd-strip" />
+              <rect x="548" y="560" width="504" height="100" className="bd-bars" />
+            </g>
+            <ellipse cx="800" cy="730" rx="360" ry="50" fill="url(#mu-spill)" filter="url(#mu-b30)" />
+          </g>
+  
+          {/* Alfombra de parches con textura de tela */}
+          <g className="bd-rug">
+            <polygon points="300,800 560,800 545,840 270,840" className="a" />
+            <polygon points="560,800 800,800 795,840 545,840" className="b" />
+            <polygon points="800,800 1050,800 1060,840 795,840" className="c" />
+            <polygon points="1050,800 1300,800 1330,840 1060,840" className="b" />
+            <polygon points="270,840 600,840 590,890 230,890" className="c" />
+            <polygon points="600,840 900,840 905,890 590,890" className="a" />
+            <polygon points="900,840 1330,840 1370,890 905,890" className="d" />
+          </g>
+          <rect x="230" y="800" width="1140" height="90" filter="url(#mu-fabric)" clipPath="url(#mu-rug-clip)" />
+  
+          {/* Viñeta y grano de película */}
+          <rect width="1600" height="900" fill="url(#mu-vignette)" />
+          <rect width="1600" height="900" filter="url(#mu-grain)" className="bd-grain" />
+        </svg>
+      </div>
     </>
   );
 }

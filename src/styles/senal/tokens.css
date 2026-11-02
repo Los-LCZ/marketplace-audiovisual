@@ -16,6 +16,8 @@
   --acc: #38bdf8;
   --acc-soft: rgba(56, 189, 248, 0.14);
   --acc-ink: #04131c;
+  /* Texto destacado (.acc): en Música es más claro que el acento para leerse sobre la escena. */
+  --acc-text: var(--acc);
   --rec: #ff3b30;
   --ok: #6ff0c1;
   --glow: 0 0 24px rgba(56, 189, 248, 0.45);
@@ -26,9 +28,10 @@
   --key: rgba(248, 250, 252, 0.14);
   --key-at: 50% 0%;
   --spill: 0 28px 80px -28px rgba(56, 189, 248, 0.38);
-  /* Escena de fondo: muro azul medianoche y la tira de luz cálida al pie del ciclorama. */
-  --wall: #111a30;
-  --rim: rgba(255, 140, 70, 0.4);
+  /* Foto del set: tinte azul medianoche (multiply) y velo oscuro para que el texto se lea encima. */
+  --photo-tint: #5677b3;
+  --veil-top: rgba(9, 12, 16, 0.4);
+  --veil: rgba(9, 12, 16, 0.5);
   --radius: 14px;
   --radius-sm: 8px;
   color-scheme: dark;
@@ -45,6 +48,7 @@
   --acc: #8b7cc7;
   --acc-soft: rgba(90, 59, 140, 0.4);
   --acc-ink: #0e0b1d;
+  --acc-text: #c9c2e3;
   --rec: #ff4d6d;
   --ok: #7ee0c3;
   --glow: 0 0 24px rgba(139, 124, 199, 0.5);
@@ -56,7 +60,9 @@
   --key-at: 50% 100%;
   --spill: 0 28px 80px -28px rgba(90, 59, 140, 0.75);
   --wall: #151030;
-  --rim: rgba(201, 194, 227, 0.55);
+  /* Velo sobre el estudio dibujado, con el fondo de la paleta. */
+  --veil-top: rgba(14, 11, 29, 0.62);
+  --veil: rgba(14, 11, 29, 0.55);
   --radius: 10px;
   --radius-sm: 6px;
 }
