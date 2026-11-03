@@ -109,3 +109,20 @@ export async function getBookingsReviews(bookingIds: string[]): Promise<Map<stri
   if (error) throw new Error(`Error al obtener reseñas de las reservas: ${error.message}`);
   return new Map((data ?? []).map((row) => [row.booking_id, row.reviews]));
 }
+
+/**
+ * Reservas y solicitudes vigentes que aún no empiezan en un espacio propio
+ * (requested, pending_payment o confirmed). Para avisar antes de pasarlo a Borrador
+ * o Archivado: esas reservas no se cancelan solas. 0 si el espacio no es del usuario (RLS).
+ */
+export async function countUpcomingBookings(spaceId: string): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("bookings")
+    .select("id", { count: "exact", head: true })
+    .eq("space_id", spaceId)
+    .in("status", ["requested", "pending_payment", "confirmed"])
+    .gt("start_time", new Date().toISOString());
+  if (error) throw new Error(`Error al contar reservas: ${error.message}`);
+  return count ?? 0;
+}

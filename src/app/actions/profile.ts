@@ -107,3 +107,22 @@ export async function removeAvatar(): Promise<ActionState> {
   revalidateProfile(user.id);
   return { ok: true, message: "Foto eliminada" };
 }
+
+/**
+ * El cliente pasa a ser anfitrión para poder publicar espacios. Solo client → host;
+ * la base rechaza cualquier otro cambio de rol. Si ya es anfitrión (o admin), no hace nada.
+ * No recibe FormData: úsala con `useTransition` o con `.bind`; después lleva a /espacios/nuevo.
+ */
+export async function becomeHost(): Promise<ActionState> {
+  const user = await getCurrentUser();
+  if (!user) return fail("Debes iniciar sesión");
+  if (user.profile.role !== "client") return { ok: true };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("profiles").update({ role: "host" }).eq("id", user.id);
+  if (error) return fail(`No se pudo activar tu cuenta de anfitrión: ${error.message}`);
+
+  revalidateProfile(user.id);
+  revalidatePath("/dashboard");
+  return { ok: true, message: "Ya eres anfitrión: publica tu primer espacio" };
+}

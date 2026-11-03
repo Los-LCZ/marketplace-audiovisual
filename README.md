@@ -65,6 +65,7 @@ Ejecutar las migraciones de `supabase/migrations/` **en orden** (SQL Editor o `s
 | `20261102100000_spaces_updated_at.sql` | `spaces.updated_at` (datos, fotos o amenities) para el sitemap |
 | `20261102110000_booking_horizon.sql` | Reservas como máximo un año hacia adelante |
 | `20261103100000_space_cards_world.sql` | `space_cards.world` para ordenar primero el mundo activo |
+| `20261103110000_become_host.sql` | Un cliente puede pasar su propio perfil a anfitrión |
 
 `init.sql` no se edita: cada cambio de esquema va en una migración nueva `<timestamp>_<descripcion>.sql`.
 
@@ -138,6 +139,8 @@ Las rutas protegidas se definen en `PROTECTED_PREFIXES` de `src/utils/supabase/m
 - **Montos:** los calcula el trigger `compute_booking_amounts` (horas completas × `price_per_hour`, comisión de plataforma de 10%). El cliente nunca envía montos.
 - **Horario:** cada espacio tiene `open_hour`–`close_hour` (hora de Chile); las reservas fuera de ese rango se rechazan.
 - **Días cerrados:** el anfitrión puede cerrar días completos a su elección (por defecto todo está abierto, feriados incluidos). En un día cerrado no se crean ni aceptan reservas, no aparece en el filtro por fecha y la ficha lo muestra ocupado. No se puede cerrar un día que ya tiene reservas o solicitudes activas.
+- **Cliente → anfitrión:** `becomeHost()` pasa el perfil propio de `client` a `host` (solo esa transición; a admin o de vuelta a cliente sigue reservado al SQL Editor o a un admin).
+- **Espacio a Borrador o Archivado:** las reservas futuras no se cancelan solas. `countUpcomingBookings(spaceId)` cuenta las vigentes (requested, pending_payment, confirmed) que aún no empiezan, para avisar antes del cambio.
 - **Comuna y ciudad:** `createSpace`/`updateSpace` las guardan normalizadas (`normalizePlaceName`: "  providencia " → "Providencia", "san josé de maipo" → "San José de Maipo").
 - **Etiquetas de reseña:** vocabulario único en `src/lib/review-tags.ts` (elogios por tipo de reseña y problemas comunes). `createReview` y `createClientReview` rechazan etiquetas fuera de esa lista.
 - **Orden "relevance":** `listPublishedSpaces({ sort: "relevance", world })` pone primero los espacios del mundo activo en todas las páginas y luego los más recientes.
