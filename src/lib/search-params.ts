@@ -51,8 +51,10 @@ export function buildQueryString(
   return qs ? `?${qs}` : "";
 }
 
+// La clave sigue siendo "relevancia" para que las URLs guardadas (?sort=relevancia) sigan funcionando.
 export const SORTS = {
-  relevancia: "Más recientes",
+  relevancia: "Recomendados",
+  recientes: "Más recientes",
   "precio-asc": "Precio: menor a mayor",
   "precio-desc": "Precio: mayor a menor",
   valoracion: "Mejor valorados",
