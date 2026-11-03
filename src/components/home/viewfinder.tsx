@@ -170,8 +170,17 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
         }}
       >
         <div ref={imgRef} className="vf-img">
-          {space?.image && (
+          {space?.image ? (
             <Image src={space.image} alt={space.title} fill priority sizes="(min-width: 1240px) 1184px, 100vw" className="object-cover" />
+          ) : (
+            space && (
+              // Sin fotos el visor quedaba negro: mostramos la categoría como "pizarra" de la toma.
+              <div className="vf-empty">
+                <CategoryIcon category={space.category} />
+                <b>{SPACE_CATEGORY_LABELS[space.category]}</b>
+                <span>Sin fotos todavía</span>
+              </div>
+            )
           )}
         </div>
         <div ref={peakRef} className="vf-peak" />
@@ -244,7 +253,13 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
                       frame(i);
                     }}
                   >
-                    {s.image && <Image src={s.image} alt="" width={92} height={54} />}
+                    {s.image ? (
+                      <Image src={s.image} alt="" width={92} height={54} />
+                    ) : (
+                      <span className="vf-thumb-empty" aria-hidden>
+                        <CategoryIcon category={s.category} />
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
