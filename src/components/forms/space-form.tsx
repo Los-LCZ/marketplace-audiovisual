@@ -319,7 +319,7 @@ export function SpaceForm({ amenities, space }: { amenities: Amenity[]; space?: 
 
       {space ? (
         <Section title="Fotos" description="Agrega, ordena o elimina fotos; los cambios se guardan al instante.">
-          <SpaceImagesManager spaceId={space.id} images={space.images} />
+          <SpaceImagesManager spaceId={space.id} spaceTitle={space.title} images={space.images} />
         </Section>
       ) : (
         <Section title="Fotos" description="La primera foto es la portada. Podrás agregar más después.">

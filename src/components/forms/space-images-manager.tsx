@@ -5,11 +5,11 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, ImagePlus, X } from "lucide-react";
 import { addSpaceImages, removeSpaceImage, reorderSpaceImages } from "@/app/actions/spaces";
-import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_SPACE, validateImage } from "@/lib/storage";
+import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_SPACE } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/ui/layer";
 import { toast } from "@/components/ui/toaster";
-import { MAX_UPLOAD_BYTES } from "./image-picker";
+import { rejectReason, RejectedFiles } from "./image-picker";
 
 function formatMB(bytes: number) {
   return `${(bytes / 1024 / 1024).toLocaleString("es-CL", { maximumFractionDigits: 1 })} MB`;
@@ -22,7 +22,16 @@ function formatMB(bytes: number) {
  * edición, así que no usa <form> propio: el <input type="file"> no tiene `name` y
  * no viaja con updateSpace.
  */
-export function SpaceImagesManager({ spaceId, images }: { spaceId: string; images: string[] }) {
+export function SpaceImagesManager({
+  spaceId,
+  spaceTitle,
+  images,
+}: {
+  spaceId: string;
+  /** Para el texto alternativo de cada foto. */
+  spaceTitle: string;
+  images: string[];
+}) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, startUpload] = useTransition();
@@ -32,26 +41,26 @@ export function SpaceImagesManager({ spaceId, images }: { spaceId: string; image
   const [shown, setShown] = useOptimistic(images);
   const [toRemove, setToRemove] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [rejected, setRejected] = useState<string[]>([]);
   const free = MAX_IMAGES_PER_SPACE - images.length;
 
   function upload(list: FileList | null) {
     if (!list?.length) return;
     const files: File[] = [];
     let bytes = 0;
-    let problem: string | null = null;
+    const problems: string[] = [];
     for (const file of Array.from(list)) {
-      const invalid = validateImage(file);
-      if (invalid) problem = invalid;
-      else if (files.length >= free) problem = `Máximo ${MAX_IMAGES_PER_SPACE} fotos por espacio`;
-      else if (bytes + file.size > MAX_UPLOAD_BYTES)
-        problem = `Las fotos no pueden sumar más de ${formatMB(MAX_UPLOAD_BYTES)} por envío`;
+      // Cuenta las que ya tiene el espacio más las que van en este envío.
+      const problem = rejectReason(file, images.length + files.length, bytes);
+      if (problem) problems.push(problem);
       else {
         files.push(file);
         bytes += file.size;
       }
     }
     if (inputRef.current) inputRef.current.value = "";
-    setError(problem);
+    setError(null);
+    setRejected(problems);
     if (!files.length) return;
 
     const formData = new FormData();
@@ -97,7 +106,13 @@ export function SpaceImagesManager({ spaceId, images }: { spaceId: string; image
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {shown.map((url, i) => (
           <li key={url} className="group relative aspect-[4/3] overflow-hidden rounded-xl bg-muted">
-            <Image src={url} alt={`Foto ${i + 1}`} fill sizes="200px" className="object-cover" />
+            <Image
+              src={url}
+              alt={`${spaceTitle}, foto ${i + 1} de ${shown.length}${i === 0 ? " (portada)" : ""}`}
+              fill
+              sizes="200px"
+              className="object-cover"
+            />
             {i === 0 ? (
               <span className="absolute bottom-2 left-2 rounded-full bg-surface/90 px-2 py-0.5 text-xs font-medium">
                 Portada
@@ -107,6 +122,7 @@ export function SpaceImagesManager({ spaceId, images }: { spaceId: string; image
                 type="button"
                 onClick={() => move(i, 0)}
                 disabled={reordering}
+                aria-label={`Usar la foto ${i + 1} de portada`}
                 className="absolute bottom-2 left-2 rounded-full bg-surface/90 px-2 py-0.5 text-xs opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
               >
                 Usar de portada
@@ -154,7 +170,7 @@ export function SpaceImagesManager({ spaceId, images }: { spaceId: string; image
               disabled={uploading}
               className={cn(
                 "flex aspect-[4/3] w-full flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-60",
-                error ? "border-danger" : "border-border",
+                error || rejected.length ? "border-danger" : "border-border",
               )}
             >
               <ImagePlus className="size-6" aria-hidden />
@@ -179,7 +195,7 @@ export function SpaceImagesManager({ spaceId, images }: { spaceId: string; image
         Se guardan al tiro, sin apretar Guardar cambios. JPG, PNG, WebP o AVIF · hasta {formatMB(MAX_IMAGE_BYTES)} cada
         una · {images.length}/{MAX_IMAGES_PER_SPACE} fotos. La primera es la portada; usa las flechas para ordenarlas.
       </p>
-      {error && <p className="text-sm text-danger">{error}</p>}
+      <RejectedFiles problems={rejected} error={error} />
 
       <ConfirmDialog
         open={!!toRemove}
