@@ -364,14 +364,15 @@ const MAX_BLACKOUTS_PER_CALL = 62;
 /**
  * Cierra días de un espacio propio (hora de Chile). Todos o ninguno: si un día ya pasó,
  * está a más de un año o tiene reservas/solicitudes activas, no se cierra ninguno y se
- * devuelve el motivo. Los días ya cerrados se ignoran. `reason` es una nota privada.
+ * devuelve el motivo. Los días ya cerrados se ignoran y vuelven en `skipped`/`skippedDates`
+ * (`count` son solo los nuevos). `reason` es una nota privada.
  * No recibe FormData: úsala con `useTransition` o con `.bind`.
  */
 export async function addSpaceBlackouts(
   spaceId: string,
   dates: string[],
   reason?: string,
-): Promise<ActionState<{ count: number }>> {
+): Promise<ActionState<{ count: number; skipped: number; skippedDates: string[] }>> {
   const user = await getCurrentUser();
   if (!user) return fail("Debes iniciar sesión");
 
@@ -388,7 +389,7 @@ export async function addSpaceBlackouts(
       unique.map((date) => ({ space_id: spaceId, date, reason: note || null })),
       { onConflict: "space_id,date", ignoreDuplicates: true },
     )
-    .select("id");
+    .select("date");
 
   if (error) {
     if (error.code === "P0001") return fail(error.message);
@@ -396,8 +397,10 @@ export async function addSpaceBlackouts(
     return fail(`No se pudieron cerrar los días: ${error.message}`);
   }
 
-  revalidateSpace(spaceId);
-  return { ok: true, data: { count: data?.length ?? 0 } };
+  const added = new Set((data ?? []).map((row) => row.date));
+  const skippedDates = unique.filter((d) => !added.has(d)).sort();
+  if (added.size) revalidateSpace(spaceId);
+  return { ok: true, data: { count: added.size, skipped: skippedDates.length, skippedDates } };
 }
 
 /**
