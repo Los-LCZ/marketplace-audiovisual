@@ -82,6 +82,12 @@ export function UserMenu({
               </Link>
             </>
           )}
+          {/* Clientes: lleva a /espacios/nuevo, donde pueden activarse como anfitrión. */}
+          {!isHost && (
+            <Link role="menuitem" href="/espacios/nuevo" onClick={close} className={ITEM}>
+              <Plus className="size-4" aria-hidden /> Publicar mi espacio
+            </Link>
+          )}
           <form action={signout} className="mt-1 border-t border-[var(--line)] pt-1">
             <button type="submit" role="menuitem" className={ITEM}>
               <LogOut className="size-4" aria-hidden /> Cerrar sesión

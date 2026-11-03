@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Store } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { listAmenities } from "@/lib/queries/spaces";
 import { SpaceForm } from "@/components/forms/space-form";
-import { EmptyState } from "@/components/ui/empty-state";
-import { buttonClasses } from "@/components/ui/button";
+import { BecomeHost } from "@/components/profile/become-host";
 
 export const metadata: Metadata = { title: "Publicar espacio" };
 
@@ -15,19 +12,11 @@ export default async function NuevoEspacioPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/espacios/nuevo");
 
+  // Un cliente puede activarse como anfitrión aquí mismo; después ve el formulario.
   if (user.profile.role === "client") {
     return (
-      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center px-4 py-8 sm:px-6">
-        <EmptyState
-          icon={Store}
-          title="Solo los anfitriones pueden publicar espacios"
-          description="Tu cuenta es de cliente. Para publicar un espacio necesitas una cuenta de anfitrión."
-          action={
-            <Link href="/" className={buttonClasses({ variant: "secondary" })}>
-              Explorar espacios
-            </Link>
-          }
-        />
+      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center px-4 py-12 sm:px-6">
+        <BecomeHost />
       </div>
     );
   }
