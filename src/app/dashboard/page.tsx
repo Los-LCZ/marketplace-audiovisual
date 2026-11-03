@@ -69,10 +69,18 @@ export default async function DashboardPage() {
       <div className="wrap pt-[34px]">
         <div className="empty">
           <b>Tu cuenta es de cliente</b>
-          <p className="dim">El panel de anfitrión es para quienes publican espacios. Revisa tus reservas en Mis sesiones.</p>
-          <Link className="btn btn-soft" href="/mis-reservas">
-            Ir a mis sesiones
-          </Link>
+          <p className="dim">
+            El panel de anfitrión es para quienes publican espacios. Revisa tus reservas en Mis sesiones o activa tu cuenta
+            de anfitrión para publicar el tuyo.
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Link className="btn btn-soft" href="/mis-reservas">
+              Ir a mis sesiones
+            </Link>
+            <Link className="btn btn-acc" href="/espacios/nuevo">
+              Publicar mi espacio
+            </Link>
+          </div>
         </div>
       </div>
     );
