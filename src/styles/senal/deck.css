@@ -4,7 +4,8 @@
 .discover { display: grid; gap: 34px; padding-top: 30px; }
 @media (min-width: 1000px) { .discover { grid-template-columns: 1fr 320px; } }
 .deck-wrap { display: flex; flex-direction: column; align-items: center; }
-.deck { position: relative; width: 100%; max-width: 400px; height: min(calc(100svh - 270px), 560px); min-height: 420px; }
+/* En móvil descuenta también la barra inferior (.tabbar, 68px): si no, los botones del mazo quedan debajo (E-06). */
+.deck { position: relative; width: 100%; max-width: 400px; height: min(calc(100svh - 338px - env(safe-area-inset-bottom, 0px)), 560px); min-height: 380px; }
 @media (min-width: 900px) { .deck { height: 580px; } }
 .card { position: absolute; inset: 0; border-radius: 22px; overflow: hidden; background: var(--s2); border: 1px solid var(--line2); touch-action: none; user-select: none; box-shadow: 0 30px 60px -25px rgba(0,0,0,.8); will-change: transform; }
 [data-world="mu"] .card { border-radius: 14px; }
