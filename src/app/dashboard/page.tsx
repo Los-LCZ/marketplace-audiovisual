@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { Plus } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { listMySpaces } from "@/lib/queries/spaces";
-import { listHostBookings, listHostRequests, type HostBooking } from "@/lib/queries/bookings";
+import { countUpcomingBookings, listHostBookings, listHostRequests, type HostBooking } from "@/lib/queries/bookings";
 import { getHostResponseStats, getProfileRatingStats } from "@/lib/queries/profiles";
 import { canCancel, canComplete, isUpcoming } from "@/lib/booking-rules";
 import { loadBookingReviews } from "@/lib/booking-reviews";
@@ -86,7 +86,11 @@ export default async function DashboardPage() {
     getHostResponseStats(user.id),
   ]);
   const { now, today } = currentTime();
-  const reviews = await loadBookingReviews(bookings);
+  // Reservas y solicitudes próximas por espacio, para avisar antes de pasarlo a Borrador o Archivado.
+  const [reviews, upcomingBySpace] = await Promise.all([
+    loadBookingReviews(bookings),
+    Promise.all(spaces.map((s) => countUpcomingBookings(s.id))),
+  ]);
   const blind = (b: HostBooking) => {
     const data = reviews.get(b.id);
     return data ? { data, viewer: "host" as const, counterpart: b.client?.full_name ?? "El cliente" } : null;
@@ -264,8 +268,8 @@ export default async function DashboardPage() {
             <b>{spaces.length === 1 ? "Tu espacio" : "Tus espacios"}</b>
             {spaces.length ? (
               <ul className="mt-2.5 grid gap-3">
-                {spaces.map((space) => (
-                  <HostSpaceRow key={space.id} space={space} />
+                {spaces.map((space, i) => (
+                  <HostSpaceRow key={space.id} space={space} upcomingBookings={upcomingBySpace[i]} />
                 ))}
               </ul>
             ) : (
