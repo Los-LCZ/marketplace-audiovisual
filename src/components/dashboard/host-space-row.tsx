@@ -6,7 +6,7 @@ import { SpaceStatusBadge } from "@/components/ui/badge";
 import { RatingPill } from "@/components/ui/rating";
 import { SpaceStatusControl } from "./space-status-control";
 
-export function HostSpaceRow({ space }: { space: SpaceWithAmenities }) {
+export function HostSpaceRow({ space, upcomingBookings }: { space: SpaceWithAmenities; upcomingBookings: number }) {
   return (
     <li className="panel overflow-hidden">
       <Link href={`/espacios/${space.id}`} className="block no-underline">
@@ -28,7 +28,7 @@ export function HostSpaceRow({ space }: { space: SpaceWithAmenities }) {
             Editar
           </Link>
         </span>
-        <SpaceStatusControl spaceId={space.id} status={space.status} />
+        <SpaceStatusControl spaceId={space.id} status={space.status} upcomingBookings={upcomingBookings} />
       </div>
     </li>
   );

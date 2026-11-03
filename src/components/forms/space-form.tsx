@@ -4,7 +4,8 @@ import { startTransition, useActionState, useState, type FormEvent, type ReactNo
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createSpace, updateSpace } from "@/app/actions/spaces";
-import type { Amenity, Space } from "@/types/database";
+import type { Amenity, Space, SpaceStatus } from "@/types/database";
+import { hideSpaceWarning } from "@/lib/hide-space";
 import {
   AMENITY_CATEGORY_LABELS,
   GEAR_CATEGORIES,
@@ -16,6 +17,7 @@ import { toast } from "@/components/ui/toaster";
 import type { ActionState } from "@/lib/action-state";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Field, FormMessage, Input, Select, Textarea } from "@/components/ui/form-controls";
+import { ConfirmDialog } from "@/components/ui/layer";
 import { ImagePicker, type PickedImage } from "./image-picker";
 import { SpaceImagesManager } from "./space-images-manager";
 
@@ -45,7 +47,16 @@ type EditableSpace = Space & { amenities: Amenity[] };
  * para armar `rules` (repetido) y `gear` (JSON) a partir de los textos de una línea por elemento.
  * Al crear, createSpace redirige a la ficha; al editar se vuelve a la ficha.
  */
-export function SpaceForm({ amenities, space }: { amenities: Amenity[]; space?: EditableSpace }) {
+export function SpaceForm({
+  amenities,
+  space,
+  upcomingBookings = 0,
+}: {
+  amenities: Amenity[];
+  space?: EditableSpace;
+  /** Al editar: reservas y solicitudes próximas, para confirmar antes de ocultar el espacio. */
+  upcomingBookings?: number;
+}) {
   const router = useRouter();
   // Al editar, la navegación va dentro de la misma transición de la action: desde un
   // useEffect posterior, el refresco que dispara revalidatePath la pisaba.
@@ -65,6 +76,8 @@ export function SpaceForm({ amenities, space }: { amenities: Amenity[]; space?: 
   const [images, setImages] = useState<PickedImage[]>([]);
   const fieldErrors = state && !state.ok ? state.fieldErrors : undefined;
   const selected = new Set(space?.amenities.map((a) => a.id));
+  // Envío en espera mientras se confirma el aviso de reservas próximas.
+  const [held, setHeld] = useState<{ formData: FormData; warning: string } | null>(null);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -75,6 +88,8 @@ export function SpaceForm({ amenities, space }: { amenities: Amenity[]; space?: 
       (g) => g.items.length,
     );
     formData.set("gear", JSON.stringify(gear));
+    const warning = space && hideSpaceWarning(space.status, formData.get("status") as SpaceStatus, upcomingBookings);
+    if (warning) return setHeld({ formData, warning });
     startTransition(() => formAction(formData));
   }
 
@@ -356,6 +371,18 @@ export function SpaceForm({ amenities, space }: { amenities: Amenity[]; space?: 
       </Section>
 
       <FormMessage state={state} />
+      <ConfirmDialog
+        open={!!held}
+        title="¿Ocultar el espacio?"
+        body={held?.warning}
+        confirmLabel="Sí, guardar"
+        onConfirm={() => {
+          const formData = held?.formData;
+          setHeld(null);
+          if (formData) startTransition(() => formAction(formData));
+        }}
+        onClose={() => setHeld(null)}
+      />
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <Link href={space ? `/espacios/${space.id}` : "/dashboard"} className={buttonClasses({ variant: "ghost" })}>

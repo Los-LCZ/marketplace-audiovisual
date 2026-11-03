@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { countUpcomingBookings } from "@/lib/queries/bookings";
 import { getSpaceById, listAmenities, listSpaceBlackouts } from "@/lib/queries/spaces";
 import { currentTime } from "@/lib/zoned-time";
 import { SpaceForm } from "@/components/forms/space-form";
@@ -19,7 +20,11 @@ export default async function EditarEspacioPage({ params }: PageProps<"/espacios
   // Solo el dueño edita; para el resto la ruta no existe.
   if (!space || space.host_id !== user.id) notFound();
 
-  const [amenities, blackouts] = await Promise.all([listAmenities(), listSpaceBlackouts(space.id)]);
+  const [amenities, blackouts, upcomingBookings] = await Promise.all([
+    listAmenities(),
+    listSpaceBlackouts(space.id),
+    countUpcomingBookings(space.id),
+  ]);
   const { today } = currentTime();
 
   return (
@@ -30,7 +35,7 @@ export default async function EditarEspacioPage({ params }: PageProps<"/espacios
           Los cambios se aplican al guardar. El equipamiento y las amenities reemplazan a los actuales.
         </p>
       </header>
-      <SpaceForm amenities={amenities} space={space} />
+      <SpaceForm amenities={amenities} space={space} upcomingBookings={upcomingBookings} />
       {/* Fuera del formulario: cada cierre o reapertura se guarda al tiro, sin "Guardar cambios". */}
       <section
         id="dias-cerrados"
