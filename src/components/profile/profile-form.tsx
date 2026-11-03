@@ -18,6 +18,8 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   const [state, formAction, pending] = useActionState(updateProfile, null);
   const [tags, setTags] = useState(profile.tags);
   const [draft, setDraft] = useState("");
+  // Por qué no se agregó la etiqueta (tope o repetida); antes se descartaba sin aviso.
+  const [tagNotice, setTagNotice] = useState<string | null>(null);
   const errors = state && !state.ok ? state.fieldErrors : undefined;
 
   useEffect(() => {
@@ -26,8 +28,12 @@ export function ProfileForm({ profile }: { profile: Profile }) {
 
   function addTag() {
     const tag = draft.trim().slice(0, 30);
-    if (tag && !tags.includes(tag) && tags.length < MAX_TAGS) setTags([...tags, tag]);
+    if (!tag) return;
+    if (tags.length >= MAX_TAGS) return setTagNotice(`Máximo ${MAX_TAGS} etiquetas: quita una para agregar otra.`);
+    if (tags.includes(tag)) return setTagNotice(`Ya tienes "${tag}".`);
+    setTags([...tags, tag]);
     setDraft("");
+    setTagNotice(null);
   }
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -77,7 +83,10 @@ export function ProfileForm({ profile }: { profile: Profile }) {
             value={draft}
             maxLength={30}
             placeholder="Ej.: Rock, Publicidad, Fotografía de producto"
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              setTagNotice(null);
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === ",") {
                 e.preventDefault();
@@ -85,10 +94,13 @@ export function ProfileForm({ profile }: { profile: Profile }) {
               }
             }}
           />
-          <button type="button" className="btn btn-soft" onClick={addTag} disabled={!draft.trim() || tags.length >= MAX_TAGS}>
+          <button type="button" className="btn btn-soft" onClick={addTag} disabled={!draft.trim()}>
             Agregar
           </button>
         </div>
+        <p className="dim text-xs" aria-live="polite">
+          {tagNotice ?? (tags.length >= MAX_TAGS ? `Llegaste al máximo de ${MAX_TAGS} etiquetas.` : null)}
+        </p>
         {tags.length > 0 && (
           <div className="chips mt-1">
             {tags.map((t) => (
@@ -97,7 +109,10 @@ export function ProfileForm({ profile }: { profile: Profile }) {
                 type="button"
                 className="chip"
                 aria-label={`Quitar ${t}`}
-                onClick={() => setTags(tags.filter((x) => x !== t))}
+                onClick={() => {
+                  setTags(tags.filter((x) => x !== t));
+                  setTagNotice(null);
+                }}
               >
                 {t} <X className="size-3" aria-hidden />
               </button>
