@@ -88,6 +88,21 @@ La vista `space_cards` usa `spaces.*`: si agregas columnas a `spaces`, recrea la
 
 Cuentas demo: `ana.rojas`, `diego.fuentes` y `valentina.soto` (anfitriones; Diego exige nota mínima 4); `matias.perez`, `camila.munoz` y `joaquin.herrera` (clientes; Joaquín no tiene reseñas). Todas con `@senal-demo.test`.
 
+### Correos de autenticación
+
+Las plantillas en español están en `supabase/templates/`. **No se aplican solas**: se pegan a mano en **Authentication → Email Templates** de cada proyecto, primero en staging y después en producción. Si cambias una, actualiza el archivo del repo y vuelve a pegarla en los dos.
+
+| Plantilla en Supabase | Archivo | Asunto |
+|---|---|---|
+| Confirm signup | `confirmation.html` | Confirma tu cuenta en Señal |
+| Reset Password | `recovery.html` | Recupera tu contraseña de Señal |
+| Change Email Address | `email_change.html` | Confirma tu nuevo correo en Señal |
+
+- El botón usa `{{ .ConfirmationURL }}`, que pasa por `/auth/callback`. No lo cambies por un enlace armado a mano.
+- `recovery.html` dice que el enlace vale 1 hora, igual que la ventana de `updatePassword`.
+- Magic Link, Invite y Reauthentication no se usan en la app y quedan con el texto de Supabase.
+- Staging tiene *Confirm email* desactivado, así que ahí solo llega el correo de recuperar contraseña.
+
 ## Rutas
 
 | Ruta | Quién | Estado |
