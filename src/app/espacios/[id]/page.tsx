@@ -25,6 +25,7 @@ import { getProfileRatingStats } from "@/lib/queries/profiles";
 import { SPACE_CATEGORY_LABELS } from "@/lib/labels";
 import { BASE_OPEN_GRAPH, excerpt } from "@/lib/site";
 import { firstParam, parseDateParam } from "@/lib/search-params";
+import { MAX_DAYS_AHEAD } from "@/lib/booking-rules";
 import { formatCLP, formatRating } from "@/lib/utils";
 import { worldOf } from "@/lib/world";
 import { addDays, currentTime, zonedTimeToUtc } from "@/lib/zoned-time";
@@ -38,7 +39,9 @@ import { GearAccordion } from "@/components/spaces/gear-accordion";
 import { ReviewList } from "@/components/spaces/review-list";
 import { SpaceGallery } from "@/components/spaces/space-gallery";
 
-const BOOKING_DAYS_AHEAD = 14;
+// Horarios ocupados de todo el rango reservable (hoy + 365, como createBooking): un año de un solo
+// espacio son pocas filas, y así "Elegir otra fecha" del widget no necesita pedir nada más.
+const BOOKING_DAYS_AHEAD = MAX_DAYS_AHEAD;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const hh = (h: number) => `${String(h % 24).padStart(2, "0")}:00`;

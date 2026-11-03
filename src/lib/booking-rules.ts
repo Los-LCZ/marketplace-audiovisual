@@ -5,6 +5,9 @@ import type { BookingStatus } from "@/types/database";
 // Qué acciones ofrece la UI para cada reserva. La base de datos (guard_booking_update
 // y RLS) vuelve a validar todo; esto solo evita mostrar botones que fallarían o no aplican.
 
+/** Hasta cuántos días adelante se puede reservar (hoy + 365 en hora de Chile, como createBooking, #30). */
+export const MAX_DAYS_AHEAD = 365;
+
 /** Reservas vigentes: las que bloquean el horario más las solicitudes por aprobar. */
 export function isActiveBooking(status: BookingStatus) {
   return status === "requested" || isOpenBooking(status);
