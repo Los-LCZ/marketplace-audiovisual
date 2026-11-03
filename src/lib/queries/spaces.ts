@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { escapeLike } from "@/lib/like";
 import { isValidIsoDate } from "@/lib/iso-date";
 import { zonedDateString } from "@/lib/zoned-time";
+import type { World } from "@/lib/world";
 import type {
   Amenity,
   CommuneCount,
@@ -13,7 +14,8 @@ import type {
   SpaceBlackout,
 } from "@/types/database";
 
-export type SpaceSort = "recent" | "price_asc" | "price_desc" | "rating";
+/** "relevance": primero el mundo de `world` y luego los más recientes (sin `world`, igual que "recent"). */
+export type SpaceSort = "relevance" | "recent" | "price_asc" | "price_desc" | "rating";
 
 export type SpaceFilters = {
   /** Texto libre: busca en título, descripción, ciudad y comuna. */
@@ -31,6 +33,8 @@ export type SpaceFilters = {
   availableOn?: string;
   /** Orden aplicado en la base, antes de paginar. Por defecto "recent". */
   sort?: SpaceSort;
+  /** Mundo activo: con sort "relevance", sus espacios van primero en todas las páginas. */
+  world?: World;
   page?: number;
   pageSize?: number;
 };
@@ -136,6 +140,10 @@ export async function listPublishedSpaces(filters: SpaceFilters = {}) {
 
   let query = filtered();
   switch (filters.sort) {
+    case "relevance":
+      // 'av' < 'mu': ascendente pone Audiovisual primero, descendente Música.
+      if (filters.world) query = query.order("world", { ascending: filters.world === "av" });
+      break;
     case "price_asc":
       query = query.order("price_per_hour", { ascending: true });
       break;

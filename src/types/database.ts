@@ -429,6 +429,8 @@ export type Database = {
         Row: SpaceRow & {
           avg_rating: number | null;
           review_count: number;
+          /** Mundo del espacio según su categoría (igual que WORLDS en src/lib/world.ts). */
+          world: "av" | "mu";
         };
         Relationships: [];
       };

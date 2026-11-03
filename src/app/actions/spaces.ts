@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { fail, getString, getStringList, type ActionState } from "@/lib/action-state";
 import { MAX_IMAGES_PER_SPACE, removeSpaceImages, uploadSpaceImages } from "@/lib/storage";
 import { isValidIsoDate } from "@/lib/iso-date";
+import { normalizePlaceName } from "@/lib/place-name";
 import type { GearCategory, GearGroup, SpaceCategory, SpaceStatus } from "@/types/database";
 
 const CATEGORIES: SpaceCategory[] = [
@@ -62,8 +63,9 @@ function parseSpaceForm(formData: FormData) {
   const description = getString(formData, "description");
   const summary = getString(formData, "summary");
   const address = getString(formData, "address");
-  const city = getString(formData, "city");
-  const commune = getString(formData, "commune");
+  // Normalizadas para que el filtro y la lista de comunas no se separen ("providencia" → "Providencia").
+  const city = normalizePlaceName(getString(formData, "city"));
+  const commune = normalizePlaceName(getString(formData, "commune"));
   const neighborhood = getString(formData, "neighborhood");
   const pricePerHour = Number(getString(formData, "price_per_hour"));
   const minHours = Number(getString(formData, "min_hours") || 1);
