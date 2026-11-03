@@ -129,6 +129,7 @@ function MatchOverlay({
   const ref = useLayer(true, onClose);
 
   const hostName = card.host?.full_name ?? "El anfitrión";
+  const firstName = card.host?.full_name?.split(" ")[0] ?? "El anfitrión";
   return createPortal(
     <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="match-title">
       <div className="match" ref={ref}>
@@ -146,7 +147,11 @@ function MatchOverlay({
             ))}
           </div>
         )}
-        <p className="mono acc">Tu nota cumple lo que pide {hostName.split(" ")[0]}</p>
+        <p className="mono acc">
+          {card.host_min_client_rating != null
+            ? `Tu nota cumple lo que pide ${firstName}`
+            : `${firstName} acepta a cualquier cliente`}
+        </p>
         <h2 className="t" id="match-title">
           {WORLDS[world].deck.matchTitle}
         </h2>
