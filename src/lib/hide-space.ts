@@ -6,6 +6,8 @@ import type { SpaceStatus } from "@/types/database";
  */
 export function hideSpaceWarning(from: SpaceStatus, to: SpaceStatus, upcoming: number) {
   if (to === from || to === "published" || upcoming <= 0) return null;
-  const n = upcoming === 1 ? "1 reserva próxima" : `${upcoming} reservas próximas`;
-  return `Este espacio tiene ${n}. Seguirán vigentes aunque lo ocultes; si no puedes recibirlas, cancélalas o recházalas desde tu panel.`;
+  if (upcoming === 1) {
+    return "Este espacio tiene 1 reserva próxima. Seguirá vigente aunque lo ocultes; si no puedes recibirla, cancélala o recházala desde tu panel.";
+  }
+  return `Este espacio tiene ${upcoming} reservas próximas. Seguirán vigentes aunque lo ocultes; si no puedes recibirlas, cancélalas o recházalas desde tu panel.`;
 }

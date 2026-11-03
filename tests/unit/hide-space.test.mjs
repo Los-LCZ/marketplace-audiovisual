@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { hideSpaceWarning } from "../../src/lib/hide-space.ts";
 
 test("avisa al ocultar un espacio con reservas próximas", () => {
-  assert.match(hideSpaceWarning("published", "draft", 1), /1 reserva próxima\./);
+  assert.match(hideSpaceWarning("published", "draft", 1), /1 reserva próxima\. Seguirá vigente/);
   assert.match(hideSpaceWarning("published", "archived", 3), /3 reservas próximas\./);
   assert.match(hideSpaceWarning("draft", "archived", 2), /2 reservas próximas/);
 });
