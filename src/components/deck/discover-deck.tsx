@@ -92,7 +92,7 @@ function CardFace({ card, photo, index, world }: { card: DeckCard; photo: number
           </span>
           {card.host && (
             <span className="flex items-center gap-2 text-xs">
-              <Avatar name={card.host.full_name} size="sm" verified={card.host.verified} />
+              <Avatar name={card.host.full_name} src={card.host.avatar_url} size="sm" verified={card.host.verified} />
               <span>
                 {card.host.full_name?.split(" ")[0]}
                 <br />
@@ -122,7 +122,7 @@ function MatchOverlay({
 }: {
   card: DeckCard;
   world: World;
-  me: { name: string; rating: number | null; verified: boolean };
+  me: { name: string; avatarUrl: string | null; rating: number | null; verified: boolean };
   onClose: () => void;
 }) {
   // Escape, Tab dentro del aviso y foco de vuelta al mazo al cerrar.
@@ -151,9 +151,9 @@ function MatchOverlay({
           {WORLDS[world].deck.matchTitle}
         </h2>
         <div className="pair">
-          <Avatar name={me.name} size="xl" verified={me.verified} />
+          <Avatar name={me.name} src={me.avatarUrl} size="xl" verified={me.verified} />
           <span className="plus">+</span>
-          <Avatar name={hostName} size="xl" verified={card.host?.verified} />
+          <Avatar name={hostName} src={card.host?.avatar_url} size="xl" verified={card.host?.verified} />
         </div>
         <div className="flex flex-wrap justify-center gap-2.5">
           <RatingPill rating={me.rating} label="como cliente" />
@@ -182,7 +182,7 @@ export function DiscoverDeck({
 }: {
   cards: DeckCard[];
   world: World;
-  me: { name: string; rating: number | null; verified: boolean };
+  me: { name: string; avatarUrl: string | null; rating: number | null; verified: boolean };
 }) {
   const router = useRouter();
   const [match, setMatch] = useState<DeckCard | null>(null);

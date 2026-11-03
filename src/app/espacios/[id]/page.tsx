@@ -170,7 +170,7 @@ export default async function SpacePage({ params, searchParams }: PageProps<"/es
           <section className="host-card panel" aria-label="Anfitrión">
             <div className="host-top">
               <span className="flex min-w-[220px] flex-1 items-center gap-3.5">
-                <Avatar name={hostName} size="lg" verified={space.host?.verified} />
+                <Avatar name={hostName} src={space.host?.avatar_url} size="lg" verified={space.host?.verified} />
                 <span>
                   {space.host ? (
                     <Link href={`/u/${space.host.id}`} className="font-bold no-underline hover:underline">

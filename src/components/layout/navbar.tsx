@@ -49,7 +49,7 @@ export async function Navbar({ world }: { world: World }) {
           <div className="topbar-right">
             <WorldSwitch world={world} />
             {user ? (
-              <UserMenu userId={user.id} name={displayName} email={user.email} roleLabel={roleLabel} isHost={isHost} />
+              <UserMenu userId={user.id} name={displayName} avatarUrl={user.profile.avatar_url} email={user.email} roleLabel={roleLabel} isHost={isHost} />
             ) : (
               <>
                 <Link className="btn btn-line btn-sm hidden sm:inline-flex" href="/login">

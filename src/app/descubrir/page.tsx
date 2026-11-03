@@ -38,12 +38,12 @@ export default async function DescubrirPage() {
         <section>
           <p className="mono acc">{WORLDS[world].deck.kicker}</p>
           <h1 className="display h2 mt-2 mb-[22px]">Descubrir</h1>
-          <DiscoverDeck cards={deck} world={world} me={{ name, rating: myRating, verified: user.profile.verified }} />
+          <DiscoverDeck cards={deck} world={world} me={{ name, avatarUrl: user.profile.avatar_url, rating: myRating, verified: user.profile.verified }} />
         </section>
 
         <aside className="grid content-start gap-[22px]">
           <Link className="panel li no-underline" href={`/u/${user.id}`}>
-            <Avatar name={name} verified={user.profile.verified} />
+            <Avatar name={name} src={user.profile.avatar_url} verified={user.profile.verified} />
             <div className="grow">
               <b>{name}</b>
               <RatingPill rating={myRating} count={stats.as_client.count || undefined} label="como cliente" />

@@ -53,7 +53,7 @@ function ClientLine({ booking }: { booking: HostBooking }) {
   if (!client) return null;
   return (
     <Link href={`/u/${client.id}`} className="mt-1 flex items-center gap-2 text-[13px] no-underline hover:underline">
-      <Avatar name={client.full_name} size="sm" verified={client.verified} />
+      <Avatar name={client.full_name} src={client.avatar_url} size="sm" verified={client.verified} />
       {client.full_name ?? "Cliente"}
       <RatingPill rating={client.avg_rating} count={client.review_count || undefined} />
     </Link>
@@ -126,7 +126,7 @@ export default async function DashboardPage() {
     <div className="wrap pt-[34px]">
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div className="flex items-center gap-4">
-          <Avatar name={user.profile.full_name ?? user.email} size="lg" verified={user.profile.verified} />
+          <Avatar name={user.profile.full_name ?? user.email} src={user.profile.avatar_url} size="lg" verified={user.profile.verified} />
           <div>
             <p className="mono acc">Panel de anfitrión</p>
             <h1 className="display h2 mt-1">Hola, {(user.profile.full_name ?? "").split(" ")[0] || "anfitrión"}</h1>
@@ -223,6 +223,7 @@ export default async function DashboardPage() {
                       bookingId={b.id}
                       target="client"
                       name={b.client?.full_name ?? "el cliente"}
+                      avatarUrl={b.client?.avatar_url}
                       context={`Sesión del ${formatDate(b.start_time)}${b.space ? ` en ${b.space.title}` : ""}.`}
                     />
                   </BookingCard>

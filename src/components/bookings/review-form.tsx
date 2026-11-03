@@ -27,6 +27,7 @@ export function ReviewForm({
   bookingId,
   target,
   name,
+  avatarUrl,
   context,
 }: {
   bookingId: string;
@@ -35,6 +36,8 @@ export function ReviewForm({
   name: string;
   /** Línea de contexto, p. ej. "Sesión del 12 de octubre en Estudio Matucana." */
   context?: string;
+  /** Foto de la persona calificada (solo se muestra al calificar a un cliente). */
+  avatarUrl?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState(0);
@@ -62,7 +65,7 @@ export function ReviewForm({
           {picked.map((tag) => (
             <input key={tag} type="hidden" name="tags" value={tag} />
           ))}
-          {target === "client" && <Avatar name={name} size="lg" />}
+          {target === "client" && <Avatar name={name} src={avatarUrl} size="lg" />}
           <h2 className="display h3">¿Cómo estuvo {who}?</h2>
           <p className="dim text-sm">
             {target === "space"

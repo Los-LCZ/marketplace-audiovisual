@@ -68,7 +68,7 @@ export default async function PerfilPublicoPage({ params }: PageProps<"/u/[id]">
       <div className="wrap">
         <div className="prof-head">
           <div className="who">
-            <Avatar name={name} size="xl" verified={profile.verified} />
+            <Avatar name={name} src={profile.avatar_url} size="xl" verified={profile.verified} />
             <div>
               <h1 className="display h2">{name}</h1>
               {profile.headline && <p className="dim mt-1.5">{profile.headline}</p>}

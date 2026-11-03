@@ -68,7 +68,7 @@ export default async function MisReservasPage() {
     <div className="wrap pt-[34px]">
       <div className="flex flex-wrap items-center justify-between gap-5">
         <div className="flex items-center gap-4">
-          <Avatar name={user.profile.full_name ?? user.email} size="lg" verified={user.profile.verified} />
+          <Avatar name={user.profile.full_name ?? user.email} src={user.profile.avatar_url} size="lg" verified={user.profile.verified} />
           <div>
             <h1 className="display h2">Hola, {firstName}</h1>
             <Link
@@ -125,7 +125,7 @@ export default async function MisReservasPage() {
                           </span>
                           {host && (
                             <Link href={`/u/${host.id}`} className="inline-flex items-center gap-2 text-[13px] no-underline">
-                              <Avatar name={host.full_name} size="sm" verified={host.verified} />
+                              <Avatar name={host.full_name} src={host.avatar_url} size="sm" verified={host.verified} />
                               {host.full_name}
                             </Link>
                           )}
