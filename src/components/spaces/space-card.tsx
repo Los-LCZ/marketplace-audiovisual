@@ -14,7 +14,7 @@ const MAX_TAGS = 3;
 function LevelBars({ rating }: { rating: number | null }) {
   const lit = rating == null ? 0 : Math.round(((rating - 4.5) / 0.5) * 12);
   return (
-    <div className="lvl" aria-hidden>
+    <div className="lvl" aria-hidden title="Medidor de nota: se enciende de 4,5 a 5,0">
       {Array.from({ length: 14 }, (_, i) => (
         <b key={i} className={`${i < lit ? "on" : ""} ${i >= 10 ? "h" : ""} ${i >= 13 ? "p" : ""}`} />
       ))}
