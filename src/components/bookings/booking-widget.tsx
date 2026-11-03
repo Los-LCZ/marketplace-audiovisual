@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { Check, Circle, CircleCheck, Hourglass, Lock, Minus, Plus } from "lucide-react";
 import { createBooking } from "@/app/actions/bookings";
+import { MAX_DAYS_AHEAD } from "@/lib/booking-rules";
 import { formatCLP, formatDate, formatRating, formatTimeRange } from "@/lib/utils";
 import { addDays, dayLabel, dayMonth, dayOfMonth, zonedTimeToUtc } from "@/lib/zoned-time";
 import { FormMessage, Input, Textarea } from "@/components/ui/form-controls";
@@ -12,7 +13,7 @@ import { Sheet } from "@/components/ui/layer";
 import { toast } from "@/components/ui/toaster";
 
 const HOUR_MS = 60 * 60 * 1000;
-const DAYS_SHOWN = 14;
+const DAYS_SHOWN = 30;
 // Comisión de la plataforma (trigger compute_booking_amounts: round(subtotal * 0.10)).
 const PLATFORM_FEE_RATE = 0.1;
 
@@ -81,10 +82,22 @@ export function BookingPanel(props: Props) {
     return today;
   };
 
-  const validInitial = props.initialDate && props.initialDate >= today && props.initialDate < addDays(today, DAYS_SHOWN);
+  const lastDay = addDays(today, MAX_DAYS_AHEAD);
+  const validInitial = props.initialDate && props.initialDate >= today && props.initialDate <= lastDay;
   const [date, setDate] = useState(() => (validInitial ? props.initialDate! : firstAvailableDay()));
   const [start, setStart] = useState<number | null>(null);
   const [dur, setDur] = useState(minHours);
+  // Día elegido con "Elegir otra fecha" que no está en la tira: se agrega al final de ella.
+  const outsideStrip = date >= addDays(today, DAYS_SHOWN) ? date : null;
+
+  // Lleva el día elegido a la vista dentro de la tira (moviendo solo su scroll horizontal, no la página).
+  // El contenido se monta dos veces (panel y hoja), así que se ajustan todas las tiras.
+  useEffect(() => {
+    for (const strip of document.querySelectorAll<HTMLElement>(".book .days")) {
+      const on = strip.querySelector<HTMLElement>('[aria-checked="true"]');
+      if (on) strip.scrollLeft = on.offsetLeft - strip.offsetLeft - 8;
+    }
+  }, [date, sheetOpen]);
 
   const booking = state?.ok ? state.data : undefined;
   const done = booking && booking.id !== dismissedId;
@@ -163,17 +176,34 @@ export function BookingPanel(props: Props) {
       </div>
 
       <div>
-        <p className="mono dim mb-2">Día</p>
+        <div className="mb-2 flex items-baseline justify-between gap-2">
+          <p className="mono dim">Día</p>
+          {/* Sin id: este contenido se monta dos veces (panel de escritorio y hoja móvil). */}
+          <label className="dim flex items-center gap-1.5 text-xs">
+            Elegir otra fecha
+            <input
+              type="date"
+              value={date}
+              min={today}
+              max={lastDay}
+              onChange={(e) => {
+                const d = e.target.value;
+                if (d && d >= today && d <= lastDay) pickDay(d);
+              }}
+              className="h-8 rounded-lg border border-border bg-surface px-2 text-xs text-[var(--fg)] focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+            />
+          </label>
+        </div>
         <div className="days" role="radiogroup" aria-label="Día">
-          {Array.from({ length: DAYS_SHOWN }, (_, i) => {
-            const d = addDays(today, i);
-            return (
+          {[...Array.from({ length: DAYS_SHOWN }, (_, i) => addDays(today, i)), ...(outsideStrip ? [outsideStrip] : [])].map(
+            (d) => (
               <button key={d} type="button" role="radio" aria-checked={d === date} aria-label={`${dayLabel(d, today)} ${dayMonth(d)}`} onClick={() => pickDay(d)}>
-                <span>{dayLabel(d, today)}</span>
+                {/* Fuera de la tira el mes importa más que el día de la semana ("mar" / 15). */}
+                <span>{d === outsideStrip ? dayMonth(d).split(" ").slice(1).join(" ") : dayLabel(d, today)}</span>
                 <b>{dayOfMonth(d)}</b>
               </button>
-            );
-          })}
+            ),
+          )}
         </div>
       </div>
 
