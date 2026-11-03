@@ -26,8 +26,10 @@ const dateFormatter = new Intl.DateTimeFormat("es-CL", {
   year: "numeric",
 });
 
+// 24 h, como el resto de Chile: sin hourCycle, es-CL da "02:00 p. m." (y "p. m.." al cerrar una frase).
 const timeFormatter = new Intl.DateTimeFormat("es-CL", {
   timeZone: TIME_ZONE,
+  hourCycle: "h23",
   hour: "2-digit",
   minute: "2-digit",
 });
