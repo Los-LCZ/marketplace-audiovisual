@@ -93,7 +93,7 @@ export function BookingPanel(props: Props) {
     if (!state?.ok || !state.data) return;
     const when = `${spaceTitle}, ${formatTimeRange(state.data.start_time, state.data.end_time)}.`;
     if (state.data.status === "requested") toast("Solicitud enviada", `${when} El anfitrión debe aprobarla.`, "info");
-    else toast("Sesión reservada", when);
+    else toast("Reserva confirmada", when);
   }, [state, spaceTitle]);
 
   const hours = Array.from({ length: closeHour - openHour }, (_, i) => openHour + i);
@@ -118,7 +118,7 @@ export function BookingPanel(props: Props) {
       <span className="btn btn-acc pointer-events-none size-12 rounded-full p-0">
         {requested ? <Hourglass aria-hidden /> : <Check aria-hidden />}
       </span>
-      <h3 className="display h3">{requested ? "Solicitud enviada" : "Sesión reservada"}</h3>
+      <h3 className="display h3">{requested ? "Solicitud enviada" : "Reserva confirmada"}</h3>
       <p className="dim">
         {spaceTitle}, {formatDate(booking.start_time)}, {formatTimeRange(booking.start_time, booking.end_time)}.
         {requested && " El anfitrión revisará tu solicitud; mientras tanto el horario sigue abierto para otros."}
