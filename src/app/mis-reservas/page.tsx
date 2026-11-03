@@ -32,7 +32,12 @@ function Empty({ title, text, href, cta }: { title: string; text: string; href: 
   );
 }
 
-export default async function MisReservasPage() {
+const TAB_KEYS = ["matches", "sesiones", "calificar", "historial"];
+
+export default async function MisReservasPage({ searchParams }: PageProps<"/mis-reservas">) {
+  // ?tab=matches abre esa pestaña directo (por ejemplo, desde "Ver todo" de Descubrir).
+  const { tab } = await searchParams;
+  const requestedTab = typeof tab === "string" && TAB_KEYS.includes(tab) ? tab : undefined;
   // El proxy ya protege la ruta; esto cubre una sesión que expiró entre medio.
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/mis-reservas");
@@ -93,7 +98,10 @@ export default async function MisReservasPage() {
 
       <div className="mt-[34px]">
         <Tabs
-          initial={toRate.length && !upcoming.length ? "calificar" : upcoming.length || !liked.length ? "sesiones" : "matches"}
+          initial={
+            requestedTab ??
+            (toRate.length && !upcoming.length ? "calificar" : upcoming.length || !liked.length ? "sesiones" : "matches")
+          }
           tabs={[
             {
               key: "matches",

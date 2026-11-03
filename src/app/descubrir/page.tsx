@@ -56,7 +56,7 @@ export default async function DescubrirPage() {
           <div>
             <div className="flex justify-between">
               <b>Tus me gusta</b>
-              <Link href="/mis-reservas" className="dim text-[13px]">
+              <Link href="/mis-reservas?tab=matches" className="dim text-[13px]">
                 Ver todo
               </Link>
             </div>
