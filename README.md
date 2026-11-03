@@ -62,6 +62,7 @@ Ejecutar las migraciones de `supabase/migrations/` **en orden** (SQL Editor o `s
 | `20261101140200_available_space_ids_setbased.sql` | Disponibilidad por día en una sola consulta (rendimiento) |
 | `20261101150000_space_blackouts.sql` | Días cerrados a elección del anfitrión |
 | `20261101160000_avatars.sql` | Foto de perfil: bucket `avatars` y validación de `avatar_url` |
+| `20261102100000_spaces_updated_at.sql` | `spaces.updated_at` (datos, fotos o amenities) para el sitemap |
 
 `init.sql` no se edita: cada cambio de esquema va en una migración nueva `<timestamp>_<descripcion>.sql`.
 
@@ -76,6 +77,14 @@ La vista `space_cards` usa `spaces.*`: si agregas columnas a `spaces`, recrea la
 - `seed_demo.sql` carga 3 anfitriones, 3 clientes, 12 espacios (sin fotos), 10 reservas, una solicitud pendiente y reseñas reveladas en ambos sentidos. Antes de ejecutarlo, reemplaza `CAMBIAME` por la contraseña de las cuentas demo (mínimo 10 caracteres) y **no la subas al repo**.
 - `unseed_demo.sql` borra todo lo demo (usuarios `@senal-demo.test`), incluidas las reservas que usuarios reales hayan hecho en espacios demo.
   - **Fotos:** Supabase no permite borrar archivos de Storage con SQL. Si un anfitrión demo subió fotos, el script avisa con un *warning* qué carpetas quedan. Bórralas a mano en **Dashboard → Storage → `space-images`**: cada carpeta lleva el id del anfitrión demo (empieza con `de000000-`). Hazlo **antes o después** del unseed; no afecta a los datos.
+
+**Producción:** los datos demo se cargaron en producción antes de que existiera staging, y el sitemap los publica. Para sacarlos (con el OK del equipo):
+1. En el SQL Editor de **producción** (`tskhtlbpbvfuvqguypkh`), revisa qué se va a borrar:
+   `select count(*) from public.bookings b join public.spaces s on s.id = b.space_id join auth.users u on u.id = s.host_id where u.email like '%@senal-demo.test' and b.client_id not in (select id from auth.users where email like '%@senal-demo.test');`
+   Si da más de 0, hay reservas de usuarios reales en espacios demo que también se borrarán.
+2. Ejecuta `supabase/demo/unseed_demo.sql` y anota las carpetas que nombre el *warning*.
+3. Borra esas carpetas en **Storage → `space-images`** y **`avatars`**.
+4. Comprueba que `/sitemap.xml` ya no tenga ids `de5ace00-`.
 
 Cuentas demo: `ana.rojas`, `diego.fuentes` y `valentina.soto` (anfitriones; Diego exige nota mínima 4); `matias.perez`, `camila.munoz` y `joaquin.herrera` (clientes; Joaquín no tiene reseñas). Todas con `@senal-demo.test`.
 

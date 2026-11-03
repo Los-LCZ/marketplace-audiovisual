@@ -107,6 +107,8 @@ type SpaceRow = {
   images: string[];
   status: SpaceStatus;
   created_at: string;
+  /** Última modificación (datos, fotos o amenities). La fija la base. */
+  updated_at: string;
   neighborhood: string | null;
   size_m2: number | null;
   capacity: number | null;
