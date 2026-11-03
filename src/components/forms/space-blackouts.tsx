@@ -92,7 +92,13 @@ export function SpaceBlackouts({
       setSelected([]);
       setReason("");
       const n = result.data?.count ?? 0;
-      toast(n === 1 ? "Día cerrado" : `${n} días cerrados`, "Ya no se pueden reservar.", "ok");
+      // Días que otra pestaña ya había cerrado: se ignoran, pero lo contamos.
+      const skipped = result.data?.skippedDates ?? [];
+      const skippedNote = skipped.length
+        ? `${skipped.map((d) => shortFormatter.format(toUtc(d))).join(", ")} ya estaba${skipped.length === 1 ? "" : "n"} cerrado${skipped.length === 1 ? "" : "s"}.`
+        : "";
+      if (!n) return toast("Sin cambios", skippedNote, "info");
+      toast(n === 1 ? "Día cerrado" : `${n} días cerrados`, `Ya no se pueden reservar. ${skippedNote}`.trim(), "ok");
     });
   }
 
