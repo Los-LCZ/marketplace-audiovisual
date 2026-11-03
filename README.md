@@ -64,6 +64,7 @@ Ejecutar las migraciones de `supabase/migrations/` **en orden** (SQL Editor o `s
 | `20261101160000_avatars.sql` | Foto de perfil: bucket `avatars` y validación de `avatar_url` |
 | `20261102100000_spaces_updated_at.sql` | `spaces.updated_at` (datos, fotos o amenities) para el sitemap |
 | `20261102110000_booking_horizon.sql` | Reservas como máximo un año hacia adelante |
+| `20261103100000_space_cards_world.sql` | `space_cards.world` para ordenar primero el mundo activo |
 
 `init.sql` no se edita: cada cambio de esquema va en una migración nueva `<timestamp>_<descripcion>.sql`.
 
@@ -137,6 +138,9 @@ Las rutas protegidas se definen en `PROTECTED_PREFIXES` de `src/utils/supabase/m
 - **Montos:** los calcula el trigger `compute_booking_amounts` (horas completas × `price_per_hour`, comisión de plataforma de 10%). El cliente nunca envía montos.
 - **Horario:** cada espacio tiene `open_hour`–`close_hour` (hora de Chile); las reservas fuera de ese rango se rechazan.
 - **Días cerrados:** el anfitrión puede cerrar días completos a su elección (por defecto todo está abierto, feriados incluidos). En un día cerrado no se crean ni aceptan reservas, no aparece en el filtro por fecha y la ficha lo muestra ocupado. No se puede cerrar un día que ya tiene reservas o solicitudes activas.
+- **Comuna y ciudad:** `createSpace`/`updateSpace` las guardan normalizadas (`normalizePlaceName`: "  providencia " → "Providencia", "san josé de maipo" → "San José de Maipo").
+- **Etiquetas de reseña:** vocabulario único en `src/lib/review-tags.ts` (elogios por tipo de reseña y problemas comunes). `createReview` y `createClientReview` rechazan etiquetas fuera de esa lista.
+- **Orden "relevance":** `listPublishedSpaces({ sort: "relevance", world })` pone primero los espacios del mundo activo en todas las páginas y luego los más recientes.
 - **Horizonte de reserva:** se reserva y se cierran días como máximo hasta hoy + 366 días (hora de Chile). Así todo día reservable se puede cerrar.
 - **Solicitudes:** la reserva nace `confirmed` si el anfitrión no exige nota mínima o el cliente la cumple. Si no, nace `requested` y el anfitrión la acepta (`acceptBooking`) o rechaza (`rejectBooking`). Un cliente sin reseñas reveladas no cumple ningún mínimo. Al aceptar, la restricción de solape valida que el horario siga libre.
 - **`pending_payment` (integración de pago futura):** hoy ninguna reserva nace así. Cuando se integre una pasarela de pago (p. ej. Webpay/Flow/Mercado Pago):

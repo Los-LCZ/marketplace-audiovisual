@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { fail, getString, getStringList, type ActionState } from "@/lib/action-state";
+import { isReviewTag, type ReviewTarget } from "@/lib/review-tags";
 import type { Booking, BookingStatus } from "@/types/database";
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -144,7 +145,8 @@ export async function completeBooking(bookingId: string): Promise<ActionState> {
 const MAX_REVIEW_TAGS = 8;
 
 // Campos comunes de las dos reseñas: booking_id, rating (1–5), comment y tags (repetido).
-function parseReviewForm(formData: FormData) {
+// Las etiquetas deben ser del vocabulario de src/lib/review-tags.ts para ese tipo de reseña.
+function parseReviewForm(formData: FormData, target: ReviewTarget) {
   const bookingId = getString(formData, "booking_id");
   const rating = Number(getString(formData, "rating"));
   const comment = getString(formData, "comment");
@@ -154,7 +156,7 @@ function parseReviewForm(formData: FormData) {
   if (!Number.isInteger(rating) || rating < 1 || rating > 5)
     return { error: fail("La calificación debe ser entre 1 y 5", { rating: "Entre 1 y 5" }) };
   if (comment.length > 2000) return { error: fail("Comentario muy largo", { comment: "Máximo 2000 caracteres" }) };
-  if (tags.some((t) => t.length > 30)) return { error: fail("Etiqueta muy larga", { tags: "Máximo 30 caracteres" }) };
+  if (tags.some((t) => !isReviewTag(target, t))) return { error: fail("Hay una etiqueta inválida", { tags: "Elige etiquetas de la lista" }) };
 
   return { values: { booking_id: bookingId, rating, comment: comment || null, tags } };
 }
@@ -168,7 +170,7 @@ export async function createReview(_prev: ActionState, formData: FormData): Prom
   const user = await getCurrentUser();
   if (!user) return fail("Debes iniciar sesión");
 
-  const parsed = parseReviewForm(formData);
+  const parsed = parseReviewForm(formData, "space");
   if (parsed.error) return parsed.error;
   const { booking_id: bookingId } = parsed.values;
 
@@ -202,7 +204,7 @@ export async function createClientReview(_prev: ActionState, formData: FormData)
   const user = await getCurrentUser();
   if (!user) return fail("Debes iniciar sesión");
 
-  const parsed = parseReviewForm(formData);
+  const parsed = parseReviewForm(formData, "client");
   if (parsed.error) return parsed.error;
 
   const supabase = await createClient();

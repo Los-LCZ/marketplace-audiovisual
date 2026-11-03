@@ -241,26 +241,26 @@ begin
   insert into public.reviews (booking_id, rating, comment, tags, created_at)
   select v.booking_id, v.rating, v.comment, v.tags, b.completed_at + interval '2 hours'
   from (values
-    ('deb00c00-0000-4000-8000-000000000001'::uuid, 5, 'Sonido impecable y Ana es una gran ingeniera.', array['acústica', 'equipo impecable']),
-    ('deb00c00-0000-4000-8000-000000000002', 4, 'Muy buen estudio, el estacionamiento es difícil.', array['acústica', 'buena ubicación']),
-    ('deb00c00-0000-4000-8000-000000000003', 5, 'Backline en perfecto estado.', array['equipo impecable', 'puntual']),
-    ('deb00c00-0000-4000-8000-000000000004', 5, 'El ciclorama estaba recién pintado. Volveremos.', array['espacioso', 'equipo impecable']),
-    ('deb00c00-0000-4000-8000-000000000005', 4, 'Linda luz natural en la mañana.', array['buena luz']),
-    ('deb00c00-0000-4000-8000-000000000006', 3, 'La vista es increíble, pero hacía mucho viento.', array['buena ubicación']),
-    ('deb00c00-0000-4000-8000-000000000007', 5, 'Cabina silenciosa, ideal para podcast.', array['acústica', 'puntual'])
+    ('deb00c00-0000-4000-8000-000000000001'::uuid, 5, 'Sonido impecable y Ana es una gran ingeniera.', array['Gran acústica', 'Sonido impecable']),
+    ('deb00c00-0000-4000-8000-000000000002', 4, 'Muy buen estudio, el estacionamiento es difícil.', array['Gran acústica', 'Anfitrión atento']),
+    ('deb00c00-0000-4000-8000-000000000003', 5, 'Backline en perfecto estado.', array['Equipo tal cual la ficha', 'Anfitrión atento']),
+    ('deb00c00-0000-4000-8000-000000000004', 5, 'El ciclorama estaba recién pintado. Volveremos.', array['Excelente iluminación', 'Equipo tal cual la ficha']),
+    ('deb00c00-0000-4000-8000-000000000005', 4, 'Linda luz natural en la mañana.', array['Excelente iluminación']),
+    ('deb00c00-0000-4000-8000-000000000006', 3, 'La vista es increíble, pero hacía mucho viento.', array['Llegada fácil']),
+    ('deb00c00-0000-4000-8000-000000000007', 5, 'Cabina silenciosa, ideal para podcast.', array['Gran acústica', 'Sonido impecable'])
   ) as v(booking_id, rating, comment, tags)
   join public.bookings b on b.id = v.booking_id;
 
   insert into public.client_reviews (booking_id, rating, comment, tags, created_at)
   select v.booking_id, v.rating, v.comment, v.tags, b.completed_at + interval '5 hours'
   from (values
-    ('deb00c00-0000-4000-8000-000000000001'::uuid, 5, 'Puntual y cuidadoso con los equipos.', array['puntual', 'ordenado']),
-    ('deb00c00-0000-4000-8000-000000000002', 4, 'Todo bien, llegó 10 minutos tarde.', array['comunicativa']),
-    ('deb00c00-0000-4000-8000-000000000003', 5, 'Dejaron la sala impecable.', array['ordenado']),
-    ('deb00c00-0000-4000-8000-000000000004', 5, 'Producción muy profesional.', array['puntual', 'ordenado']),
-    ('deb00c00-0000-4000-8000-000000000005', 4, 'Sin problemas.', array['puntual']),
-    ('deb00c00-0000-4000-8000-000000000006', 4, 'Buena comunicación.', array['comunicativa']),
-    ('deb00c00-0000-4000-8000-000000000007', 5, 'Excelente cliente.', array['puntual'])
+    ('deb00c00-0000-4000-8000-000000000001'::uuid, 5, 'Puntual y cuidadoso con los equipos.', array['Puntual', 'Cuida el equipo']),
+    ('deb00c00-0000-4000-8000-000000000002', 4, 'Todo bien, llegó 10 minutos tarde.', array['Comunicación clara', 'Llegó tarde']),
+    ('deb00c00-0000-4000-8000-000000000003', 5, 'Dejaron la sala impecable.', array['Deja la sala impecable']),
+    ('deb00c00-0000-4000-8000-000000000004', 5, 'Producción muy profesional.', array['Puntual', 'Respeta el horario']),
+    ('deb00c00-0000-4000-8000-000000000005', 4, 'Sin problemas.', array['Puntual']),
+    ('deb00c00-0000-4000-8000-000000000006', 4, 'Buena comunicación.', array['Comunicación clara']),
+    ('deb00c00-0000-4000-8000-000000000007', 5, 'Excelente cliente.', array['Puntual', 'Buena energía'])
   ) as v(booking_id, rating, comment, tags)
   join public.bookings b on b.id = v.booking_id;
 
