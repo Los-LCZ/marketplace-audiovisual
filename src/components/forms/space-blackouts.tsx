@@ -29,6 +29,8 @@ const shortFormatter = new Intl.DateTimeFormat("es-CL", {
 });
 
 const toUtc = (date: string) => new Date(`${date}T12:00:00Z`);
+// Solo la primera letra: la clase `capitalize` también subiría el "de" ("20 De Noviembre").
+const upperFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const monthStart = (date: string) => `${date.slice(0, 7)}-01`;
 function addMonths(month: string, n: number) {
   const d = toUtc(month);
@@ -73,14 +75,20 @@ export function SpaceBlackouts({
   const canPrev = month > monthStart(today);
   const canNext = addMonths(month, 1) <= last;
 
+  // Update funcional: dos toques seguidos antes de re-renderizar no se pisan.
   function toggle(date: string) {
-    if (selected.includes(date)) {
+    setSelected((prev) => {
+      if (prev.includes(date)) {
+        setError(null);
+        return prev.filter((d) => d !== date);
+      }
+      if (prev.length >= MAX_PER_CALL) {
+        setError(`Puedes cerrar hasta ${MAX_PER_CALL} días a la vez`);
+        return prev;
+      }
       setError(null);
-      return setSelected(selected.filter((d) => d !== date));
-    }
-    if (selected.length >= MAX_PER_CALL) return setError(`Puedes cerrar hasta ${MAX_PER_CALL} días a la vez`);
-    setError(null);
-    setSelected([...selected, date].sort());
+      return [...prev, date].sort();
+    });
   }
 
   function close() {
@@ -124,8 +132,8 @@ export function SpaceBlackouts({
           >
             <ChevronLeft aria-hidden />
           </button>
-          <b className="capitalize" aria-live="polite">
-            {monthFormatter.format(toUtc(month))}
+          <b aria-live="polite">
+            {upperFirst(monthFormatter.format(toUtc(month)))}
           </b>
           <button
             type="button"
@@ -233,7 +241,7 @@ export function SpaceBlackouts({
                 <li key={b.id} className="panel flex items-center gap-3 px-3 py-2">
                   <CalendarOff className="size-4 flex-none text-[var(--rec)]" aria-hidden />
                   <div className="min-w-0 grow">
-                    <span className="block text-sm font-medium capitalize">{longFormatter.format(toUtc(b.date))}</span>
+                    <span className="block text-sm font-medium">{upperFirst(longFormatter.format(toUtc(b.date)))}</span>
                     {b.reason && <span className="dim block truncate text-xs">{b.reason}</span>}
                   </div>
                   <button
@@ -258,7 +266,7 @@ export function SpaceBlackouts({
       <ConfirmDialog
         open={!!toReopen}
         title="¿Reabrir este día?"
-        body={toReopen ? `${longFormatter.format(toUtc(toReopen.date))} vuelve a estar disponible para reservas.` : undefined}
+        body={toReopen ? `${upperFirst(longFormatter.format(toUtc(toReopen.date)))} vuelve a estar disponible para reservas.` : undefined}
         confirmLabel="Reabrir"
         pending={reopening}
         onConfirm={() => toReopen && reopen(toReopen)}
