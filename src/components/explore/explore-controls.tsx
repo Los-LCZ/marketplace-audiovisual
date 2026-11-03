@@ -7,7 +7,7 @@ import type { Amenity } from "@/types/database";
 import { SPACE_CATEGORIES, SPACE_CATEGORY_LABELS } from "@/lib/labels";
 import { SORTS, type SortKey } from "@/lib/search-params";
 import { formatCLP } from "@/lib/utils";
-import { dayLabel, dayMonth } from "@/lib/zoned-time";
+import { addDays, dayLabel, dayMonth } from "@/lib/zoned-time";
 import { AmenityIcon } from "@/components/ui/amenity-icon";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { Sheet } from "@/components/ui/layer";
@@ -15,6 +15,8 @@ import { Sheet } from "@/components/ui/layer";
 export const PRICE_MIN = 5000;
 export const PRICE_MAX = 100000;
 const PRICE_STEP = 1000;
+// Igual que el límite de reservas del backend (#30): hasta un año hacia adelante.
+const DATE_DAYS_AHEAD = 365;
 
 type Updates = Record<string, string | string[] | undefined>;
 
@@ -39,9 +41,10 @@ function useFilterUrl() {
   return { params, update, pending };
 }
 
-/** Panel de filtros (escritorio y hoja móvil): tipo, comuna, precio y equipamiento. */
-function FilterPanel({ amenities, communes }: { amenities: Amenity[]; communes: string[] }) {
+/** Panel de filtros (escritorio y hoja móvil): día, tipo, comuna, precio y equipamiento. */
+function FilterPanel({ amenities, communes, today }: { amenities: Amenity[]; communes: string[]; today: string }) {
   const { params, update } = useFilterUrl();
+  const fecha = params.get("fecha") ?? "";
   const category = params.get("category");
   const commune = params.get("commune");
   const selectedAmenities = params.getAll("amenity");
@@ -72,6 +75,28 @@ function FilterPanel({ amenities, communes }: { amenities: Amenity[]; communes: 
 
   return (
     <>
+      <div className="fgroup">
+        <h4>
+          <label htmlFor="filter-fecha">Día</label> <span>con horario libre</span>
+        </h4>
+        <div className="flex gap-2">
+          <input
+            id="filter-fecha"
+            type="date"
+            value={fecha}
+            min={today}
+            max={addDays(today, DATE_DAYS_AHEAD)}
+            onChange={(e) => update({ fecha: e.target.value || undefined })}
+            className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+          />
+          {fecha && (
+            <button type="button" className="btn btn-soft btn-sm" onClick={() => update({ fecha: undefined })}>
+              Cualquier día
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="fgroup">
         <h4>Tipo de espacio</h4>
         <div className="tgrid">
@@ -176,12 +201,17 @@ function FilterPanel({ amenities, communes }: { amenities: Amenity[]; communes: 
 }
 
 /** Columna de filtros de escritorio (oculta bajo 1000 px). */
-export function DesktopFilters({ amenities, communes }: { amenities: Amenity[]; communes: string[] }) {
+export function DesktopFilters({ amenities, communes, today }: { amenities: Amenity[]; communes: string[]; today: string }) {
   const params = useSearchParams();
   return (
     <aside className="filters panel desk" aria-label="Filtros">
       {/* key: reinicia el rango de precio si los filtros cambian desde fuera (chips, limpiar) */}
-      <FilterPanel key={`${params.get("min")}-${params.get("max")}`} amenities={amenities} communes={communes} />
+      <FilterPanel
+        key={`${params.get("min")}-${params.get("max")}`}
+        amenities={amenities}
+        communes={communes}
+        today={today}
+      />
     </aside>
   );
 }
@@ -297,7 +327,7 @@ export function ResultsBar({
 
       <Sheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="Filtros">
         <div className="filters" style={{ position: "static", padding: 0 }}>
-          <FilterPanel key={`${min}-${max}`} amenities={amenities} communes={communes} />
+          <FilterPanel key={`${min}-${max}`} amenities={amenities} communes={communes} today={today} />
         </div>
         <div className="mt-5 flex gap-2">
           <button type="button" className="btn btn-soft flex-1" onClick={() => update(clearAll)}>
