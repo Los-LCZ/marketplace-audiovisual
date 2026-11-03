@@ -4,7 +4,8 @@
 .discover { display: grid; gap: 34px; padding-top: 30px; }
 @media (min-width: 1000px) { .discover { grid-template-columns: 1fr 320px; } }
 .deck-wrap { display: flex; flex-direction: column; align-items: center; }
-.deck { position: relative; width: 100%; max-width: 400px; height: min(calc(100svh - 270px), 560px); min-height: 420px; }
+/* En móvil descuenta también la barra inferior (.tabbar, 68px): si no, los botones del mazo quedan debajo (E-06). */
+.deck { position: relative; width: 100%; max-width: 400px; height: min(calc(100svh - 338px - env(safe-area-inset-bottom, 0px)), 560px); min-height: 380px; }
 @media (min-width: 900px) { .deck { height: 580px; } }
 .card { position: absolute; inset: 0; border-radius: 22px; overflow: hidden; background: var(--s2); border: 1px solid var(--line2); touch-action: none; user-select: none; box-shadow: 0 30px 60px -25px rgba(0,0,0,.8); will-change: transform; }
 [data-world="mu"] .card { border-radius: 14px; }
@@ -54,7 +55,7 @@
 .deck-hint { margin-top: 10px; font-size: 12px; color: var(--dim); text-align: center; }
 
 /* Match */
-.overlay { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 24px; background: color-mix(in oklab, var(--bg) 92%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); animation: fade .3s ease; }
+.overlay { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 24px; background: color-mix(in oklab, var(--bg) 92%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); animation: fade .3s ease; }
 @keyframes fade { from { opacity: 0; } }
 .match { text-align: center; max-width: 440px; display: grid; justify-items: center; gap: 16px; position: relative; }
 .match .t { font: 600 clamp(44px, 9vw, 72px)/0.95 var(--font-display); letter-spacing: -0.03em; color: var(--fg); text-shadow: var(--glow); }
