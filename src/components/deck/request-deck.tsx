@@ -16,7 +16,8 @@ function RequestCard({ request }: { request: HostBooking }) {
   const quote = client?.last_review;
   return (
     <div className="req">
-      <span className="proj">{request.project ?? request.space?.title ?? "Solicitud"}</span>
+      {/* Siempre la sala: con varios espacios, el nombre del proyecto solo no dice cuál piden. */}
+      <span className="proj">{request.space?.title ?? "Solicitud"}</span>
       <div className="who">
         <Avatar name={name} src={client?.avatar_url} size="lg" verified={client?.verified} />
         <div>
@@ -56,7 +57,10 @@ function RequestCard({ request }: { request: HostBooking }) {
           <span className="dim text-xs">Otro anfitrión, {formatDate(quote.created_at)}</span>
         </blockquote>
       )}
-      <div className="msg">{request.message ?? "Sin mensaje."}</div>
+      <div className="msg">
+        {request.project && <b className="mb-1 block">{request.project}</b>}
+        {request.message ?? (request.project ? null : "Sin mensaje.")}
+      </div>
       <div className="when">
         <span>
           {formatDate(request.start_time)}, {formatTimeRange(request.start_time, request.end_time)}
