@@ -4,20 +4,18 @@
 
 | | |
 |---|---|
-| Fecha | 31-oct-2026 23:02 → 1-nov-2026 ~01:30 (hora de Chile) |
+| Fecha | 31-oct-2026 23:02 → 1-nov-2026 ~01:30, y la sección G el 2-nov-2026 ~22:45 (hora de Chile) |
 | Entorno | Producción: https://marketplace-audiovisual.vercel.app, con los datos demo cargados el 31-oct |
 | Commit probado | `16efc61` (`main`) |
 | Navegadores | Brave (escritorio, Windows), del tester, y el navegador integrado de Claude Desktop (Chromium), controlado por el QA lead |
 | Dispositivos | Escritorio (~1900 px y ~980 px de ancho) y móvil emulado (375×812, más el modo responsive del tester) |
 | Cuentas usadas | matias.perez, joaquin.herrera, diego.fuentes, camila.munoz, ana.rojas (todas `@senal-demo.test`) |
 
-**Totales (39 casos):** ✅ 25 · ❌ 2 · ⚠️ 8 · ⏸️ 4 no ejecutados (B2, G1 parte 3, G2 y G3).
+**Totales (39 casos):** ✅ 28 · ❌ 2 · ⚠️ 8 · ⏸️ 1 no ejecutado (B2).
 
 **Errores encontrados:** 7. **Alta: 1** (E-05, redirección abierta en el login). Media: 2 (E-03, E-07). Baja: 4 (E-01, E-02, E-04, E-06).
 
-**No ejecutado:**
-- **B2:** registro con un correo propio; es opcional y el tester decidió no hacerlo.
-- **G1 parte 3, G2 y G3:** la reserva de G1 (1-nov, 9–10 h) recién termina a las 10:00 del 1-nov y se cerró el informe antes. Quedan pendientes para otra ronda, junto con el hallazgo de código sobre cancelar después del inicio (ver *Hallazgos de revisión de código*).
+**No ejecutado:** B2 (registro con un correo propio; es opcional y el tester decidió no hacerlo).
 
 Leyenda: ✅ pasa · ❌ falla · ⚠️ funciona con problemas · ⏸️ no ejecutado · [M] probado también en móvil.
 
@@ -88,9 +86,9 @@ Leyenda: ✅ pasa · ❌ falla · ⚠️ funciona con problemas · ⏸️ no eje
 |---|---|---|---|---|---|---|
 | G1 (parte 1) | matias.perez reserva Cabina Bellavista el 1-nov de 09:00 a 10:00 | Confirmada; $15.000 + 10% = $16.500 | **Confirmada**, $16.500 | ✅ | Captura de /mis-reservas | A las 23:02 la próxima hora en punto (00:00) quedaba fuera del horario (9–23 h), así que se reservó la primera hora del día siguiente. |
 | G1 (parte 2) | ana.rojas en /dashboard ~01:00 del 1-nov | "Completar" no disponible antes de que termine | Solo aparece "Cancelar reserva"; "0 por completar" | ✅ | DOM | Ingresos del mes de Ana: $90.000 (sin contar la cancelada) ✔. |
-| G1 (parte 3) | Después de las 10:00, Ana marca la reserva como Completada | Pasa a Completada | — | ⏸️ | — | Pendiente. Revisar también si Matías todavía puede cancelarla una vez terminada (ver *Hallazgos de revisión de código*). |
-| G2 | Matías califica; Ana no debe ver la reseña, solo que ya calificó | — | — | ⏸️ | — | Pendiente |
-| G3 | Ana califica a Matías; se revelan las dos reseñas, se actualiza el rating y la reseña deja de ser editable | — | — | ⏸️ | — | Pendiente |
+| G1 (parte 3) | 2-nov 22:45: antes de completar, revisar como Matías si todavía puede cancelar la reserva terminada; luego Ana la marca como Completada | Pasa a Completada; no se puede cancelar una reserva terminada | Matías: la reserva aparece en Historial como "Confirmada" con "Podrás calificarla cuando el anfitrión la marque como completada", **sin "Cancelar"**. Ana: sección "Por completar" con **"Marcar completada"** (sin "Cancelar") → diálogo "¿Marcar la sesión como completada? Ambos podrán calificarse a ciegas…" → toast **"Sesión completada"**; pasa a "Califica a tus clientes". | ✅ | DOM | La interfaz no ofrece cancelar una reserva terminada; el backend no se probó para no perder la reserva (ver *Hallazgos de revisión de código*). |
+| G2 Calificación a ciegas | Matías califica Cabina Bellavista (4★, "Gran acústica" y "Anfitrión atento", comentario); luego Ana revisa su panel | Ana no ve la reseña, solo que ya calificó | Matías: formulario con estrellas etiquetadas ("4 estrellas, Muy buena"), etiquetas y comentario (máx. 2000). Después: "Ana aún no califica. Verás su reseña cuando la envíe o el **lun, 16 nov 2026**" (14 días). Ficha pública: sigue en **5,0 (1)**. Ana: **"Matías ya te calificó. Lo verás cuando envíes tu calificación."**; el comentario no aparece ni en la página ni en el HTML. | ✅ | DOM y HTML | Por código, RLS `reviews_select_visible` / `client_reviews_select_visible` ocultan la reseña hasta que se revele. Al enviar no aparece toast de confirmación. |
+| G3 Revelación | Ana califica a Matías (5★, "Puntual", comentario) | Ambos ven las dos reseñas; el rating del espacio se actualiza; la reseña ya no es editable | El panel de Ana muestra "Tu calificación" y **"Matías calificó tu espacio"** (4★, sus etiquetas y comentario). Cabina Bellavista **5,0 (1) → 4,5 (2)**, con la reseña visible en la ficha pública. Ana como anfitriona **4,7 (3) → 4,5 (4)**. Matías como cliente: 5 reseñas, 4,8, con la reseña de Ana en su perfil. No hay opción de editar ni borrar. | ✅ | DOM; `fetch` sin sesión a la ficha y a los perfiles | No se volvió a iniciar sesión como Matías: la revelación se verificó en la ficha y los perfiles públicos. Por código, editar o borrar solo se permite mientras la reseña está oculta (`reviews_update_author_while_hidden`). |
 
 ## H. Generales
 
@@ -153,7 +151,7 @@ Leyenda: ✅ pasa · ❌ falla · ⚠️ funciona con problemas · ⏸️ no eje
 
 ## Hallazgos de revisión de código (no verificados en la prueba)
 
-- **Un cliente puede cancelar una reserva ya empezada o terminada:** la rama del cliente en `guard_booking_update` (`supabase/migrations/20261031160100_booking_requests.sql`) acepta `cancelled` desde `confirmed` sin comparar con `start_time`, aunque la UI dice "Puedes cancelar antes del inicio". Después de la sesión, y antes de que el anfitrión la complete, el cliente podría cancelarla (y evitar la calificación). Pendiente de verificar con G1. Si se confirma, sería al menos de severidad **media** (backend).
+- **Un cliente puede cancelar una reserva ya empezada o terminada:** la rama del cliente en `guard_booking_update` (`supabase/migrations/20261031160100_booking_requests.sql`) acepta `cancelled` desde `confirmed` sin comparar con `start_time`, aunque la UI dice "Puedes cancelar antes del inicio". Después de la sesión, y antes de que el anfitrión la complete, el cliente podría cancelarla (y evitar la calificación). En G1 se comprobó que **la interfaz no ofrece cancelar** una reserva terminada (ni al cliente ni a la anfitriona), así que hoy solo sería explotable llamando directo a la API de Supabase. No se probó en el backend para no perder la reserva de G. Si se confirma, sería de severidad **media** (backend).
 - **El orden por mundo se aplica solo dentro de cada página:** con el orden por defecto, `src/app/explorar/page.tsx:43-48` reordena la página actual con el mundo activo primero. Con más de 24 resultados, la página 2 vuelve a empezar con el mundo activo. No se puede reproducir con 13 espacios.
 - **KPI de respuesta público:** `get_host_response_stats` tiene `grant execute … to anon` y acepta cualquier `p_host_id`.
 
@@ -173,6 +171,7 @@ Leyenda: ✅ pasa · ❌ falla · ⚠️ funciona con problemas · ⏸️ no eje
 - Tarjetas del catálogo: la barra segmentada de colores no tiene leyenda.
 - Sin fotos, el visor de la portada (Audiovisual) se ve negro; usar un placeholder con la categoría.
 - Mensaje de reserva directa: "Sesión reservada" frente a "Reserva confirmada" del README; alinear la redacción.
+- Calificaciones: al enviar no hay toast de confirmación (el formulario simplemente desaparece). Las etiquetas del formulario ("Gran acústica", "Anfitrión atento") no coinciden con las del seed ("acústica", "puntual"), lo que separa las estadísticas de etiquetas del perfil; usar un vocabulario único. La base permite editar la reseña mientras está oculta, pero la UI no ofrece esa opción.
 
 **Accesibilidad**
 - Editor de fotos: `alt` descriptivo en lugar de "Foto 1"; "Usar de portada" debería decir de qué foto es; listar todos los archivos rechazados, no solo el último.
@@ -187,7 +186,8 @@ Leyenda: ✅ pasa · ❌ falla · ⚠️ funciona con problemas · ⏸️ no eje
 
 ## Datos modificados durante la prueba (para el reset)
 
-- Reservas: Matías en Cabina Bellavista el 1-nov 9–10 h (Confirmada, G1) y en Irarrázaval el 4-nov 14–16 h (Confirmada); Bellavista el 4-nov 12–14 h (Cancelada); Joaquín en Irarrázaval el 4-nov 18–20 h (Confirmada) y el 2-nov 20–22 h (Rechazada).
+- Reseñas de prueba de G2/G3 (reveladas): Matías → Cabina Bellavista 4★ y Ana → Matías 5★ (comentarios que empiezan con "QA:"). Bajan el rating de Bellavista a 4,5 y el de Ana a 4,5.
+- Reservas: Matías en Cabina Bellavista el 1-nov 9–10 h (Completada, G1) y en Irarrázaval el 4-nov 14–16 h (Confirmada); Bellavista el 4-nov 12–14 h (Cancelada); Joaquín en Irarrázaval el 4-nov 18–20 h (Confirmada) y el 2-nov 20–22 h (Rechazada).
 - Me gusta y descartes de Camila en el mundo Música.
 - Espacio "QA Sala Prueba (demo)" de Ana (`a89dc267-…`, archivado) con 2 fotos en Storage.
 - El perfil de Matías se editó y se restauró.
