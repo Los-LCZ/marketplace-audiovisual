@@ -6,6 +6,14 @@ import { updateSpaceStatus } from "@/app/actions/spaces";
 import { SPACE_STATUSES, SPACE_STATUS_LABELS } from "@/lib/labels";
 import type { SpaceStatus } from "@/types/database";
 import { Select } from "@/components/ui/form-controls";
+import { toast } from "@/components/ui/toaster";
+
+// Confirmación del cambio, con la misma explicación de cada estado que el formulario del espacio.
+const STATUS_TOASTS: Record<SpaceStatus, [string, string]> = {
+  published: ["Espacio publicado", "Aparece en el listado y se puede reservar."],
+  draft: ["Espacio en borrador", "Solo tú lo ves; puedes publicarlo desde tu panel."],
+  archived: ["Espacio archivado", "Fuera del listado; las reservas pasadas se conservan."],
+};
 
 // Cambia el estado de un espacio propio (publicado / borrador / archivado).
 export function SpaceStatusControl({ spaceId, status }: { spaceId: string; status: SpaceStatus }) {
@@ -19,7 +27,8 @@ export function SpaceStatusControl({ spaceId, status }: { spaceId: string; statu
     startTransition(async () => {
       setOptimisticStatus(next);
       const result = await updateSpaceStatus(spaceId, next);
-      if (result && !result.ok) setError(result.error);
+      if (result && !result.ok) return setError(result.error);
+      toast(...STATUS_TOASTS[next], "ok");
     });
   }
 
