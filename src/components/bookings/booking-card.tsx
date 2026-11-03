@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { BookingWithSpace } from "@/lib/queries/bookings";
 import { formatCLP, formatTimeRange } from "@/lib/utils";
-import { dayLabel, dayOfMonth, zonedDateString } from "@/lib/zoned-time";
+import { dayLabel, dayMonth, dayOfMonth, zonedDateString } from "@/lib/zoned-time";
 import { BookingStatusBadge } from "@/components/ui/badge";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { Stars } from "@/components/ui/rating";
@@ -35,6 +35,8 @@ export function BookingCard({
         <div className="date-box">
           <span className="text-[11px]">{dayLabel(date, today)}</span>
           <b>{dayOfMonth(date)}</b>
+          {/* Con reservas hasta un año adelante, el mes ya no se deduce. */}
+          <span className="block text-[11px]">{dayMonth(date).split(" ").slice(1).join(" ")}</span>
         </div>
         <div className="thumb hidden sm:block">
           {space?.images[0] ? (
