@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { listAmenities, listCommunes, listLikedSpaces, listPublishedSpaces, type SpaceSort } from "@/lib/queries/spaces";
 import { buildQueryString, parseDateParam, parseSort, parseSpaceFilters, type SortKey } from "@/lib/search-params";
 import { getWorld } from "@/lib/world-server";
-import { SUGGESTED_COMMUNES, WORLDS, worldOf } from "@/lib/world";
+import { SUGGESTED_COMMUNES, WORLDS } from "@/lib/world";
 import { currentTime } from "@/lib/zoned-time";
 import { SpaceCard } from "@/components/spaces/space-card";
 import { DesktopFilters, ResultsBar } from "@/components/explore/explore-controls";
@@ -32,7 +32,8 @@ function emptyHints(filters: ReturnType<typeof parseSpaceFilters>, fecha: string
 
 // Orden de la URL (en español) al orden de la base, que se aplica antes de paginar.
 const SORT_MAP: Record<SortKey, SpaceSort> = {
-  relevancia: "recent",
+  relevancia: "relevance",
+  recientes: "recent",
   "precio-asc": "price_asc",
   "precio-desc": "price_desc",
   valoracion: "rating",
@@ -44,10 +45,18 @@ export default async function ExplorarPage({ searchParams }: PageProps<"/explora
   const sort = parseSort(params);
   const fecha = parseDateParam(params);
   const world = await getWorld();
+  const recommended = sort === "relevancia" && !filters.category;
 
   const user = await getCurrentUser();
   const [{ spaces, total, page }, amenities, communes, liked] = await Promise.all([
-    listPublishedSpaces({ ...filters, sort: SORT_MAP[sort], availableOn: fecha, pageSize: PAGE_SIZE }),
+    listPublishedSpaces({
+      ...filters,
+      sort: SORT_MAP[sort],
+      // Recomendados sin categoría: el mundo activo primero, ordenado en la base antes de paginar.
+      world: recommended ? world : undefined,
+      availableOn: fecha,
+      pageSize: PAGE_SIZE,
+    }),
     listAmenities(),
     listCommunes(),
     user ? listLikedSpaces(user.id) : null,
@@ -61,12 +70,6 @@ export default async function ExplorarPage({ searchParams }: PageProps<"/explora
   const likedIds = liked ? new Set(liked.map((s) => s.id)) : null;
   const communeNames = communes.length ? communes.slice(0, MAX_COMMUNES).map((c) => c.commune) : SUGGESTED_COMMUNES;
 
-  // Con el orden por defecto y sin categoría, primero los espacios del mundo activo (dentro de la página;
-  // sort es estable, así que cada grupo conserva el orden de la base).
-  const results =
-    filters.category || sort !== "relevancia"
-      ? spaces
-      : [...spaces].sort((a, b) => Number(worldOf(b.category) === world) - Number(worldOf(a.category) === world));
   const cardQuery = fecha ? `?fecha=${fecha}` : undefined;
   const today = currentTime().today;
   const hints = emptyHints(filters, fecha);
@@ -89,7 +92,7 @@ export default async function ExplorarPage({ searchParams }: PageProps<"/explora
             total={total}
             today={today}
             summary={
-              !filters.category && sort === "relevancia" && <span className="dim">· primero {WORLDS[world].name}</span>
+              recommended && <span className="dim">· primero {WORLDS[world].name}</span>
             }
           />
           {fecha && (
@@ -97,14 +100,14 @@ export default async function ExplorarPage({ searchParams }: PageProps<"/explora
               Espacios con horario libre ese día. Elige tu bloque en la ficha: el día buscado queda preseleccionado.
             </p>
           )}
-          {world === "mu" && results.length > 0 && (
+          {world === "mu" && spaces.length > 0 && (
             <p className="dim mb-4 text-xs">
               El medidor bajo cada foto sube con la nota del espacio: apagado bajo 4,5 y al máximo en 5,0.
             </p>
           )}
-          {results.length ? (
+          {spaces.length ? (
             <div className="grid-cards">
-              {results.map((space, i) => (
+              {spaces.map((space, i) => (
                 <SpaceCard
                   key={space.id}
                   space={space}
