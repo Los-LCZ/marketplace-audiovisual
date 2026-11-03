@@ -16,6 +16,20 @@ export const metadata: Metadata = { title: "Explorar" };
 const PAGE_SIZE = 24;
 const MAX_COMMUNES = 10;
 
+/** Qué soltar para encontrar resultados, según los filtros que hay puestos. */
+function emptyHints(filters: ReturnType<typeof parseSpaceFilters>, fecha: string | undefined) {
+  const hints: string[] = [];
+  if (fecha) hints.push("prueba otro día");
+  if (filters.q) hints.push("busca con otras palabras");
+  if (filters.category) hints.push("quita el tipo de espacio");
+  if (filters.commune || filters.city) hints.push("prueba otra comuna");
+  if (filters.amenityIds?.length) hints.push("quita algún equipamiento");
+  if (filters.minPrice || filters.maxPrice) hints.push("amplía el rango de precio");
+  if (!hints.length) return null;
+  const text = hints.length === 1 ? hints[0] : `${hints.slice(0, -1).join(", ")} o ${hints.at(-1)}`;
+  return `${text[0].toUpperCase()}${text.slice(1)}.`;
+}
+
 // Orden de la URL (en español) al orden de la base, que se aplica antes de paginar.
 const SORT_MAP: Record<SortKey, SpaceSort> = {
   relevancia: "recent",
@@ -54,6 +68,8 @@ export default async function ExplorarPage({ searchParams }: PageProps<"/explora
       ? spaces
       : [...spaces].sort((a, b) => Number(worldOf(b.category) === world) - Number(worldOf(a.category) === world));
   const cardQuery = fecha ? `?fecha=${fecha}` : undefined;
+  const today = currentTime().today;
+  const hints = emptyHints(filters, fecha);
 
   return (
     <div className="wrap">
@@ -65,13 +81,13 @@ export default async function ExplorarPage({ searchParams }: PageProps<"/explora
         </p>
       </div>
       <div className="explore">
-        <DesktopFilters amenities={amenities} communes={communeNames} />
+        <DesktopFilters amenities={amenities} communes={communeNames} today={today} />
         <section aria-label="Resultados">
           <ResultsBar
             amenities={amenities}
             communes={communeNames}
             total={total}
-            today={currentTime().today}
+            today={today}
             summary={
               !filters.category && sort === "relevancia" && <span className="dim">· primero {WORLDS[world].name}</span>
             }
@@ -79,6 +95,11 @@ export default async function ExplorarPage({ searchParams }: PageProps<"/explora
           {fecha && (
             <p className="dim mb-4 text-sm">
               Espacios con horario libre ese día. Elige tu bloque en la ficha: el día buscado queda preseleccionado.
+            </p>
+          )}
+          {world === "mu" && results.length > 0 && (
+            <p className="dim mb-4 text-xs">
+              El medidor bajo cada foto sube con la nota del espacio: apagado bajo 4,5 y al máximo en 5,0.
             </p>
           )}
           {results.length ? (
@@ -95,13 +116,20 @@ export default async function ExplorarPage({ searchParams }: PageProps<"/explora
             </div>
           ) : (
             <div className="empty">
-              <b>Ningún espacio cumple todos estos filtros</b>
-              <p className="dim">
-                {fecha ? "Prueba otro día, quita" : "Quita"} algún equipamiento o amplía el rango de precio.
-              </p>
-              <Link className="btn btn-soft" href="/explorar">
-                Limpiar filtros
-              </Link>
+              {hints ? (
+                <>
+                  <b>Ningún espacio cumple todos estos filtros</b>
+                  <p className="dim">{hints}</p>
+                  <Link className="btn btn-soft" href="/explorar">
+                    Limpiar filtros
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <b>Todavía no hay espacios publicados</b>
+                  <p className="dim">Vuelve pronto: los anfitriones están sumando salas, estudios y sets.</p>
+                </>
+              )}
             </div>
           )}
           <div className="mt-8">
