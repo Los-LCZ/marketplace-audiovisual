@@ -1,10 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Camera, Music } from "lucide-react";
 import { WORLDS, WORLD_COOKIE, type World } from "@/lib/world";
 
 const ICONS = { av: Camera, mu: Music } as const;
+// Ficha de un espacio (no /espacios/nuevo): se ve en el mundo del espacio, así que cambiar de mundo ahí no
+// tendría efecto visible; en vez de eso lleva a la portada del mundo elegido.
+const SPACE_PAGE = /^\/espacios\/(?!nuevo$)[^/]+$/;
 
 // Aplica el mundo en el documento y lo recuerda por un año.
 export function applyWorld(world: World) {
@@ -16,16 +19,18 @@ export function applyWorld(world: World) {
 /**
  * Interruptor Audiovisual / Música. Cambia de mundo con un "iris de cámara" que se
  * abre desde el botón tocado (View Transitions) y re-renderiza las partes del servidor
- * que dependen del mundo (por ejemplo, el hero de la portada).
+ * que dependen del mundo (por ejemplo, el hero de la portada). Desde una ficha, va a la portada.
  */
 export function WorldSwitch({ world }: { world: World }) {
   const router = useRouter();
+  const pathname = usePathname();
 
   function select(next: World, origin: HTMLElement) {
     if (next === world) return;
     const run = () => {
       applyWorld(next);
-      router.refresh();
+      if (SPACE_PAGE.test(pathname)) router.push("/");
+      else router.refresh();
     };
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!document.startViewTransition || reduceMotion) return run();
