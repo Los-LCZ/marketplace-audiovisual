@@ -3,7 +3,7 @@
 /* ---------- Perfil ---------- */
 .cover { height: 170px; border-bottom: 1px solid var(--line); position: relative; overflow: hidden; }
 [data-world="av"] .cover { background: radial-gradient(60% 120% at 80% 0%, var(--acc-soft), transparent 70%), linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 48px 48px, linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 48px 48px; }
-[data-world="mu"] .cover { background: radial-gradient(60% 120% at 80% 0%, var(--acc-soft), transparent 70%), repeating-linear-gradient(90deg, rgba(255,220,170,.05) 0 2px, transparent 2px 22px); }
+[data-world="mu"] .cover { background: radial-gradient(60% 120% at 80% 0%, var(--acc-soft), transparent 70%), repeating-linear-gradient(90deg, color-mix(in oklab, var(--fg) 5%, transparent) 0 2px, transparent 2px 22px); }
 .prof-head { margin-top: -52px; display: flex; flex-wrap: wrap; gap: 18px; align-items: end; justify-content: space-between; }
 .prof-head .who { display: flex; flex-wrap: wrap; gap: 18px; align-items: end; }
 .rcards { display: grid; gap: 14px; margin-top: 34px; }

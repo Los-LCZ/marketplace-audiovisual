@@ -2,7 +2,7 @@ import type { SpaceCategory } from "@/types/database";
 
 /**
  * Señal separa el catálogo en dos "mundos" con identidad visual propia:
- * Audiovisual (Visor, magenta) y Música (Consola, ámbar). El mundo activo se guarda
+ * Audiovisual (Visor, azul de estudio) y Música (Consola, violeta). El mundo activo se guarda
  * en una cookie y se aplica como <html data-world="av|mu">.
  */
 export type World = "av" | "mu";
@@ -28,7 +28,7 @@ export const WORLDS: Record<World, WorldConfig> = {
     name: "Audiovisual",
     device: "Visor",
     categories: ["filming_set", "photo_studio", "outdoor_location"],
-    themeColor: "#090b0e",
+    themeColor: "#090c10",
     deck: {
       kicker: "Revisión de tomas",
       like: "Toma buena",
@@ -42,7 +42,7 @@ export const WORLDS: Record<World, WorldConfig> = {
     name: "Música",
     device: "Consola",
     categories: ["recording_studio", "rehearsal_room"],
-    themeColor: "#0d0906",
+    themeColor: "#0e0b1d",
     deck: {
       kicker: "Escucha de canales",
       like: "Solo",

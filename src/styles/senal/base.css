@@ -53,8 +53,8 @@ body::before {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  /* Panel de madera de la sala de control, muy apagado */
-  background-image: repeating-linear-gradient(90deg, rgba(255, 220, 170, 0.025) 0 2px, transparent 2px 26px);
+  /* Paneles acústicos de la sala, muy apagados */
+  background-image: repeating-linear-gradient(90deg, color-mix(in oklab, var(--fg) 2.5%, transparent) 0 2px, transparent 2px 26px);
   -webkit-mask-image: linear-gradient(180deg, #000, transparent 60%);
   mask-image: linear-gradient(180deg, #000, transparent 60%);
 }
@@ -75,7 +75,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; font-weight: 600; }
 .h3 { font-size: 20px; }
 .mono { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
 .dim { color: var(--dim); }
-.acc { color: var(--acc); }
+.acc { color: var(--acc-text); }
 .lede { color: var(--dim); max-width: 60ch; font-size: 17px; margin: 14px 0 0; }
 p { margin: 0; }
 

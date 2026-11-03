@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Hanken_Grotesk, Martian_Mono, Unbounded } from "next/font/google";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { StudioBackdrop } from "@/components/layout/studio-backdrop";
 import { Toaster } from "@/components/ui/toaster";
 import { getWorld } from "@/lib/world-server";
 import { WORLDS } from "@/lib/world";
@@ -49,6 +50,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${unbounded.variable} ${hanken.variable} ${martian.variable}`}
     >
       <body>
+        <StudioBackdrop />
         <Navbar world={world} />
         <main id="app">{children}</main>
         <Footer />
