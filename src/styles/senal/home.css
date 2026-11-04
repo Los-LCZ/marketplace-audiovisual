@@ -71,7 +71,6 @@
 /* ===== CONSOLA (Música) ===== */
 .console { border-radius: 16px; border: 1px solid var(--line2); background: linear-gradient(180deg, var(--s2), var(--s1)); box-shadow: inset 0 1px 0 color-mix(in oklab, var(--fg) 6%, transparent), 0 30px 80px -30px rgba(0,0,0,.9); overflow: hidden; }
 .daw { position: relative; height: 150px; border-bottom: 1px solid var(--line); background: var(--bg); overflow: hidden; }
-.daw canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .daw-info { position: absolute; left: 18px; top: 14px; right: 18px; display: flex; justify-content: space-between; gap: 12px; pointer-events: none; }
 .daw-info .t { font-family: var(--font-display); font-size: clamp(18px, 2.4vw, 26px); }
 .strips { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: thin; padding: 2px; }
@@ -164,10 +163,9 @@
 .vf .map-link { position: absolute; left: 22px; top: 52px; z-index: 1; }
 @media (max-width: 720px) { .vf .map-link { top: 76px; } }
 /* Consola: el mapa ocupa la pantalla del DAW. Una sombra arriba y abajo (multiply) deja leer el canal y los
-   botones; el cabezal de reproducción queda encima del mapa. */
+   botones. */
 .daw .hero-map::after { background: linear-gradient(180deg, var(--bg) 0, transparent 42%, transparent 72%, var(--bg) 100%), var(--map-tint); }
 .daw .hero-map-status { top: auto; bottom: 18px; }
-.daw-head { position: absolute; top: 0; bottom: 0; left: 42%; width: 1.5px; background: var(--rec); box-shadow: 0 0 10px var(--rec); pointer-events: none; }
 .daw-info { text-shadow: 0 1px 3px var(--bg); }
 .daw-actions { position: absolute; right: 18px; bottom: 14px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 /* Miniaturas de un espacio sin fotos: ícono de la categoría sobre la superficie del mundo. */

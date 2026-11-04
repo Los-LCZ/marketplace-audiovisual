@@ -36,10 +36,9 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
   const [tab, setTab] = useState<SpaceCategory>(WORLDS.mu.categories[0]);
 
   const conRef = useRef<HTMLDivElement>(null);
-  const tcRef = useRef<HTMLDivElement>(null);
   const meterRefs = useRef<Record<string, HTMLElement | null>>({});
   // La animación lee el estado más reciente sin reiniciarse.
-  const live = useRef({ solo, muted, master, recording, gains, faders, offset: 0 });
+  const live = useRef({ solo, muted, master, recording, gains, faders });
   useEffect(() => {
     Object.assign(live.current, { solo, muted, master, recording, gains, faders });
   }, [solo, muted, master, recording, gains, faders]);
@@ -64,7 +63,6 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
       last = now;
       const s = live.current;
       beat += dt;
-      s.offset += dt * 0.02;
       spaces.forEach((sp, i) => {
         const off = s.muted[i] || sp.pricePerHour > s.master;
         const base = off ? 0 : s.gains[i] * s.faders[i] * (i === s.solo ? 1.25 : 0.75) * (s.recording ? 1.15 : 1);
@@ -82,10 +80,6 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
         meterRefs.current[k]?.style.setProperty("--lvl", `${clamp(avg * 1.6 + j * 0.03, 0, 1) * 100}%`),
       );
 
-      if (tcRef.current) {
-        const bars = Math.floor(s.offset / 40);
-        tcRef.current.textContent = `${String((bars % 999) + 1).padStart(3, "0")}.${(Math.floor(s.offset / 10) % 4) + 1}.${String(Math.floor(s.offset * 25) % 1000).padStart(3, "0")}`;
-      }
       if (visible && !reduceMotion) raf = requestAnimationFrame(tick);
     };
 
@@ -134,7 +128,6 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
   }
 
   function reset() {
-    live.current.offset = 0;
     setSolo(0);
     setMuted(spaces.map(() => false));
     setMaster(priceMax);
@@ -151,10 +144,8 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
     <div className="console" ref={conRef}>
       <div className="daw">
         {current && <HeroMap key={current.id} place={`${current.commune}, ${current.city}`} live />}
-        <i className="daw-head" aria-hidden />
         <div className="daw-info">
           <div>
-            <div className="mono acc">CH {String(solo + 1).padStart(2, "0")} · SOLO</div>
             <div className="t">{current?.title ?? "Tu sala podría sonar aquí"}</div>
             <div className="meta">
               {current
@@ -163,12 +154,6 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
                     .join(" · ")
                 : "Aún no hay estudios ni salas publicados."}
             </div>
-          </div>
-          <div className="text-right">
-            <div className="mono" ref={tcRef}>
-              001.1.000
-            </div>
-            <div className="mono dim mt-1">120 BPM · 4/4</div>
           </div>
         </div>
         <div className="daw-actions">
