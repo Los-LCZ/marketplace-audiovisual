@@ -35,7 +35,6 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
   const [gains, setGains] = useState<number[]>(() => spaces.map((_, i) => 0.5 + i * 0.05));
   const [faders, setFaders] = useState<number[]>(() => spaces.map((_, i) => (70 - i * 4) / 100));
   const [tab, setTab] = useState<SpaceCategory>(WORLDS.mu.categories[0]);
-  const [exploring, setExploring] = useState(false);
 
   const conRef = useRef<HTMLDivElement>(null);
   const meterRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -144,16 +143,11 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
 
   return (
     <div className="console" ref={conRef}>
-      <div
-        className={`daw ${exploring ? "exploring" : ""}`}
-        // Clic en la pantalla: el mapa toma el puntero para arrastrarlo; al salir vuelve el micrófono.
-        onClick={(e) => {
-          if (current && !(e.target as HTMLElement).closest("a, button")) setExploring(true);
-        }}
-        onPointerLeave={() => setExploring(false)}
-      >
-        {current && <HeroMap key={current.id} place={`${current.commune}, ${current.city}`} live={exploring} />}
-        {current && <MicCursor off={exploring} hint="Clic para explorar" />}
+      {/* El mapa no toma el puntero (dentro del iframe Google pone su propia mano), así el cursor es
+          siempre el micrófono; para recorrer el mapa está "Abrir en Maps". */}
+      <div className="daw">
+        {current && <HeroMap key={current.id} place={`${current.commune}, ${current.city}`} live={false} />}
+        {current && <MicCursor />}
         <div className="daw-info">
           <div>
             <div className="t">{current?.title ?? "Tu sala podría sonar aquí"}</div>
