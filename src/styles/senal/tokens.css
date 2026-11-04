@@ -40,6 +40,7 @@
   --map-filter: invert(0.92) hue-rotate(180deg) saturate(0.7) brightness(0.9) contrast(1.05);
   --map-opacity: 0.9;
   --map-crop: 180px;
+  --map-tint: var(--scene-tint);
   --radius: 14px;
   --radius-sm: 8px;
   color-scheme: dark;
@@ -71,6 +72,8 @@
   /* Estudio dibujado: neón de los LED (emisión) y púrpura profundo de la paleta para la gradación. */
   --neon: #9b6cff;
   --deep: #5a3b8c;
+  /* Mapa de la consola: el mismo modo noche, teñido de violeta en vez de azul. */
+  --map-tint: color-mix(in oklab, var(--deep) 75%, var(--acc-text));
   /* Velo sobre el estudio dibujado, con el fondo de la paleta. */
   --veil-top: rgba(14, 11, 29, 0.62);
   --veil: rgba(14, 11, 29, 0.55);

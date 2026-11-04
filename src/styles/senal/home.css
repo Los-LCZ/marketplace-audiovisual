@@ -148,20 +148,28 @@
 .ctl .lbl { display: flex; justify-content: space-between; font-size: 13px; }
 .ctl .lbl b { font-family: var(--font-mono); font-size: 13px; }
 
+/* Mapa de la portada (visor sin fotos y pantalla de la consola): embed de Google invertido a modo noche y
+   teñido con --map-tint del mundo. Solo recibe el puntero con .live (en el visor, con el foco fijado). */
+.hero-map { position: absolute; inset: 0; overflow: hidden; background: radial-gradient(60% 70% at 50% 40%, color-mix(in oklab, var(--acc) 14%, var(--s2)), var(--bg) 80%); }
+/* El iframe sube --map-crop por sobre el cuadro para que la tarjeta del lugar que Google pone arriba a la
+   izquierda quede fuera; abajo quedan visibles los controles y la atribución del mapa. */
+.hero-map iframe { position: absolute; left: 0; top: calc(-1 * var(--map-crop)); width: 100%; height: calc(100% + var(--map-crop)); border: 0; opacity: 0; filter: var(--map-filter); pointer-events: none; transition: opacity .6s; }
+.hero-map.ready iframe { opacity: var(--map-opacity); }
+.hero-map.live iframe { pointer-events: auto; }
+.hero-map::after { content: ""; position: absolute; inset: 0; background: var(--map-tint); mix-blend-mode: multiply; pointer-events: none; }
+.hero-map-status { position: absolute; left: 50%; top: max(14%, 76px); translate: -50% 0; font: 500 12px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
+/* "Abrir en Maps" propio, en vidrio: reemplaza al botón del embed, que queda recortado. */
+.map-link { background: var(--glass); backdrop-filter: var(--glass-blur); font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.map-link svg { width: 14px; height: 14px; color: var(--acc); }
+.vf .map-link { position: absolute; left: 22px; top: 52px; z-index: 1; }
+@media (max-width: 720px) { .vf .map-link { top: 76px; } }
+/* Consola: el mapa ocupa la pantalla del DAW. Una sombra arriba y abajo (multiply) deja leer el canal y los
+   botones; el cabezal de reproducción queda encima del mapa. */
+.daw .hero-map::after { background: linear-gradient(180deg, var(--bg) 0, transparent 42%, transparent 72%, var(--bg) 100%), var(--map-tint); }
+.daw .hero-map-status { top: auto; bottom: 18px; }
+.daw-head { position: absolute; top: 0; bottom: 0; left: 42%; width: 1.5px; background: var(--rec); box-shadow: 0 0 10px var(--rec); pointer-events: none; }
+.daw-info { text-shadow: 0 1px 3px var(--bg); }
+.daw-actions { position: absolute; right: 18px; bottom: 14px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 /* Miniaturas de un espacio sin fotos: ícono de la categoría sobre la superficie del mundo. */
-/* Mapa del visor (espacio sin fotos): embed de Google invertido a modo noche y teñido de azul medianoche.
-   Bajo el HUD y la cuadrícula; solo recibe el puntero con el foco fijado (.live). */
-.vf-map { position: absolute; inset: 0; overflow: hidden; background: radial-gradient(60% 70% at 50% 40%, color-mix(in oklab, var(--acc) 14%, var(--s2)), var(--bg) 80%); }
-/* El iframe sube --map-crop por sobre el visor para que la tarjeta del lugar que Google pone arriba a la
-   izquierda quede fuera del cuadro; abajo quedan visibles los controles y la atribución del mapa. */
-.vf-map iframe { position: absolute; left: 0; top: calc(-1 * var(--map-crop)); width: 100%; height: calc(100% + var(--map-crop)); border: 0; opacity: 0; filter: var(--map-filter); pointer-events: none; transition: opacity .6s; }
-.vf-map.ready iframe { opacity: var(--map-opacity); }
-.vf-map.live iframe { pointer-events: auto; }
-.vf-map::after { content: ""; position: absolute; inset: 0; background: var(--scene-tint); mix-blend-mode: multiply; pointer-events: none; }
-/* "Abrir en Maps" del visor: sobre el botón del embed (arriba a la izquierda, bajo la fila del REC). */
-.vf-maplink { position: absolute; left: 22px; top: 52px; z-index: 1; background: var(--glass); backdrop-filter: var(--glass-blur); font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
-.vf-maplink svg { width: 14px; height: 14px; color: var(--acc); }
-@media (max-width: 720px) { .vf-maplink { top: 76px; } }
-.vf-map-status { position: absolute; left: 50%; top: max(14%, 76px); translate: -50% 0; font: 500 12px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
 .vf-thumb-empty { display: grid; place-items: center; width: 100%; height: 100%; color: var(--dim); background: var(--s2); }
 .vf-thumb-empty svg { width: 20px; height: 20px; }

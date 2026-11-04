@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { SPACE_CATEGORY_LABELS } from "@/lib/labels";
 import { CategoryIcon } from "@/components/ui/category-icon";
@@ -12,45 +11,10 @@ import { formatCLP } from "@/lib/utils";
 import type { SpaceCategory } from "@/types/database";
 import type { DayOption, HeroSpace } from "./hero-types";
 import { exploreHref, SearchFields } from "./search-fields";
+import { HeroMap, MapsLink } from "./hero-map";
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const AUTO_ADVANCE_MS = 7000;
-const DOUBLE_CLICK_MS = 450;
-const mapsHref = (place: string) =>
-  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place}, Chile`)}`;
-
-/**
- * Mapa de Google (embed sin API key) centrado en la comuna, teñido de noche con los tokens del visor.
- * Mientras el foco no está fijado, el mapa no recibe el puntero y el visor se comporta igual que con
- * una foto; al fijar el foco (clic o espacio) se puede arrastrar y hacer zoom en el mapa.
- */
-function VfMap({ place, live }: { place: string; live: boolean }) {
-  const [ready, setReady] = useState(false);
-  // Se activa un poco después del clic que fija el foco, para que el doble clic siga abriendo la ficha.
-  const [armed, setArmed] = useState(false);
-  useEffect(() => {
-    if (!live) return;
-    const t = window.setTimeout(() => setArmed(true), DOUBLE_CLICK_MS);
-    return () => {
-      window.clearTimeout(t);
-      setArmed(false);
-    };
-  }, [live]);
-  const active = live && armed;
-  const src = `https://maps.google.com/maps?q=${encodeURIComponent(`${place}, Chile`)}&z=14&hl=es&output=embed`;
-  return (
-    <div className={`vf-map ${ready ? "ready" : ""} ${active ? "live" : ""}`}>
-      <iframe
-        src={src}
-        title={`Mapa de ${place}`}
-        tabIndex={active ? 0 : -1}
-        referrerPolicy="no-referrer-when-downgrade"
-        onLoad={() => setReady(true)}
-      />
-      {!ready && <span className="vf-map-status">Cargando mapa…</span>}
-    </div>
-  );
-}
 
 /**
  * Hero del mundo Audiovisual: un visor de cámara. Mover el puntero enfoca, clic fija el
@@ -217,7 +181,8 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
           ) : (
             space && (
               // Sin fotos, el visor encuadra el mapa de la comuna del espacio.
-              <VfMap key={space.id} place={`${space.commune}, ${space.city}`} live={locked} />
+              // Al fijar el foco, el mapa toma el puntero (se puede arrastrar y hacer zoom).
+              <HeroMap key={space.id} place={`${space.commune}, ${space.city}`} live={locked} />
             )
           )}
         </div>
@@ -234,19 +199,7 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
           <span>{locked ? "AF ✓ ENFOCADO" : "AF-C"}</span>
         </div>
         <div key={flashKey} className={`vf-flash ${flashKey ? "go" : ""}`} />
-        {space && !space.image && (
-          // El botón propio del embed queda bajo el HUD y solo responde con el foco fijado: este siempre responde.
-          <a
-            className="btn btn-line btn-sm vf-maplink"
-            href={mapsHref(`${space.commune}, ${space.city}`)}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <MapPin aria-hidden />
-            Abrir en Maps
-            <span className="sr-only"> (se abre en una pestaña nueva)</span>
-          </a>
-        )}
+        {space && !space.image && <MapsLink place={`${space.commune}, ${space.city}`} />}
         <div className="vf-hud top">
           <span className="rec">
             <i />

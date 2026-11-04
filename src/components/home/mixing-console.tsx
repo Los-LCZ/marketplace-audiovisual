@@ -12,17 +12,14 @@ import { CategoryIcon } from "@/components/ui/category-icon";
 import { toast } from "@/components/ui/toaster";
 import type { DayOption, HeroSpace } from "./hero-types";
 import { exploreHref, SearchFields } from "./search-fields";
+import { HeroMap, MapsLink } from "./hero-map";
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const MAX_STRIPS = 8;
-const noise = (i: number) => {
-  const x = Math.sin(i * 127.1 + 311.7) * 43758.5453;
-  return x - Math.floor(x);
-};
 
 /**
  * Hero del mundo Música: una consola de mezcla donde cada canal es una sala o estudio.
- * Solo muestra un canal en la pantalla del DAW, Mute lo saca, el Master fija el precio
+ * Solo muestra un canal en la pantalla del DAW (con el mapa de su comuna), Mute lo saca, el Master fija el precio
  * máximo por hora y Play lleva la búsqueda a /explorar.
  */
 export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days: DayOption[] }) {
@@ -39,7 +36,6 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
   const [tab, setTab] = useState<SpaceCategory>(WORLDS.mu.categories[0]);
 
   const conRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const tcRef = useRef<HTMLDivElement>(null);
   const meterRefs = useRef<Record<string, HTMLElement | null>>({});
   // La animación lee el estado más reciente sin reiniciarse.
@@ -52,29 +48,16 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
   const liveCount = spaces.filter((_, i) => !isOff(i)).length;
   const current = spaces[solo];
 
-  // Medidores y forma de onda del canal en solo.
+  // Medidores y timecode del canal en solo.
   useEffect(() => {
     const con = conRef.current;
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!con || !canvas || !ctx) return;
-    const amber = getComputedStyle(document.documentElement).getPropertyValue("--acc").trim() || "#ffb020";
+    if (!con) return;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const levels: Record<string, number> = {};
     let beat = 0;
     let raf = 0;
     let visible = true;
     let last = performance.now();
-
-    const resize = () => {
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      canvas.width = canvas.clientWidth * dpr;
-      canvas.height = canvas.clientHeight * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-    resize();
-    const ro = new ResizeObserver(resize);
-    ro.observe(canvas);
 
     const tick = (now: number) => {
       const dt = Math.min(64, now - last);
@@ -99,21 +82,6 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
         meterRefs.current[k]?.style.setProperty("--lvl", `${clamp(avg * 1.6 + j * 0.03, 0, 1) * 100}%`),
       );
 
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
-      ctx.clearRect(0, 0, w, h);
-      const head = w * 0.42;
-      const seed = s.solo * 97;
-      for (let x = 0; x < w; x += 4) {
-        const i = Math.floor(x / 4 + s.offset) + seed;
-        const env = Math.max(0, Math.sin(i / (s.solo % 2 ? 9 : 22)) * 0.6 + 0.35);
-        const a = env * (0.5 + noise(i) * 0.5) * (s.solo % 2 ? (i % 16 < 2 ? 1.3 : 0.6) : 1);
-        const bh = clamp(a, 0.02, 1) * (h * 0.34);
-        ctx.fillStyle = x < head ? amber : "rgba(255,232,200,0.16)";
-        ctx.fillRect(x, h * 0.8 - bh / 2, 2, bh);
-      }
-      ctx.fillStyle = "#ff4a2e";
-      ctx.fillRect(head, 0, 1.5, h);
       if (tcRef.current) {
         const bars = Math.floor(s.offset / 40);
         tcRef.current.textContent = `${String((bars % 999) + 1).padStart(3, "0")}.${(Math.floor(s.offset / 10) % 4) + 1}.${String(Math.floor(s.offset * 25) % 1000).padStart(3, "0")}`;
@@ -134,7 +102,6 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
     return () => {
       cancelAnimationFrame(raf);
       io.disconnect();
-      ro.disconnect();
     };
     // La lista de canales solo cambia al recargar la portada.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -183,7 +150,8 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
   return (
     <div className="console" ref={conRef}>
       <div className="daw">
-        <canvas ref={canvasRef} aria-hidden />
+        {current && <HeroMap key={current.id} place={`${current.commune}, ${current.city}`} live />}
+        <i className="daw-head" aria-hidden />
         <div className="daw-info">
           <div>
             <div className="mono acc">CH {String(solo + 1).padStart(2, "0")} · SOLO</div>
@@ -203,13 +171,12 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
             <div className="mono dim mt-1">120 BPM · 4/4</div>
           </div>
         </div>
-        <Link
-          className="btn btn-acc btn-sm"
-          href={current ? `/espacios/${current.id}` : "/espacios/nuevo"}
-          style={{ position: "absolute", right: 18, bottom: 14 }}
-        >
-          {current ? "Abrir ficha" : "Publicar una sala"}
-        </Link>
+        <div className="daw-actions">
+          {current && <MapsLink place={`${current.commune}, ${current.city}`} />}
+          <Link className="btn btn-acc btn-sm" href={current ? `/espacios/${current.id}` : "/espacios/nuevo"}>
+            {current ? "Abrir ficha" : "Publicar una sala"}
+          </Link>
+        </div>
       </div>
 
       <div className="strips" role="group" aria-label="Canales: un espacio por canal">
