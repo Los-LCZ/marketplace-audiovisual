@@ -36,6 +36,9 @@
   --scene-tint: #5677b3;
   --veil-top: rgba(9, 12, 16, 0.4);
   --veil: rgba(9, 12, 16, 0.5);
+  /* Mapa del visor: el embed de Google es claro; se invierte a modo noche y se atenúa bajo el HUD. */
+  --map-filter: invert(0.92) hue-rotate(180deg) saturate(0.7) brightness(0.9) contrast(1.05);
+  --map-opacity: 0.9;
   --radius: 14px;
   --radius-sm: 8px;
   color-scheme: dark;
