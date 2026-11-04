@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { SPACE_CATEGORY_LABELS } from "@/lib/labels";
 import { CategoryIcon } from "@/components/ui/category-icon";
@@ -15,6 +16,8 @@ import { exploreHref, SearchFields } from "./search-fields";
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const AUTO_ADVANCE_MS = 7000;
 const DOUBLE_CLICK_MS = 450;
+const mapsHref = (place: string) =>
+  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place}, Chile`)}`;
 
 /**
  * Mapa de Google (embed sin API key) centrado en la comuna, teñido de noche con los tokens del visor.
@@ -231,6 +234,19 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
           <span>{locked ? "AF ✓ ENFOCADO" : "AF-C"}</span>
         </div>
         <div key={flashKey} className={`vf-flash ${flashKey ? "go" : ""}`} />
+        {space && !space.image && (
+          // El botón propio del embed queda bajo el HUD y solo responde con el foco fijado: este siempre responde.
+          <a
+            className="btn btn-line btn-sm vf-maplink"
+            href={mapsHref(`${space.commune}, ${space.city}`)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <MapPin aria-hidden />
+            Abrir en Maps
+            <span className="sr-only"> (se abre en una pestaña nueva)</span>
+          </a>
+        )}
         <div className="vf-hud top">
           <span className="rec">
             <i />
