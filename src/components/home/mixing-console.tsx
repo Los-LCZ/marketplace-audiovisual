@@ -13,6 +13,7 @@ import { toast } from "@/components/ui/toaster";
 import type { DayOption, HeroSpace } from "./hero-types";
 import { exploreHref, SearchFields } from "./search-fields";
 import { HeroMap, MapsLink } from "./hero-map";
+import { MicCursor } from "./mic-cursor";
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const MAX_STRIPS = 8;
@@ -34,6 +35,7 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
   const [gains, setGains] = useState<number[]>(() => spaces.map((_, i) => 0.5 + i * 0.05));
   const [faders, setFaders] = useState<number[]>(() => spaces.map((_, i) => (70 - i * 4) / 100));
   const [tab, setTab] = useState<SpaceCategory>(WORLDS.mu.categories[0]);
+  const [exploring, setExploring] = useState(false);
 
   const conRef = useRef<HTMLDivElement>(null);
   const meterRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -142,8 +144,16 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
 
   return (
     <div className="console" ref={conRef}>
-      <div className="daw">
-        {current && <HeroMap key={current.id} place={`${current.commune}, ${current.city}`} live />}
+      <div
+        className={`daw ${exploring ? "exploring" : ""}`}
+        // Clic en la pantalla: el mapa toma el puntero para arrastrarlo; al salir vuelve el micrófono.
+        onClick={(e) => {
+          if (current && !(e.target as HTMLElement).closest("a, button")) setExploring(true);
+        }}
+        onPointerLeave={() => setExploring(false)}
+      >
+        {current && <HeroMap key={current.id} place={`${current.commune}, ${current.city}`} live={exploring} />}
+        {current && <MicCursor off={exploring} hint="Clic para explorar" />}
         <div className="daw-info">
           <div>
             <div className="t">{current?.title ?? "Tu sala podría sonar aquí"}</div>
