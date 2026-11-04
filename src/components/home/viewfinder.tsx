@@ -11,6 +11,7 @@ import { formatCLP } from "@/lib/utils";
 import type { SpaceCategory } from "@/types/database";
 import type { DayOption, HeroSpace } from "./hero-types";
 import { exploreHref, SearchFields } from "./search-fields";
+import { HeroMap, MapsLink } from "./hero-map";
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const AUTO_ADVANCE_MS = 7000;
@@ -38,6 +39,7 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
   const anim = useRef({ target: { x: 0.5, y: 0.5 }, pos: { x: 0.5, y: 0.5 }, frames: 0, lastInteraction: 0, cycle: 0 });
   const zoomRef = useRef(zoom);
   const idxRef = useRef(idx);
+  const lockedRef = useRef(locked);
 
   const space = spaces[idx];
 
@@ -67,6 +69,9 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
   useEffect(() => {
     idxRef.current = idx;
   }, [idx]);
+  useEffect(() => {
+    lockedRef.current = locked;
+  }, [locked]);
 
   // Bucle de animación: timecode, foco que sigue al puntero, zoom y avance automático.
   useEffect(() => {
@@ -97,7 +102,8 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
         imgRef.current.style.transformOrigin = `${px} ${py}`;
         imgRef.current.style.transform = `scale(${zoomRef.current})`;
       }
-      a.cycle += dt;
+      // Con el foco fijado no avanza: el puntero puede estar recorriendo el mapa (sus eventos no llegan aquí).
+      a.cycle = lockedRef.current ? 0 : a.cycle + dt;
       if (now - a.lastInteraction > AUTO_ADVANCE_MS && a.cycle > AUTO_ADVANCE_MS) {
         a.cycle = 0;
         frame(idxRef.current + 1);
@@ -139,7 +145,7 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
         ref={vfRef}
         className={`vf ${focusing ? "focusing" : ""} ${locked ? "focused" : ""}`}
         tabIndex={0}
-        aria-label="Visor de cámara. Mueve el puntero para enfocar, haz clic para fijar el foco y doble clic para abrir el espacio."
+        aria-label="Visor de cámara. Mueve el puntero para enfocar, haz clic para fijar el foco (y mover el mapa si el espacio no tiene fotos) y doble clic para abrir el espacio."
         onPointerMove={(e) => {
           const r = e.currentTarget.getBoundingClientRect();
           anim.current.target = {
@@ -174,12 +180,9 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
             <Image src={space.image} alt={space.title} fill priority sizes="(min-width: 1240px) 1184px, 100vw" className="object-cover" />
           ) : (
             space && (
-              // Sin fotos el visor quedaba negro: mostramos la categoría como "pizarra" de la toma.
-              <div className="vf-empty">
-                <CategoryIcon category={space.category} />
-                <b>{SPACE_CATEGORY_LABELS[space.category]}</b>
-                <span>Sin fotos todavía</span>
-              </div>
+              // Sin fotos, el visor encuadra el mapa de la comuna del espacio.
+              // Al fijar el foco, el mapa toma el puntero (se puede arrastrar y hacer zoom).
+              <HeroMap key={space.id} place={`${space.commune}, ${space.city}`} live={locked} />
             )
           )}
         </div>
@@ -196,6 +199,7 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
           <span>{locked ? "AF ✓ ENFOCADO" : "AF-C"}</span>
         </div>
         <div key={flashKey} className={`vf-flash ${flashKey ? "go" : ""}`} />
+        {space && !space.image && <MapsLink place={`${space.commune}, ${space.city}`} />}
         <div className="vf-hud top">
           <span className="rec">
             <i />
