@@ -151,8 +151,9 @@
    teñido con --map-tint del mundo. Solo recibe el puntero con .live (en el visor, con el foco fijado). */
 .hero-map { position: absolute; inset: 0; overflow: hidden; background: radial-gradient(60% 70% at 50% 40%, color-mix(in oklab, var(--acc) 14%, var(--s2)), var(--bg) 80%); }
 /* El iframe sube --map-crop por sobre el cuadro para que la tarjeta del lugar que Google pone arriba a la
-   izquierda quede fuera; abajo quedan visibles los controles y la atribución del mapa. */
-.hero-map iframe { position: absolute; left: 0; top: calc(-1 * var(--map-crop)); width: 100%; height: calc(100% + var(--map-crop)); border: 0; opacity: 0; filter: var(--map-filter); pointer-events: none; transition: opacity .6s; }
+   izquierda quede fuera, y se corre --map-crop-x a la izquierda para sacar el selector de capas de abajo a
+   la izquierda; abajo a la derecha quedan visibles los controles y la atribución del mapa. */
+.hero-map iframe { position: absolute; left: calc(-1 * var(--map-crop-x)); top: calc(-1 * var(--map-crop)); width: calc(100% + var(--map-crop-x)); height: calc(100% + var(--map-crop)); border: 0; opacity: 0; filter: var(--map-filter); pointer-events: none; transition: opacity .6s; }
 .hero-map.ready iframe { opacity: var(--map-opacity); }
 .hero-map.live iframe { pointer-events: auto; }
 .hero-map::after { content: ""; position: absolute; inset: 0; background: var(--map-tint); mix-blend-mode: multiply; pointer-events: none; }

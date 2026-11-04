@@ -40,6 +40,7 @@
   --map-filter: invert(0.92) hue-rotate(180deg) saturate(0.7) brightness(0.9) contrast(1.05);
   --map-opacity: 0.9;
   --map-crop: 180px;
+  --map-crop-x: 90px;
   --map-tint: var(--scene-tint);
   --radius: 14px;
   --radius-sm: 8px;
