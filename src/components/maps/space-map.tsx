@@ -26,8 +26,8 @@ const STYLE_URL = "https://tiles.openfreemap.org/styles/dark";
 const WORKER_URL = new URL("maplibre-gl/dist/maplibre-gl-worker.mjs", import.meta.url).href;
 const SANTIAGO: [number, number] = [-70.6483, -33.4569];
 const APPROX_RADIUS_M = 1200;
-// El punto queda un poco bajo el centro, así el globo (que va encima del punto) queda centrado en el cuadro.
-const PIN_OFFSET: [number, number] = [0, 48];
+// Por defecto el punto queda un poco bajo el centro, así el globo (que va encima del punto) queda centrado.
+const PIN_OFFSET_Y = 48;
 const LOCALE = {
   "CooperativeGesturesHandler.WindowsHelpText": "Usa Ctrl + rueda para acercar o alejar el mapa",
   "CooperativeGesturesHandler.MacHelpText": "Usa ⌘ + rueda para acercar o alejar el mapa",
@@ -71,6 +71,7 @@ export function SpaceMap({
   interactive = true,
   zoomBoost = 0,
   controls = false,
+  pinOffsetY = PIN_OFFSET_Y,
   className = "",
 }: {
   spot: MapSpot | null;
@@ -78,6 +79,8 @@ export function SpaceMap({
   zoomBoost?: number;
   /** Botones + y − (en la ficha). */
   controls?: boolean;
+  /** Cuántos px bajo el centro cae el punto (negativo: sobre el centro). */
+  pinOffsetY?: number;
   className?: string;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
@@ -153,13 +156,13 @@ export function SpaceMap({
     if (has) marker.setLngLat([lng, lat]).addTo(map);
     else marker.remove();
     (map.getSource("approx") as GeoJSONSource | undefined)?.setData(approximate ? circle([lng, lat], APPROX_RADIUS_M) : EMPTY);
-    const offset = has ? PIN_OFFSET : ([0, 0] as [number, number]);
+    const offset: [number, number] = [0, has ? pinOffsetY : 0];
     // La primera vez salta (sin animación); después vuela al espacio elegido.
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduceMotion || !placed.current) map.easeTo({ center: [lng, lat], zoom: target, offset, duration: 0 });
     else map.flyTo({ center: [lng, lat], zoom: target, offset, speed: 1.4, essential: false });
     placed.current = true;
-  }, [loaded, has, lng, lat, target, approximate]);
+  }, [loaded, has, lng, lat, target, approximate, pinOffsetY]);
 
   return (
     <div className={`space-map ${loaded ? "ready" : ""} ${className}`}>
