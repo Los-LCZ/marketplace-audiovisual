@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { escapeLike } from "@/lib/like";
 import { isValidIsoDate } from "@/lib/iso-date";
 import { zonedDateString } from "@/lib/zoned-time";
+import { attachLocations } from "@/lib/queries/locations";
 import type { World } from "@/lib/world";
 import type {
   Amenity,
@@ -45,6 +46,14 @@ export type SpaceWithAmenities = Space & RatingFields & { amenities: Amenity[] }
 export type SpaceDetail = SpaceWithAmenities & { host: PublicProfile | null };
 
 type Client = Awaited<ReturnType<typeof createClient>>;
+
+/**
+ * Columnas de spaces que la API deja leer. address, lat y lng no se pueden pedir
+ * (privilegios por columna): la ubicación viene de space_locations con attachLocations.
+ * No usar `select("*")` sobre spaces: falla con "permission denied".
+ */
+const SPACE_COLUMNS =
+  "id, host_id, title, category, description, city, commune, price_per_hour, min_hours, images, status, created_at, updated_at, neighborhood, size_m2, capacity, open_hour, close_hour, summary, rules, featured, gear, commune_lat, commune_lng, hide_address" as const;
 
 /** Agrega `amenities` a una lista de espacios con una sola query. */
 async function attachAmenities<T extends { id: string }>(
@@ -342,14 +351,15 @@ export async function listDiscoverDeck(categories?: SpaceCategory[], limit = 20)
 export async function getSpaceById(id: string): Promise<SpaceDetail | null> {
   const supabase = await createClient();
 
-  const { data: space, error } = await supabase
+  const { data: row, error } = await supabase
     .from("spaces")
-    .select("*, amenities(id, name, category)")
+    .select(`${SPACE_COLUMNS}, amenities(id, name, category)`)
     .eq("id", id)
     .maybeSingle();
 
   if (error) throw new Error(`Error al obtener el espacio: ${error.message}`);
-  if (!space) return null;
+  if (!row) return null;
+  const [space] = await attachLocations(supabase, [row]);
 
   const { data: host } = await supabase
     .from("public_profiles")
@@ -366,12 +376,12 @@ export async function listMySpaces(hostId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("spaces")
-    .select("*, amenities(id, name, category)")
+    .select(`${SPACE_COLUMNS}, amenities(id, name, category)`)
     .eq("host_id", hostId)
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(`Error al listar tus espacios: ${error.message}`);
-  return withRatingStats(data ?? []);
+  return withRatingStats(await attachLocations(supabase, data ?? []));
 }
 
 export async function listAmenities() {

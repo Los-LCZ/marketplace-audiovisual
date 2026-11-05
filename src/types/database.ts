@@ -121,7 +121,33 @@ type SpaceRow = {
   /** Solo lo cambia un admin. */
   featured: boolean;
   gear: GearGroup[];
+  /** Punto exacto. La API no lo entrega: se lee enmascarado como map_lat/map_lng. */
+  lat: number | null;
+  lng: number | null;
+  /** Centro de la comuna (público): el pin cuando la dirección está oculta. */
+  commune_lat: number | null;
+  commune_lng: number | null;
+  /** El anfitrión oculta la dirección exacta hasta que la reserva esté confirmada. */
+  hide_address: boolean;
 };
+
+/**
+ * Ubicación de un espacio según quién mira (vista space_locations).
+ * - address: null si está oculta para quien mira (no es el anfitrión, un admin ni un
+ *   cliente con reserva confirmada o completada en ese espacio).
+ * - map_lat/map_lng: el punto exacto si la dirección es visible; si no, el centro de la
+ *   comuna. null si no se pudo geocodificar.
+ * - address_hidden: true si la dirección se le oculta a quien mira.
+ */
+export type SpaceLocation = {
+  address: string | null;
+  map_lat: number | null;
+  map_lng: number | null;
+  address_hidden: boolean;
+};
+
+/** Columnas de spaces que la API entrega directamente (address, lat y lng no). */
+export type SpacePublicRow = Omit<SpaceRow, "address" | "lat" | "lng">;
 
 export type Database = {
   public: {
@@ -190,6 +216,11 @@ export type Database = {
           rules?: string[];
           featured?: boolean;
           gear?: GearGroup[];
+          lat?: number | null;
+          lng?: number | null;
+          commune_lat?: number | null;
+          commune_lng?: number | null;
+          hide_address?: boolean;
         };
         Update: {
           title?: string;
@@ -211,6 +242,11 @@ export type Database = {
           rules?: string[];
           featured?: boolean;
           gear?: GearGroup[];
+          lat?: number | null;
+          lng?: number | null;
+          commune_lat?: number | null;
+          commune_lng?: number | null;
+          hide_address?: boolean;
         };
         Relationships: [
           {
@@ -425,8 +461,13 @@ export type Database = {
         Relationships: [];
       };
       /** Espacios publicados con rating (solo reseñas públicas). Fuente del catálogo. */
+      /** Ubicación enmascarada de cada espacio visible para quien mira. */
+      space_locations: {
+        Row: SpaceLocation & { space_id: string };
+        Relationships: [];
+      };
       space_cards: {
-        Row: SpaceRow & {
+        Row: SpacePublicRow & SpaceLocation & {
           avg_rating: number | null;
           review_count: number;
           /** Mundo del espacio según su categoría (igual que WORLDS en src/lib/world.ts). */
@@ -554,7 +595,8 @@ export type TablesUpdate<T extends keyof PublicSchema["Tables"]> =
   PublicSchema["Tables"][T]["Update"];
 
 export type Profile = Tables<"profiles">;
-export type Space = Tables<"spaces">;
+/** Espacio tal como lo leen las queries: sin address/lat/lng crudos, con la ubicación enmascarada. */
+export type Space = SpacePublicRow & SpaceLocation;
 export type Amenity = Tables<"amenities">;
 export type Booking = Tables<"bookings">;
 export type Review = Tables<"reviews">;
