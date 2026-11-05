@@ -49,6 +49,10 @@ function toHeroSpace(space: SpaceWithAmenities): HeroSpace {
     city: space.city,
     pricePerHour: space.price_per_hour,
     image: space.images[0] ?? null,
+    // Ya enmascarados: con la dirección oculta son el centro de la comuna.
+    lat: space.map_lat,
+    lng: space.map_lng,
+    approximate: space.address_hidden,
     tags: space.amenities.slice(0, 3).map((a) => a.name),
   };
 }

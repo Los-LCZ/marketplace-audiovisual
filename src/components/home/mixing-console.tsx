@@ -12,7 +12,8 @@ import { CategoryIcon } from "@/components/ui/category-icon";
 import { toast } from "@/components/ui/toaster";
 import type { DayOption, HeroSpace } from "./hero-types";
 import { exploreHref, SearchFields } from "./search-fields";
-import { HeroMap, MapsLink } from "./hero-map";
+import { SpaceMap } from "@/components/maps/space-map";
+import { MapsLink } from "@/components/maps/maps-link";
 import { MicCursor } from "./mic-cursor";
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
@@ -143,10 +144,11 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
 
   return (
     <div className="console" ref={conRef}>
-      {/* El mapa no toma el puntero (dentro del iframe Google pone su propia mano), así el cursor es
-          siempre el micrófono; para recorrer el mapa está "Abrir en Maps". */}
+      {/* El mapa es fijo (sin arrastre), así el cursor es siempre el micrófono; para recorrerlo está
+          "Abrir en Maps". */}
       <div className="daw">
-        {current && <HeroMap key={current.id} place={`${current.commune}, ${current.city}`} live={false} />}
+        {/* Sin salas publicadas, el mapa queda en Santiago sin pin (la pantalla no queda en negro). */}
+        <SpaceMap spot={current ?? null} interactive={false} />
         {current && <MicCursor />}
         <div className="daw-info">
           <div>
@@ -161,7 +163,7 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
           </div>
         </div>
         <div className="daw-actions">
-          {current && <MapsLink place={`${current.commune}, ${current.city}`} />}
+          {current && <MapsLink spot={current} city={current.city} />}
           <Link className="btn btn-acc btn-sm" href={current ? `/espacios/${current.id}` : "/espacios/nuevo"}>
             {current ? "Abrir ficha" : "Publicar una sala"}
           </Link>

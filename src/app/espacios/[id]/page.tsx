@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
+import { SpaceMap } from "@/components/maps/space-map";
 import { getSpaceBusySlots, getSpaceById, getSpaceReviews, REVIEWS_PAGE_SIZE } from "@/lib/queries/spaces";
 import { getProfileRatingStats } from "@/lib/queries/profiles";
 import { SPACE_CATEGORY_LABELS } from "@/lib/labels";
@@ -227,6 +228,33 @@ export default async function SpacePage({ params, searchParams }: PageProps<"/es
                 {paragraphs.map((p, i) => (
                   <p key={i}>{p}</p>
                 ))}
+              </div>
+            </section>
+          )}
+
+          {space.map_lat != null && space.map_lng != null && (
+            <section aria-labelledby="ubicacion-t">
+              <h2 className="display h3" id="ubicacion-t">
+                Ubicación
+              </h2>
+              <p className="dim mt-2 text-sm">
+                {space.address_hidden
+                  ? `Zona aproximada en ${space.commune}: la dirección exacta se muestra cuando tu reserva esté confirmada.`
+                  : [space.address, space.commune, space.city].filter(Boolean).join(", ")}
+              </p>
+              <div className="detail-map mt-3.5">
+                <SpaceMap
+                  controls
+                  spot={{
+                    lat: space.map_lat,
+                    lng: space.map_lng,
+                    approximate: space.address_hidden,
+                    title: space.title,
+                    commune: space.commune,
+                    category: space.category,
+                    image: space.images[0] ?? null,
+                  }}
+                />
               </div>
             </section>
           )}
