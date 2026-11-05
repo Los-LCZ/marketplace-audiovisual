@@ -30,6 +30,11 @@
 .space-map .maplibregl-ctrl-icon { filter: invert(1); }
 .space-map .maplibregl-cooperative-gesture-screen { z-index: 2; font: 500 13px var(--font-sans); }
 
+/* La atribución (obligatoria por licencia) no puede quedar bajo los botones: abajo al centro en el visor y
+   abajo a la izquierda en la consola. */
+.vf .maplibregl-ctrl-bottom-right { right: 50%; translate: 50% 0; }
+.daw .maplibregl-ctrl-bottom-right { right: auto; left: 0; }
+
 /* Visor: el puntero sigue siendo la mira de la cámara (la mano solo al arrastrar). */
 .vf .maplibregl-canvas-container.maplibregl-interactive { cursor: crosshair; }
 .vf .maplibregl-canvas-container.maplibregl-interactive:active { cursor: grabbing; }
