@@ -147,7 +147,8 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
       {/* El mapa es fijo (sin arrastre), así el cursor es siempre el micrófono; para recorrerlo está
           "Abrir en Maps". */}
       <div className="daw">
-        {current && <SpaceMap spot={current} interactive={false} />}
+        {/* Sin salas publicadas, el mapa queda en Santiago sin pin (la pantalla no queda en negro). */}
+        <SpaceMap spot={current ?? null} interactive={false} />
         {current && <MicCursor />}
         <div className="daw-info">
           <div>
