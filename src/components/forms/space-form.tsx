@@ -152,7 +152,7 @@ export function SpaceForm({
         </Field>
       </Section>
 
-      <Section title="Ubicación" description="La dirección exacta se muestra en la ficha del espacio.">
+      <Section title="Ubicación" description="La dirección exacta se muestra en la ficha del espacio, salvo que la ocultes.">
         <Field label="Dirección" htmlFor="address" error={fieldErrors?.address}>
           <Input
             id="address"
@@ -189,6 +189,21 @@ export function SpaceForm({
             <Input id="city" name="city" required placeholder="Santiago" defaultValue={space?.city} aria-invalid={!!fieldErrors?.city} />
           </Field>
         </div>
+        <label className="flex cursor-pointer items-start gap-2.5 text-sm">
+          <input
+            type="checkbox"
+            name="hide_address"
+            defaultChecked={space?.hide_address ?? false}
+            aria-describedby="hide_address-help"
+            className="mt-0.5 accent-primary"
+          />
+          <span>
+            Ocultar mi dirección exacta hasta que la reserva esté confirmada
+            <span id="hide_address-help" className="dim mt-0.5 block text-xs">
+              Los visitantes verán solo la comuna y un pin en su centro. La dirección exacta se revela al confirmar la reserva.
+            </span>
+          </span>
+        </label>
       </Section>
 
       <Section title="Precio y condiciones" description="Las reservas son por horas completas.">

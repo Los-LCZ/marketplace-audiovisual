@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { EyeOff, MapPin } from "lucide-react";
 import type { BookingWithSpace } from "@/lib/queries/bookings";
 import { formatCLP, formatTimeRange } from "@/lib/utils";
 import { dayLabel, dayMonth, dayOfMonth, zonedDateString } from "@/lib/zoned-time";
@@ -16,6 +17,7 @@ export function BookingCard({
   today,
   subtitle,
   reviews,
+  showLocation = false,
   children,
 }: {
   booking: BookingWithSpace;
@@ -24,6 +26,8 @@ export function BookingCard({
   subtitle?: ReactNode;
   /** Calificación a ciegas (reservas completadas): reemplaza la reseña simple. */
   reviews?: { data: BookingReviews; viewer: "client" | "host"; counterpart: string } | null;
+  /** Dirección (o el aviso de dirección oculta) para el cliente; el anfitrión ya conoce la suya. */
+  showLocation?: boolean;
   children?: ReactNode;
 }) {
   const { space, review } = booking;
@@ -55,8 +59,23 @@ export function BookingCard({
           )}
           <span className="dim block text-[13px]">
             {formatTimeRange(booking.start_time, booking.end_time)} · {booking.total_hours} h
-            {space && ` · ${space.commune}`}
+            {space && !showLocation && ` · ${space.commune}`}
           </span>
+          {showLocation && space && (
+            <span className="dim mt-0.5 flex items-start gap-1 text-[13px]">
+              {space.address ? (
+                <>
+                  <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                  {space.address}, {space.commune}
+                </>
+              ) : (
+                <>
+                  <EyeOff className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                  {space.commune} · La dirección exacta se muestra cuando tu reserva esté confirmada.
+                </>
+              )}
+            </span>
+          )}
           {subtitle}
           {booking.project && <span className="mono acc mt-1 block">{booking.project}</span>}
         </div>

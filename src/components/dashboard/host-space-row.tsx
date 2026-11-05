@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { EyeOff } from "lucide-react";
 import type { SpaceWithAmenities } from "@/lib/queries/spaces";
 import { formatCLP } from "@/lib/utils";
 import { SpaceStatusBadge } from "@/components/ui/badge";
@@ -24,6 +25,12 @@ export function HostSpaceRow({ space, upcomingBookings }: { space: SpaceWithAmen
       <div className="flex items-center justify-between gap-2 border-t border-[var(--line)] px-3.5 py-2.5">
         <span className="flex items-center gap-2">
           <SpaceStatusBadge status={space.status} />
+          {space.hide_address && (
+            <span className="dim inline-flex items-center gap-1 text-[12px]" title="Los visitantes ven solo la comuna hasta que su reserva esté confirmada">
+              <EyeOff className="size-3.5" aria-hidden />
+              Dirección oculta
+            </span>
+          )}
           <Link href={`/espacios/${space.id}/editar`} className="dim text-[13px]">
             Editar
           </Link>
