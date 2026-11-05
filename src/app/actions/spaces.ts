@@ -8,6 +8,8 @@ import { fail, getString, getStringList, type ActionState } from "@/lib/action-s
 import { MAX_IMAGES_PER_SPACE, removeSpaceImages, uploadSpaceImages } from "@/lib/storage";
 import { isValidIsoDate } from "@/lib/iso-date";
 import { normalizePlaceName } from "@/lib/place-name";
+import { geocodeSpace } from "@/lib/geocode";
+import { getSpaceLocations } from "@/lib/queries/locations";
 import type { GearCategory, GearGroup, SpaceCategory, SpaceStatus } from "@/types/database";
 
 const CATEGORIES: SpaceCategory[] = [
@@ -55,7 +57,9 @@ function parseGear(raw: string): GearGroup[] | null {
  * Campos del formulario de espacio (crear y editar):
  * title, category, description, summary, address, city, commune, neighborhood,
  * price_per_hour, min_hours, size_m2, capacity, open_hour, close_hour, status,
- * rules (repetido), amenity_ids (repetido), gear (JSON) e images (solo al crear).
+ * hide_address (checkbox: "on"/"true" = ocultar la dirección exacta hasta que la reserva
+ * esté confirmada; ausente = visible), rules (repetido), amenity_ids (repetido),
+ * gear (JSON) e images (solo al crear).
  */
 function parseSpaceForm(formData: FormData) {
   const title = getString(formData, "title");
@@ -74,6 +78,7 @@ function parseSpaceForm(formData: FormData) {
   const openHour = Number(getString(formData, "open_hour") || 8);
   const closeHour = Number(getString(formData, "close_hour") || 24);
   const status = (getString(formData, "status") || "published") as SpaceStatus;
+  const hideAddress = ["on", "true", "1"].includes(getString(formData, "hide_address"));
   const rules = getStringList(formData, "rules", MAX_RULES);
   const gear = parseGear(getString(formData, "gear"));
   const amenityIds = formData
@@ -127,6 +132,7 @@ function parseSpaceForm(formData: FormData) {
       open_hour: openHour,
       close_hour: closeHour,
       status,
+      hide_address: hideAddress,
       rules,
       gear: gear ?? [],
     },
@@ -164,9 +170,12 @@ export async function createSpace(
     return fail(upload.error, { images: upload.error });
   }
 
+  // Si Nominatim falla quedan en null y el espacio se guarda igual.
+  const coords = await geocodeSpace(values);
+
   const { error } = await supabase
     .from("spaces")
-    .insert({ id: spaceId, host_id: user.id, images: upload.urls, ...values });
+    .insert({ id: spaceId, host_id: user.id, images: upload.urls, ...values, ...coords });
 
   if (error) {
     await removeSpaceImages(supabase, upload.urls);
@@ -204,10 +213,37 @@ export async function updateSpace(
   if (Object.keys(fieldErrors).length) return fail("Revisa los campos marcados", fieldErrors);
 
   const supabase = await createClient();
+  const { data: current, error: currentError } = await supabase
+    .from("spaces")
+    .select("commune, city, commune_lat")
+    .eq("id", spaceId)
+    .eq("host_id", user.id)
+    .maybeSingle();
+  if (currentError) return fail(`No se pudo guardar: ${currentError.message}`);
+  if (!current) return fail("Espacio no encontrado");
+
+  // Se geocodifica solo lo que cambió (el dueño siempre ve su dirección en space_locations).
+  // Si falla, el trigger spaces_reset_coords deja lat/lng en null y se guarda igual.
+  const communeChanged = current.commune !== values.commune || current.city !== values.city;
+  const oldAddress = (await getSpaceLocations(supabase, [spaceId])).get(spaceId)?.address;
+  const addressChanged = communeChanged || oldAddress !== values.address;
+  const communeMissing = communeChanged || current.commune_lat == null;
+  let coords = {};
+  if (addressChanged || communeMissing) {
+    const { lat, lng, commune_lat, commune_lng } = await geocodeSpace(values, {
+      exact: addressChanged,
+      commune: communeMissing,
+    });
+    coords = {
+      ...(addressChanged ? { lat, lng } : {}),
+      ...(communeMissing ? { commune_lat, commune_lng } : {}),
+    };
+  }
+
   // RLS: solo el dueño puede actualizarlo; .select() detecta 0 filas afectadas.
   const { data, error } = await supabase
     .from("spaces")
-    .update(values)
+    .update({ ...values, ...coords })
     .eq("id", spaceId)
     .eq("host_id", user.id)
     .select("id");

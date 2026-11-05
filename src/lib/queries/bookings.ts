@@ -1,11 +1,19 @@
 import { createClient } from "@/utils/supabase/server";
-import type { Booking, BookingReviews, ClientSummaryRow, Review, Space } from "@/types/database";
+import { getSpaceLocations, HIDDEN_LOCATION } from "@/lib/queries/locations";
+import type { Booking, BookingReviews, ClientSummaryRow, Review, Space, SpaceLocation } from "@/types/database";
 
 export type BookingWithSpace = Booking & {
-  space: Pick<
-    Space,
-    "id" | "title" | "city" | "commune" | "images" | "host_id" | "price_per_hour" | "category"
-  > | null;
+  /**
+   * La ubicación sigue las reglas de space_locations: el cliente ve `address` si el espacio
+   * no la oculta o si su reserva (esta u otra) está confirmada o completada; el anfitrión siempre.
+   */
+  space:
+    | (Pick<
+        Space,
+        "id" | "title" | "city" | "commune" | "images" | "host_id" | "price_per_hour" | "category" | "hide_address"
+      > &
+        SpaceLocation)
+    | null;
   /** null si la reserva aún no tiene reseña (reviews.booking_id es único). */
   review: Pick<Review, "id" | "rating" | "comment" | "created_at"> | null;
 };
@@ -18,6 +26,22 @@ export type HostBooking = BookingWithSpace & { client: ClientSummary | null };
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
+type BookingRow = Omit<BookingWithSpace, "space"> & {
+  space: Omit<NonNullable<BookingWithSpace["space"]>, keyof SpaceLocation> | null;
+};
+
+/** Agrega la ubicación (enmascarada por la base) al espacio de cada reserva. */
+async function attachSpaceLocations(supabase: Client, bookings: BookingRow[]): Promise<BookingWithSpace[]> {
+  const byId = await getSpaceLocations(
+    supabase,
+    bookings.flatMap((b) => (b.space ? [b.space.id] : [])),
+  );
+  return bookings.map((b) => ({
+    ...b,
+    space: b.space ? { ...b.space, ...(byId.get(b.space.id) ?? HIDDEN_LOCATION) } : null,
+  }));
+}
+
 async function attachClients(supabase: Client, bookings: BookingWithSpace[]): Promise<HostBooking[]> {
   if (!bookings.length) return [];
   const { data, error } = await supabase.rpc("get_client_summaries", {
@@ -29,7 +53,7 @@ async function attachClients(supabase: Client, bookings: BookingWithSpace[]): Pr
   return bookings.map((b) => ({ ...b, client: byId.get(b.client_id) ?? null }));
 }
 
-const SPACE_FIELDS = "id, title, city, commune, images, host_id, price_per_hour, category";
+const SPACE_FIELDS = "id, title, city, commune, images, host_id, price_per_hour, category, hide_address";
 const REVIEW_SELECT = "review:reviews(id, rating, comment, created_at)";
 const BOOKING_SELECT = `*, space:spaces(${SPACE_FIELDS}), ${REVIEW_SELECT}` as const;
 const HOST_BOOKING_SELECT = `*, space:spaces!inner(${SPACE_FIELDS}), ${REVIEW_SELECT}` as const;
@@ -44,7 +68,7 @@ export async function listMyBookings(clientId: string) {
     .order("start_time", { ascending: false });
 
   if (error) throw new Error(`Error al listar reservas: ${error.message}`);
-  return (data ?? []) satisfies BookingWithSpace[];
+  return attachSpaceLocations(supabase, (data ?? []) satisfies BookingRow[]);
 }
 
 /**
@@ -60,7 +84,7 @@ export async function listHostBookings(hostId: string): Promise<HostBooking[]> {
     .order("start_time", { ascending: true });
 
   if (error) throw new Error(`Error al listar reservas recibidas: ${error.message}`);
-  return attachClients(supabase, (data ?? []) satisfies BookingWithSpace[]);
+  return attachClients(supabase, await attachSpaceLocations(supabase, (data ?? []) satisfies BookingRow[]));
 }
 
 /**
@@ -78,7 +102,7 @@ export async function listHostRequests(hostId: string): Promise<HostBooking[]> {
     .order("start_time", { ascending: true });
 
   if (error) throw new Error(`Error al listar solicitudes: ${error.message}`);
-  return attachClients(supabase, (data ?? []) satisfies BookingWithSpace[]);
+  return attachClients(supabase, await attachSpaceLocations(supabase, (data ?? []) satisfies BookingRow[]));
 }
 
 /**

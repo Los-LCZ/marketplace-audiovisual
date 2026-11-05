@@ -160,7 +160,7 @@ export function SpaceForm({
             required
             autoComplete="street-address"
             placeholder="Av. Ejemplo 1234"
-            defaultValue={space?.address}
+            defaultValue={space?.address ?? ""}
             aria-invalid={!!fieldErrors?.address}
           />
         </Field>
