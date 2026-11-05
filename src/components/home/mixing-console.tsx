@@ -12,7 +12,7 @@ import { CategoryIcon } from "@/components/ui/category-icon";
 import { toast } from "@/components/ui/toaster";
 import type { DayOption, HeroSpace } from "./hero-types";
 import { exploreHref, SearchFields } from "./search-fields";
-import { HeroMap, MapsLink } from "./hero-map";
+import { DEFAULT_PLACE, HeroMap, MapsLink } from "./hero-map";
 import { MicCursor } from "./mic-cursor";
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
@@ -146,8 +146,9 @@ export function MixingConsole({ spaces: all, days }: { spaces: HeroSpace[]; days
       {/* El mapa no toma el puntero (dentro del iframe Google pone su propia mano), así el cursor es
           siempre el micrófono; para recorrer el mapa está "Abrir en Maps". */}
       <div className="daw">
-        {current && <HeroMap key={current.id} place={`${current.commune}, ${current.city}`} live={false} />}
-        {current && <MicCursor />}
+        {/* Sin salas publicadas, el mapa de Santiago. */}
+        <HeroMap key={current?.id ?? "vacio"} place={current ? `${current.commune}, ${current.city}` : DEFAULT_PLACE} live={false} />
+        <MicCursor />
         <div className="daw-info">
           <div>
             <div className="t">{current?.title ?? "Tu sala podría sonar aquí"}</div>

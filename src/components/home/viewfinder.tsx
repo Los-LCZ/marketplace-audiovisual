@@ -11,7 +11,7 @@ import { formatCLP } from "@/lib/utils";
 import type { SpaceCategory } from "@/types/database";
 import type { DayOption, HeroSpace } from "./hero-types";
 import { exploreHref, SearchFields } from "./search-fields";
-import { HeroMap, MapsLink } from "./hero-map";
+import { DEFAULT_PLACE, HeroMap, MapsLink } from "./hero-map";
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const AUTO_ADVANCE_MS = 7000;
@@ -176,15 +176,9 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
         }}
       >
         <div ref={imgRef} className="vf-img">
-          {space?.image ? (
-            <Image src={space.image} alt={space.title} fill priority sizes="(min-width: 1240px) 1184px, 100vw" className="object-cover" />
-          ) : (
-            space && (
-              // Sin fotos, el visor encuadra el mapa de la comuna del espacio.
-              // Al fijar el foco, el mapa toma el puntero (se puede arrastrar y hacer zoom).
-              <HeroMap key={space.id} place={`${space.commune}, ${space.city}`} live={locked} />
-            )
-          )}
+          {/* El visor encuadra siempre el mapa de la comuna (las fotos se ven en las miniaturas y en la
+              ficha); sin espacios, el de Santiago. Al fijar el foco, el mapa toma el puntero. */}
+          <HeroMap key={space?.id ?? "vacio"} place={space ? `${space.commune}, ${space.city}` : DEFAULT_PLACE} live={locked} />
         </div>
         <div ref={peakRef} className="vf-peak" />
         <div className="vf-shade" />
@@ -199,7 +193,7 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
           <span>{locked ? "AF ✓ ENFOCADO" : "AF-C"}</span>
         </div>
         <div key={flashKey} className={`vf-flash ${flashKey ? "go" : ""}`} />
-        {space && !space.image && <MapsLink place={`${space.commune}, ${space.city}`} />}
+        {space && <MapsLink place={`${space.commune}, ${space.city}`} />}
         <div className="vf-hud top">
           <span className="rec">
             <i />

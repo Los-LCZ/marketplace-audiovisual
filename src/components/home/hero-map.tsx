@@ -9,6 +9,9 @@ const DOUBLE_CLICK_MS = 450;
 const MAP_SPAN = 3;
 const RIGHT_BUTTON = 2;
 
+/** Lugar del mapa cuando aún no hay espacios publicados en el mundo. */
+export const DEFAULT_PLACE = "Santiago";
+
 const query = (place: string) => encodeURIComponent(`${place}, Chile`);
 
 /**
