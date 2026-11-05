@@ -9,7 +9,10 @@ import { BookingStatusBadge } from "@/components/ui/badge";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { Stars } from "@/components/ui/rating";
 import { BlindReviews } from "@/components/bookings/blind-reviews";
-import type { BookingReviews } from "@/types/database";
+import type { BookingReviews, BookingStatus } from "@/types/database";
+
+// Reservas que ya no se van a confirmar: sin dirección, no se promete que se revelará.
+const CLOSED: BookingStatus[] = ["cancelled", "rejected", "expired"];
 
 // Fila de reserva (.li) compartida por /mis-reservas y /dashboard; `children` lleva las acciones.
 export function BookingCard({
@@ -67,6 +70,11 @@ export function BookingCard({
                 <>
                   <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden />
                   {space.address}, {space.commune}
+                </>
+              ) : CLOSED.includes(booking.status) ? (
+                <>
+                  <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                  {space.commune}
                 </>
               ) : (
                 <>
