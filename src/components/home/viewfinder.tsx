@@ -30,6 +30,8 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
   const [zoom, setZoom] = useState(1);
   const [tab, setTab] = useState<SpaceCategory>(WORLDS.av.categories[0]);
   const [flashKey, setFlashKey] = useState(0);
+  // En pantallas angostas el HUD ocupa más alto: el pin va bajo el centro en vez de sobre él.
+  const [narrow, setNarrow] = useState(false);
 
   const vfRef = useRef<HTMLDivElement>(null);
   const afRef = useRef<HTMLDivElement>(null);
@@ -65,6 +67,13 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
   useEffect(() => {
     idxRef.current = idx;
   }, [idx]);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 720px)");
+    const sync = () => setNarrow(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
   useEffect(() => {
     lockedRef.current = locked;
   }, [locked]);
@@ -169,8 +178,8 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
       >
         {/* El visor encuadra solo el mapa: el pin del espacio lleva su foto. El anillo de zoom acerca el mapa. */}
         <div className="vf-img">
-          {/* El punto va sobre el centro, así el globo no queda bajo el cuadro de enfoque (AF). */}
-          <SpaceMap spot={space ?? null} zoomBoost={(zoom - 1) * 3} pinOffsetY={-56} />
+          {/* En escritorio el punto va sobre el centro, así el globo no queda bajo el cuadro de enfoque (AF). */}
+          <SpaceMap spot={space ?? null} zoomBoost={(zoom - 1) * 3} pinOffsetY={narrow ? 40 : -56} />
         </div>
         <div ref={peakRef} className="vf-peak" />
         <div className="vf-shade" />

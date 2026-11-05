@@ -34,6 +34,8 @@
 /* La atribución (obligatoria por licencia) no puede quedar bajo los botones: abajo al centro en el visor y
    abajo a la izquierda en la consola. */
 .vf .maplibregl-ctrl-bottom-right { right: 50%; translate: 50% 0; }
+/* En el teléfono el centro de abajo lo ocupan las miniaturas: arriba a la derecha, bajo el HUD. */
+@media (max-width: 720px) { .vf .maplibregl-ctrl-bottom-right { top: 128px; bottom: auto; right: 16px; translate: none; } }
 .daw .maplibregl-ctrl-bottom-right { right: auto; left: 0; }
 
 /* Visor: el puntero sigue siendo la mira de la cámara (la mano solo al arrastrar). */
