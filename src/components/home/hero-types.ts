@@ -1,14 +1,10 @@
-import type { SpaceCategory } from "@/types/database";
+import type { MapSpot } from "@/components/maps/space-map";
 
-// Datos mínimos de un espacio para los heros interactivos de la portada.
-export type HeroSpace = {
+// Datos mínimos de un espacio para los heros interactivos de la portada (con su ubicación en el mapa).
+export type HeroSpace = MapSpot & {
   id: string;
-  title: string;
-  category: SpaceCategory;
-  commune: string;
   city: string;
   pricePerHour: number;
-  image: string | null;
   /** Primeros ítems de equipamiento, para la pantalla de la consola. */
   tags: string[];
 };

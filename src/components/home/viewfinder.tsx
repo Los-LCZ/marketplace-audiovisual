@@ -11,7 +11,8 @@ import { formatCLP } from "@/lib/utils";
 import type { SpaceCategory } from "@/types/database";
 import type { DayOption, HeroSpace } from "./hero-types";
 import { exploreHref, SearchFields } from "./search-fields";
-import { HeroMap, MapsLink } from "./hero-map";
+import { SpaceMap } from "@/components/maps/space-map";
+import { MapsLink } from "@/components/maps/maps-link";
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const AUTO_ADVANCE_MS = 7000;
@@ -33,11 +34,9 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
   const vfRef = useRef<HTMLDivElement>(null);
   const afRef = useRef<HTMLDivElement>(null);
   const peakRef = useRef<HTMLDivElement>(null);
-  const imgRef = useRef<HTMLDivElement>(null);
   const tcRef = useRef<HTMLSpanElement>(null);
   // Estado de la animación fuera de React (se actualiza ~60 veces por segundo).
   const anim = useRef({ target: { x: 0.5, y: 0.5 }, pos: { x: 0.5, y: 0.5 }, frames: 0, lastInteraction: 0, cycle: 0 });
-  const zoomRef = useRef(zoom);
   const idxRef = useRef(idx);
   const lockedRef = useRef(locked);
 
@@ -63,9 +62,6 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
     anim.current.lastInteraction = performance.now();
   };
 
-  useEffect(() => {
-    zoomRef.current = zoom;
-  }, [zoom]);
   useEffect(() => {
     idxRef.current = idx;
   }, [idx]);
@@ -98,11 +94,7 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
       if (afRef.current) Object.assign(afRef.current.style, { left: px, top: py });
       peakRef.current?.style.setProperty("--px", px);
       peakRef.current?.style.setProperty("--py", py);
-      if (imgRef.current) {
-        imgRef.current.style.transformOrigin = `${px} ${py}`;
-        imgRef.current.style.transform = `scale(${zoomRef.current})`;
-      }
-      // Con el foco fijado no avanza: el puntero puede estar recorriendo el mapa (sus eventos no llegan aquí).
+      // Con el foco fijado no avanza, para que el espacio no cambie mientras se recorre el mapa.
       a.cycle = lockedRef.current ? 0 : a.cycle + dt;
       if (now - a.lastInteraction > AUTO_ADVANCE_MS && a.cycle > AUTO_ADVANCE_MS) {
         a.cycle = 0;
@@ -145,7 +137,7 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
         ref={vfRef}
         className={`vf ${focusing ? "focusing" : ""} ${locked ? "focused" : ""}`}
         tabIndex={0}
-        aria-label="Visor de cámara. Mueve el puntero para enfocar, haz clic para fijar el foco (y mover el mapa si el espacio no tiene fotos) y doble clic para abrir el espacio."
+        aria-label="Visor de cámara con el mapa del espacio. Mueve el puntero para enfocar, haz clic para fijar el foco, arrastra para mover el mapa y haz doble clic para abrir el espacio."
         onPointerMove={(e) => {
           const r = e.currentTarget.getBoundingClientRect();
           anim.current.target = {
@@ -175,16 +167,9 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
           }
         }}
       >
-        <div ref={imgRef} className="vf-img">
-          {space?.image ? (
-            <Image src={space.image} alt={space.title} fill priority sizes="(min-width: 1240px) 1184px, 100vw" className="object-cover" />
-          ) : (
-            space && (
-              // Sin fotos, el visor encuadra el mapa de la comuna del espacio.
-              // Al fijar el foco, el mapa toma el puntero (se puede arrastrar y hacer zoom).
-              <HeroMap key={space.id} place={`${space.commune}, ${space.city}`} live={locked} />
-            )
-          )}
+        {/* El visor encuadra solo el mapa: el pin del espacio lleva su foto. El anillo de zoom acerca el mapa. */}
+        <div className="vf-img">
+          <SpaceMap spot={space ?? null} zoomBoost={(zoom - 1) * 3} />
         </div>
         <div ref={peakRef} className="vf-peak" />
         <div className="vf-shade" />
@@ -199,7 +184,7 @@ export function Viewfinder({ spaces, days }: { spaces: HeroSpace[]; days: DayOpt
           <span>{locked ? "AF ✓ ENFOCADO" : "AF-C"}</span>
         </div>
         <div key={flashKey} className={`vf-flash ${flashKey ? "go" : ""}`} />
-        {space && !space.image && <MapsLink place={`${space.commune}, ${space.city}`} />}
+        {space && <MapsLink spot={space} city={space.city} />}
         <div className="vf-hud top">
           <span className="rec">
             <i />

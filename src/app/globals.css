@@ -14,6 +14,9 @@
 @import "../styles/senal/home.css" layer(components);
 @import "../styles/senal/explore.css" layer(components);
 @import "../styles/senal/detail.css" layer(components);
+/* MapLibre en la misma capa y antes de map.css, para poder ajustar sus controles al tema. */
+@import "maplibre-gl/dist/maplibre-gl.css" layer(components);
+@import "../styles/senal/map.css" layer(components);
 @import "../styles/senal/deck.css" layer(components);
 @import "../styles/senal/host.css" layer(components);
 @import "../styles/senal/profile.css" layer(components);

@@ -1,0 +1,39 @@
+/* Señal · Mapa de espacios (space-map.tsx): MapLibre con el estilo oscuro de OpenFreeMap, teñido con
+   --map-filter del mundo, y el pin del espacio (globo con su foto que apunta a la dirección). */
+
+.space-map { position: absolute; inset: 0; overflow: hidden; background: radial-gradient(60% 70% at 50% 40%, color-mix(in oklab, var(--acc) 14%, var(--s2)), var(--bg) 80%); }
+.space-map-canvas { position: absolute; inset: 0; opacity: 0; transition: opacity .6s; }
+.space-map.ready .space-map-canvas { opacity: 1; }
+/* Solo el lienzo se tiñe: el pin conserva los colores de la foto. */
+.space-map .maplibregl-canvas { filter: var(--map-filter); }
+.space-map-status { position: absolute; left: 50%; top: 50%; translate: -50% -50%; z-index: 1; padding: 0 16px; font: 500 12px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--dim); text-align: center; pointer-events: none; }
+
+/* Pin: el ancla del marcador es la punta de la cola. */
+.map-pin { display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .7)); }
+.map-pin-card { display: grid; place-items: center; width: 140px; aspect-ratio: 16 / 10; overflow: hidden; border: 3px solid var(--rec); border-radius: 6px; background: var(--s2); }
+.map-pin-card img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.map-pin-card svg { width: 28px; height: 28px; color: var(--acc); }
+.map-pin-tail { width: 0; height: 0; margin-top: -1px; border-left: 9px solid transparent; border-right: 9px solid transparent; border-top: 14px solid var(--rec); }
+/* Dirección oculta: el globo apunta al centro de la comuna, con borde punteado y el aviso arriba. */
+.map-pin.approx .map-pin-card { border-style: dashed; border-color: var(--fg); }
+.map-pin.approx .map-pin-tail { border-top-color: var(--fg); }
+.map-pin-note { display: inline-flex; align-items: center; gap: 5px; margin-bottom: 6px; padding: 4px 9px; border-radius: 999px; background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); color: var(--fg); font: 500 10px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+.map-pin-note svg { width: 12px; height: 12px; }
+@media (max-width: 720px) { .map-pin-card { width: 104px; } }
+
+/* Controles de MapLibre con el tema. */
+.space-map .maplibregl-ctrl-attrib { background: color-mix(in oklab, var(--bg) 75%, transparent); color: var(--dim); font-size: 10px; }
+.space-map .maplibregl-ctrl-attrib a { color: var(--dim); }
+.space-map .maplibregl-ctrl-attrib-button { filter: invert(1); }
+.space-map .maplibregl-ctrl-group { background: var(--s1); border: 1px solid var(--line2); box-shadow: none; }
+.space-map .maplibregl-ctrl-group button + button { border-top-color: var(--line2); }
+.space-map .maplibregl-ctrl-icon { filter: invert(1); }
+.space-map .maplibregl-cooperative-gesture-screen { z-index: 2; font: 500 13px var(--font-sans); }
+
+/* Visor: el puntero sigue siendo la mira de la cámara (la mano solo al arrastrar). */
+.vf .maplibregl-canvas-container.maplibregl-interactive { cursor: crosshair; }
+.vf .maplibregl-canvas-container.maplibregl-interactive:active { cursor: grabbing; }
+
+/* Ficha: mapa en un recuadro. */
+.detail-map { position: relative; height: 320px; overflow: hidden; border: 1px solid var(--line2); border-radius: var(--radius); }
+@media (max-width: 720px) { .detail-map { height: 260px; } }
