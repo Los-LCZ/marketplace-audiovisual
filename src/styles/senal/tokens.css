@@ -37,7 +37,7 @@
   --veil-top: rgba(9, 12, 16, 0.4);
   --veil: rgba(9, 12, 16, 0.5);
   /* Mapa (space-map.tsx): el estilo oscuro de OpenFreeMap es gris; se tiñe con el color del mundo. */
-  --map-filter: sepia(0.5) hue-rotate(175deg) saturate(1.6) brightness(1.1);
+  --map-filter: sepia(1) hue-rotate(180deg) saturate(2.6) brightness(1.5) contrast(1.05);
   --radius: 14px;
   --radius-sm: 8px;
   color-scheme: dark;
@@ -70,7 +70,7 @@
   --neon: #9b6cff;
   --deep: #5a3b8c;
   /* Mapa: el mismo modo noche, teñido de violeta en vez de azul. */
-  --map-filter: sepia(0.5) hue-rotate(215deg) saturate(1.5) brightness(1.1);
+  --map-filter: sepia(1) hue-rotate(220deg) saturate(2.2) brightness(1.5) contrast(1.05);
   /* Velo sobre el estudio dibujado, con el fondo de la paleta. */
   --veil-top: rgba(14, 11, 29, 0.62);
   --veil: rgba(14, 11, 29, 0.55);

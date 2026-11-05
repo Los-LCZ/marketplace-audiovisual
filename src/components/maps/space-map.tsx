@@ -26,6 +26,8 @@ const STYLE_URL = "https://tiles.openfreemap.org/styles/dark";
 const WORKER_URL = new URL("maplibre-gl/dist/maplibre-gl-worker.mjs", import.meta.url).href;
 const SANTIAGO: [number, number] = [-70.6483, -33.4569];
 const APPROX_RADIUS_M = 1200;
+// El punto queda un poco bajo el centro, así el globo (que va encima del punto) queda centrado en el cuadro.
+const PIN_OFFSET: [number, number] = [0, 48];
 const LOCALE = {
   "CooperativeGesturesHandler.WindowsHelpText": "Usa Ctrl + rueda para acercar o alejar el mapa",
   "CooperativeGesturesHandler.MacHelpText": "Usa ⌘ + rueda para acercar o alejar el mapa",
@@ -84,6 +86,7 @@ export function SpaceMap({
   const [pinEl, setPinEl] = useState<HTMLDivElement | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const placed = useRef(false);
 
   const { has, center, zoom } = mapView(spot);
   const [lng, lat] = center;
@@ -150,9 +153,12 @@ export function SpaceMap({
     if (has) marker.setLngLat([lng, lat]).addTo(map);
     else marker.remove();
     (map.getSource("approx") as GeoJSONSource | undefined)?.setData(approximate ? circle([lng, lat], APPROX_RADIUS_M) : EMPTY);
+    const offset = has ? PIN_OFFSET : ([0, 0] as [number, number]);
+    // La primera vez salta (sin animación); después vuela al espacio elegido.
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) map.jumpTo({ center: [lng, lat], zoom: target });
-    else map.flyTo({ center: [lng, lat], zoom: target, speed: 1.4, essential: false });
+    if (reduceMotion || !placed.current) map.easeTo({ center: [lng, lat], zoom: target, offset, duration: 0 });
+    else map.flyTo({ center: [lng, lat], zoom: target, offset, speed: 1.4, essential: false });
+    placed.current = true;
   }, [loaded, has, lng, lat, target, approximate]);
 
   return (
