@@ -9,6 +9,7 @@ import {
   CircleCheck,
   Clock,
   DoorOpen,
+  EyeOff,
   Guitar,
   Lock,
   MapPin,
@@ -139,10 +140,23 @@ export default async function SpacePage({ params, searchParams }: PageProps<"/es
         <RatingPill rating={space.avg_rating} count={space.review_count} label="reseñas" />
         <span className="inline-flex items-center gap-1.5">
           <MapPin className="size-4" aria-hidden />
-          {space.address}, {space.neighborhood ? `${space.neighborhood}, ` : ""}
-          {space.commune}, {space.city}
+          {[space.address, space.neighborhood, space.commune, space.city].filter(Boolean).join(", ")}
         </span>
       </p>
+      {space.address_hidden ? (
+        <p className="dim mt-2 inline-flex items-center gap-1.5 text-sm">
+          <EyeOff className="size-4" aria-hidden />
+          La dirección exacta se muestra cuando tu reserva esté confirmada.
+        </p>
+      ) : (
+        isOwner &&
+        space.hide_address && (
+          <p className="dim mt-2 inline-flex items-center gap-1.5 text-sm">
+            <EyeOff className="size-4" aria-hidden />
+            Tu dirección exacta está oculta: los visitantes ven solo la comuna hasta que su reserva esté confirmada.
+          </p>
+        )
+      )}
 
       <div className="detail">
         <div className="grid min-w-0 gap-10">

@@ -165,6 +165,7 @@ export default async function MisReservasPage({ searchParams }: PageProps<"/mis-
                       key={b.id}
                       booking={b}
                       today={today}
+                      showLocation
                       subtitle={
                         b.status === "requested" ? (
                           <span className="block text-[13px] text-warning">Esperando que el anfitrión acepte</span>
