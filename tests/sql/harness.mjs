@@ -42,6 +42,9 @@ alter table storage.objects enable row level security;
 grant all on storage.objects, storage.buckets to anon, authenticated, service_role;
 create function storage.foldername(name text) returns text[] language sql immutable as
   $$ select string_to_array(name, '/') $$;
+-- Igual que en Supabase: lo que sigue al último punto del último segmento de la ruta.
+create function storage.extension(name text) returns text language sql immutable as
+  $$ select reverse(split_part(reverse((string_to_array(name, '/'))[array_length(string_to_array(name, '/'), 1)]), '.', 1)) $$;
 `;
 
 export async function setup(repoDir = REPO_ROOT) {
