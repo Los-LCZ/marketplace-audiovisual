@@ -5,6 +5,10 @@ import { createClient } from "@/utils/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { fail, getString, getStringList, type ActionState } from "@/lib/action-state";
 import { isReviewTag, type ReviewTarget } from "@/lib/review-tags";
+import { publicDbError } from "@/lib/action-errors";
+import { isUuid } from "@/lib/uuid";
+import { RATE_LIMITS, rateLimiter, tooManyAttemptsMessage } from "@/lib/rate-limit";
+import { logSecurityEvent } from "@/lib/security-log";
 import type { Booking, BookingStatus } from "@/types/database";
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -12,8 +16,7 @@ const HOUR_MS = 60 * 60 * 1000;
 // Mensajes legibles para los errores que lanza la base de datos.
 function bookingErrorMessage(error: { code?: string; message: string }) {
   if (error.code === "23P01") return "El espacio ya está reservado en ese horario";
-  if (error.code === "P0001") return error.message; // raise exception de los triggers
-  return `No se pudo crear la reserva: ${error.message}`;
+  return publicDbError(error, "No se pudo crear la reserva. Intenta de nuevo.", "createBooking");
 }
 
 /**
@@ -37,7 +40,7 @@ export async function createBooking(
   const project = getString(formData, "project");
   const message = getString(formData, "message");
 
-  if (!spaceId) return fail("Espacio inválido");
+  if (!isUuid(spaceId)) return fail("Espacio inválido");
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()))
     return fail("Fechas inválidas");
   if (end <= start) return fail("La hora de término debe ser posterior al inicio");
@@ -46,6 +49,12 @@ export async function createBooking(
     return fail("La reserva debe ser por horas completas");
   if (project.length > 200) return fail("Proyecto muy largo", { project: "Máximo 200 caracteres" });
   if (message.length > 2000) return fail("Mensaje muy largo", { message: "Máximo 2000 caracteres" });
+
+  const limited = rateLimiter.hit(`booking:${user.id}`, RATE_LIMITS.bookingByUser);
+  if (!limited.ok) {
+    logSecurityEvent("rate_limited", { action: "createBooking" });
+    return fail(tooManyAttemptsMessage(limited.retryAfterSeconds));
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -79,6 +88,7 @@ export async function createBooking(
 async function setBookingStatus(bookingId: string, status: BookingStatus): Promise<ActionState> {
   const user = await getCurrentUser();
   if (!user) return fail("Debes iniciar sesión");
+  if (!isUuid(bookingId)) return fail("Reserva no encontrada");
 
   const supabase = await createClient();
   // RLS + trigger guard_booking_update validan quién puede hacer cada transición.
@@ -90,7 +100,7 @@ async function setBookingStatus(bookingId: string, status: BookingStatus): Promi
 
   if (error) {
     if (error.code === "23P01") return fail("Ese horario ya fue tomado por otra reserva");
-    return fail(error.code === "P0001" ? error.message : `Error: ${error.message}`);
+    return fail(publicDbError(error, "No se pudo actualizar la reserva. Intenta de nuevo.", "setBookingStatus"));
   }
   if (!data?.length) return fail("Reserva no encontrada");
 
@@ -152,7 +162,7 @@ function parseReviewForm(formData: FormData, target: ReviewTarget) {
   const comment = getString(formData, "comment");
   const tags = getStringList(formData, "tags", MAX_REVIEW_TAGS);
 
-  if (!bookingId) return { error: fail("Reserva inválida") };
+  if (!isUuid(bookingId)) return { error: fail("Reserva inválida") };
   if (!Number.isInteger(rating) || rating < 1 || rating > 5)
     return { error: fail("La calificación debe ser entre 1 y 5", { rating: "Entre 1 y 5" }) };
   if (comment.length > 2000) return { error: fail("Comentario muy largo", { comment: "Máximo 2000 caracteres" }) };
@@ -188,7 +198,7 @@ export async function createReview(_prev: ActionState, formData: FormData): Prom
   if (error) {
     if (error.code === "23505") return fail("Ya dejaste una reseña para esta reserva");
     if (error.code === "42501") return fail("Solo puedes reseñar reservas completadas");
-    return fail(error.message);
+    return fail(publicDbError(error, "No se pudo enviar la reseña. Intenta de nuevo.", "createReview"));
   }
 
   revalidatePath("/mis-reservas");
@@ -213,7 +223,7 @@ export async function createClientReview(_prev: ActionState, formData: FormData)
   if (error) {
     if (error.code === "23505") return fail("Ya calificaste a este cliente");
     if (error.code === "42501") return fail("Solo puedes calificar clientes de reservas completadas en tus espacios");
-    return fail(error.message);
+    return fail(publicDbError(error, "No se pudo enviar la calificación. Intenta de nuevo.", "createClientReview"));
   }
 
   revalidatePath("/dashboard");

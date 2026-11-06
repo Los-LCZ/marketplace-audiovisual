@@ -10,6 +10,10 @@ import { isValidIsoDate } from "@/lib/iso-date";
 import { normalizePlaceName } from "@/lib/place-name";
 import { geocodeSpace } from "@/lib/geocode";
 import { getSpaceLocations } from "@/lib/queries/locations";
+import { publicDbError } from "@/lib/action-errors";
+import { RATE_LIMITS, rateLimiter, tooManyAttemptsMessage } from "@/lib/rate-limit";
+import { logSecurityEvent } from "@/lib/security-log";
+import { isUuid } from "@/lib/uuid";
 import type { GearCategory, GearGroup, SpaceCategory, SpaceStatus } from "@/types/database";
 
 const CATEGORIES: SpaceCategory[] = [
@@ -150,6 +154,14 @@ function revalidateSpace(spaceId: string) {
   revalidatePath(`/espacios/${spaceId}/editar`);
 }
 
+// Límite de subidas de fotos por usuario (devuelve el error listo para la acción, o null).
+function checkUploadLimit(userId: string, action: string) {
+  const limited = rateLimiter.hit(`upload:${userId}`, RATE_LIMITS.uploadByUser);
+  if (limited.ok) return null;
+  logSecurityEvent("rate_limited", { action });
+  return fail(tooManyAttemptsMessage(limited.retryAfterSeconds));
+}
+
 export async function createSpace(
   _prev: ActionState<{ id: string }>,
   formData: FormData,
@@ -161,11 +173,17 @@ export async function createSpace(
   const { fieldErrors, values, amenityIds, images } = parseSpaceForm(formData);
   if (Object.keys(fieldErrors).length) return fail("Revisa los campos marcados", fieldErrors);
 
+  if (images.length) {
+    const limited = checkUploadLimit(user.id, "createSpace");
+    if (limited) return limited;
+  }
+
   const supabase = await createClient();
   const spaceId = crypto.randomUUID();
 
   const upload = await uploadSpaceImages(supabase, user.id, spaceId, images);
   if (upload.error) {
+    logSecurityEvent("upload_rejected", { action: "createSpace", reason: upload.rejected ?? "storage" });
     await removeSpaceImages(supabase, upload.urls);
     return fail(upload.error, { images: upload.error });
   }
@@ -179,7 +197,7 @@ export async function createSpace(
 
   if (error) {
     await removeSpaceImages(supabase, upload.urls);
-    return fail(`No se pudo crear el espacio: ${error.message}`);
+    return fail(publicDbError(error, "No se pudo crear el espacio. Intenta de nuevo.", "createSpace"));
   }
 
   if (amenityIds.length) {
@@ -187,7 +205,10 @@ export async function createSpace(
       p_space_id: spaceId,
       p_amenity_ids: amenityIds,
     });
-    if (amenitiesError) return fail(`Espacio creado, pero falló al guardar amenities: ${amenitiesError.message}`);
+    if (amenitiesError)
+      return fail(
+        publicDbError(amenitiesError, "Espacio creado, pero no se pudieron guardar las amenities.", "createSpace.amenities"),
+      );
   }
 
   revalidateSpace(spaceId);
@@ -207,6 +228,7 @@ export async function updateSpace(
 ): Promise<ActionState<{ id: string }>> {
   const user = await getCurrentUser();
   if (!user) return fail("Debes iniciar sesión");
+  if (!isUuid(spaceId)) return fail("Espacio no encontrado");
 
   const { fieldErrors, values, amenityIds } = parseSpaceForm(formData);
   delete fieldErrors.images;
@@ -219,7 +241,7 @@ export async function updateSpace(
     .eq("id", spaceId)
     .eq("host_id", user.id)
     .maybeSingle();
-  if (currentError) return fail(`No se pudo guardar: ${currentError.message}`);
+  if (currentError) return fail(publicDbError(currentError, "No se pudo guardar. Intenta de nuevo.", "updateSpace.read"));
   if (!current) return fail("Espacio no encontrado");
 
   // Se geocodifica solo lo que cambió (el dueño siempre ve su dirección en space_locations).
@@ -248,14 +270,17 @@ export async function updateSpace(
     .eq("host_id", user.id)
     .select("id");
 
-  if (error) return fail(`No se pudo guardar: ${error.message}`);
+  if (error) return fail(publicDbError(error, "No se pudo guardar. Intenta de nuevo.", "updateSpace"));
   if (!data?.length) return fail("Espacio no encontrado");
 
   const { error: amenitiesError } = await supabase.rpc("set_space_amenities", {
     p_space_id: spaceId,
     p_amenity_ids: amenityIds,
   });
-  if (amenitiesError) return fail(`Cambios guardados, pero falló al guardar amenities: ${amenitiesError.message}`);
+  if (amenitiesError)
+    return fail(
+      publicDbError(amenitiesError, "Cambios guardados, pero no se pudieron guardar las amenities.", "updateSpace.amenities"),
+    );
 
   revalidateSpace(spaceId);
   return { ok: true, data: { id: spaceId }, message: "Cambios guardados" };
@@ -271,6 +296,7 @@ export async function updateSpace(
  */
 export async function updateSpaceStatus(spaceId: string, status: SpaceStatus): Promise<ActionState> {
   if (!STATUSES.includes(status)) return fail("Estado inválido");
+  if (!isUuid(spaceId)) return fail("Espacio no encontrado");
   const user = await getCurrentUser();
   if (!user) return fail("Debes iniciar sesión");
 
@@ -280,9 +306,10 @@ export async function updateSpaceStatus(spaceId: string, status: SpaceStatus): P
     .from("spaces")
     .update({ status })
     .eq("id", spaceId)
+    .eq("host_id", user.id)
     .select("id");
 
-  if (error) return fail(error.message);
+  if (error) return fail(publicDbError(error, "No se pudo cambiar el estado. Intenta de nuevo.", "updateSpaceStatus"));
   if (!data?.length) return fail("Espacio no encontrado");
 
   revalidateSpace(spaceId);
@@ -300,6 +327,7 @@ export async function addSpaceImages(
 ): Promise<ActionState> {
   const user = await getCurrentUser();
   if (!user) return fail("Debes iniciar sesión");
+  if (!isUuid(spaceId)) return fail("Espacio no encontrado");
 
   const supabase = await createClient();
   const { data: space } = await supabase
@@ -314,8 +342,12 @@ export async function addSpaceImages(
   if (space.images.length + files.length > MAX_IMAGES_PER_SPACE)
     return fail(`Máximo ${MAX_IMAGES_PER_SPACE} fotos por espacio`);
 
+  const limited = checkUploadLimit(user.id, "addSpaceImages");
+  if (limited) return limited;
+
   const upload = await uploadSpaceImages(supabase, user.id, spaceId, files);
   if (upload.error) {
+    logSecurityEvent("upload_rejected", { action: "addSpaceImages", reason: upload.rejected ?? "storage" });
     await removeSpaceImages(supabase, upload.urls);
     return fail(upload.error);
   }
@@ -326,7 +358,7 @@ export async function addSpaceImages(
     .eq("id", spaceId);
   if (error) {
     await removeSpaceImages(supabase, upload.urls);
-    return fail(error.message);
+    return fail(publicDbError(error, "No se pudieron guardar las fotos. Intenta de nuevo.", "addSpaceImages"));
   }
 
   revalidateSpace(spaceId);
@@ -341,6 +373,7 @@ export async function addSpaceImages(
 export async function removeSpaceImage(spaceId: string, imageUrl: string): Promise<ActionState> {
   const user = await getCurrentUser();
   if (!user) return fail("Debes iniciar sesión");
+  if (!isUuid(spaceId) || typeof imageUrl !== "string") return fail("Espacio no encontrado");
 
   const supabase = await createClient();
   const { data: space } = await supabase
@@ -355,7 +388,7 @@ export async function removeSpaceImage(spaceId: string, imageUrl: string): Promi
     .from("spaces")
     .update({ images: space.images.filter((url) => url !== imageUrl) })
     .eq("id", spaceId);
-  if (error) return fail(error.message);
+  if (error) return fail(publicDbError(error, "No se pudo quitar la foto. Intenta de nuevo.", "removeSpaceImage"));
 
   await removeSpaceImages(supabase, [imageUrl]);
   revalidateSpace(spaceId);
@@ -370,6 +403,7 @@ export async function removeSpaceImage(spaceId: string, imageUrl: string): Promi
 export async function reorderSpaceImages(spaceId: string, urls: string[]): Promise<ActionState> {
   const user = await getCurrentUser();
   if (!user) return fail("Debes iniciar sesión");
+  if (!isUuid(spaceId)) return fail("Espacio no encontrado");
   if (!Array.isArray(urls) || !urls.every((u) => typeof u === "string")) return fail("Orden inválido");
 
   const supabase = await createClient();
@@ -391,7 +425,7 @@ export async function reorderSpaceImages(spaceId: string, urls: string[]): Promi
     .update({ images: urls })
     .eq("id", spaceId)
     .eq("host_id", user.id);
-  if (error) return fail(error.message);
+  if (error) return fail(publicDbError(error, "No se pudo guardar el orden. Intenta de nuevo.", "reorderSpaceImages"));
 
   revalidateSpace(spaceId);
   return { ok: true };
@@ -413,6 +447,7 @@ export async function addSpaceBlackouts(
 ): Promise<ActionState<{ count: number; skipped: number; skippedDates: string[] }>> {
   const user = await getCurrentUser();
   if (!user) return fail("Debes iniciar sesión");
+  if (!isUuid(spaceId)) return fail("Espacio no encontrado");
 
   const unique = [...new Set(Array.isArray(dates) ? dates : [])];
   if (!unique.length) return fail("Elige al menos un día");
@@ -430,9 +465,8 @@ export async function addSpaceBlackouts(
     .select("date");
 
   if (error) {
-    if (error.code === "P0001") return fail(error.message);
     if (error.code === "42501") return fail("Espacio no encontrado");
-    return fail(`No se pudieron cerrar los días: ${error.message}`);
+    return fail(publicDbError(error, "No se pudieron cerrar los días. Intenta de nuevo.", "addSpaceBlackouts"));
   }
 
   const added = new Set((data ?? []).map((row) => row.date));
@@ -448,6 +482,7 @@ export async function addSpaceBlackouts(
 export async function removeSpaceBlackout(spaceId: string, date: string): Promise<ActionState> {
   const user = await getCurrentUser();
   if (!user) return fail("Debes iniciar sesión");
+  if (!isUuid(spaceId)) return fail("Espacio no encontrado");
   if (!isValidIsoDate(date)) return fail("Fecha inválida");
 
   const supabase = await createClient();
@@ -457,7 +492,7 @@ export async function removeSpaceBlackout(spaceId: string, date: string): Promis
     .eq("space_id", spaceId)
     .eq("date", date)
     .select("id");
-  if (error) return fail(error.message);
+  if (error) return fail(publicDbError(error, "No se pudo reabrir el día. Intenta de nuevo.", "removeSpaceBlackout"));
   if (!data?.length) return fail("Ese día no estaba cerrado");
 
   revalidateSpace(spaceId);
