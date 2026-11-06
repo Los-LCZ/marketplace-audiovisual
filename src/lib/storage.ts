@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
+import { IMAGE_EXTENSIONS, sniffImage } from "@/lib/file-signature";
 
 // Funciona tanto con el cliente de navegador como con el de servidor.
 type Client = SupabaseClient<Database>;
@@ -15,30 +16,39 @@ export function validateImage(file: File): string | null {
   return null;
 }
 
+/** Nombre de archivo para mostrar en mensajes (sin rutas ni caracteres de control). */
+function displayName(file: File) {
+  return file.name.replace(/[\u0000-\u001f\u007f/\\]/g, "").slice(0, 80) || "archivo";
+}
+
 /**
  * Sube fotos a space-images/{userId}/{spaceId}/ y devuelve sus URLs públicas.
  * La política de Storage exige que la primera carpeta sea el uid del usuario.
+ * Solo se usa en el servidor: valida el tipo real por los bytes del archivo y de ahí
+ * salen la extensión y el Content-Type (nunca del nombre ni del tipo que declara el navegador).
  */
 export async function uploadSpaceImages(
   supabase: Client,
   userId: string,
   spaceId: string,
   files: File[],
-): Promise<{ urls: string[]; error?: string }> {
+): Promise<{ urls: string[]; error?: string; rejected?: "type" | "size" | "storage" }> {
   const urls: string[] = [];
 
   for (const file of files) {
     const invalid = validateImage(file);
-    if (invalid) return { urls, error: invalid };
+    if (invalid) return { urls, error: invalid, rejected: file.size > MAX_IMAGE_BYTES ? "size" : "type" };
 
-    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const path = `${userId}/${spaceId}/${crypto.randomUUID()}.${ext}`;
+    const mime = await sniffImage(file, ALLOWED_IMAGE_TYPES);
+    if (!mime) return { urls, error: `${displayName(file)}: el archivo no es una imagen válida`, rejected: "type" };
+
+    const path = `${userId}/${spaceId}/${crypto.randomUUID()}.${IMAGE_EXTENSIONS[mime]}`;
 
     const { error } = await supabase.storage
       .from(SPACE_IMAGES_BUCKET)
-      .upload(path, file, { contentType: file.type, cacheControl: "31536000", upsert: false });
+      .upload(path, file, { contentType: mime, cacheControl: "31536000", upsert: false });
 
-    if (error) return { urls, error: `No se pudo subir ${file.name}: ${error.message}` };
+    if (error) return { urls, error: `No se pudo subir ${displayName(file)}. Intenta de nuevo.`, rejected: "storage" };
 
     urls.push(supabase.storage.from(SPACE_IMAGES_BUCKET).getPublicUrl(path).data.publicUrl);
   }
@@ -77,16 +87,18 @@ export async function uploadAvatar(
   supabase: Client,
   userId: string,
   file: File,
-): Promise<{ url?: string; error?: string }> {
+): Promise<{ url?: string; error?: string; rejected?: "type" | "size" | "storage" }> {
   const invalid = validateAvatar(file);
-  if (invalid) return { error: invalid };
+  if (invalid) return { error: invalid, rejected: file.size > MAX_AVATAR_BYTES ? "size" : "type" };
 
-  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-  const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+  const mime = await sniffImage(file, ALLOWED_AVATAR_TYPES);
+  if (!mime) return { error: "El archivo no es una imagen JPG, PNG o WebP válida", rejected: "type" };
+
+  const path = `${userId}/${crypto.randomUUID()}.${IMAGE_EXTENSIONS[mime]}`;
   const { error } = await supabase.storage
     .from(AVATARS_BUCKET)
-    .upload(path, file, { contentType: file.type, cacheControl: "31536000", upsert: false });
-  if (error) return { error: `No se pudo subir la foto: ${error.message}` };
+    .upload(path, file, { contentType: mime, cacheControl: "31536000", upsert: false });
+  if (error) return { error: "No se pudo subir la foto. Intenta de nuevo.", rejected: "storage" };
 
   return { url: supabase.storage.from(AVATARS_BUCKET).getPublicUrl(path).data.publicUrl };
 }

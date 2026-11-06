@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 import { safeRedirectPath } from "@/lib/safe-redirect";
+import { authCookieOptions } from "@/lib/auth-cookies";
 
 // Rutas que requieren sesión iniciada (por prefijo: también protege sus subrutas).
 // `/perfil` es la edición del perfil propio; un perfil público debe vivir en otra ruta.
@@ -16,6 +17,7 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions: authCookieOptions(),
       cookies: {
         getAll() {
           return request.cookies.getAll();

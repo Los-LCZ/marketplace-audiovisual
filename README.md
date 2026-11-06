@@ -104,7 +104,7 @@ Cuentas demo: `ana.rojas`, `diego.fuentes` y `valentina.soto` (anfitriones; Dieg
 | `/descubrir` | Usuario (protegida) | Mazo de me gusta / descarte |
 | `/login`, `/registro` | Público (redirige a `/` con sesión) | Autenticación |
 | `/recuperar` | Público | Pedir el enlace para recuperar la contraseña |
-| `/recuperar/nueva` | Quien abrió el enlace del correo (vale 1 hora) | Crear la nueva contraseña |
+| `/recuperar/nueva` | Quien abrió el enlace del correo (vale 15 minutos desde que se abre) | Crear la nueva contraseña |
 
 Las rutas protegidas se definen en `PROTECTED_PREFIXES` de `src/utils/supabase/middleware.ts`.
 

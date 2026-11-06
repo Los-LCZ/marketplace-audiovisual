@@ -5,8 +5,13 @@ import { createClient } from "@/utils/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { fail, getString, getStringList, type ActionState } from "@/lib/action-state";
 import { removeAvatarFile, uploadAvatar } from "@/lib/storage";
+import { publicDbError } from "@/lib/action-errors";
+import { RATE_LIMITS, rateLimiter, tooManyAttemptsMessage } from "@/lib/rate-limit";
+import { logSecurityEvent } from "@/lib/security-log";
 
 const MAX_TAGS = 12;
+// Teléfono: dígitos, espacios, guiones, paréntesis y un "+" inicial (p. ej. +56 9 1234 5678).
+const PHONE_RE = /^\+?[0-9 ()-]{6,20}$/;
 
 /**
  * Actualiza el perfil propio. Campos: full_name, phone, headline, bio, commune,
@@ -28,6 +33,8 @@ export async function updateProfile(_prev: ActionState, formData: FormData): Pro
 
   const fieldErrors: Record<string, string> = {};
   if (fullName.length < 2) fieldErrors.full_name = "Ingresa tu nombre";
+  if (fullName.length > 100) fieldErrors.full_name = "Máximo 100 caracteres";
+  if (phone && !PHONE_RE.test(phone)) fieldErrors.phone = "Ingresa un teléfono válido";
   if (headline.length > 120) fieldErrors.headline = "Máximo 120 caracteres";
   if (bio.length > 2000) fieldErrors.bio = "Máximo 2000 caracteres";
   if (commune.length > 80) fieldErrors.commune = "Máximo 80 caracteres";
@@ -51,7 +58,7 @@ export async function updateProfile(_prev: ActionState, formData: FormData): Pro
     })
     .eq("id", user.id);
 
-  if (error) return fail(`No se pudo guardar el perfil: ${error.message}`);
+  if (error) return fail(publicDbError(error, "No se pudo guardar el perfil. Intenta de nuevo.", "updateProfile"));
 
   revalidatePath("/perfil");
   revalidatePath("/", "layout");
@@ -75,14 +82,23 @@ export async function updateAvatar(_prev: ActionState<{ url: string }>, formData
   const file = formData.get("avatar");
   if (!(file instanceof File) || file.size === 0) return fail("Elige una foto", { avatar: "Elige una foto" });
 
+  const limited = rateLimiter.hit(`upload:${user.id}`, RATE_LIMITS.uploadByUser);
+  if (!limited.ok) {
+    logSecurityEvent("rate_limited", { action: "updateAvatar" });
+    return fail(tooManyAttemptsMessage(limited.retryAfterSeconds));
+  }
+
   const supabase = await createClient();
   const upload = await uploadAvatar(supabase, user.id, file);
-  if (!upload.url) return fail(upload.error ?? "No se pudo subir la foto", { avatar: upload.error ?? "Error" });
+  if (!upload.url) {
+    logSecurityEvent("upload_rejected", { action: "updateAvatar", reason: upload.rejected ?? "storage" });
+    return fail(upload.error ?? "No se pudo subir la foto", { avatar: upload.error ?? "Error" });
+  }
 
   const { error } = await supabase.from("profiles").update({ avatar_url: upload.url }).eq("id", user.id);
   if (error) {
     await removeAvatarFile(supabase, upload.url);
-    return fail(`No se pudo guardar la foto: ${error.message}`);
+    return fail(publicDbError(error, "No se pudo guardar la foto. Intenta de nuevo.", "updateAvatar"));
   }
 
   await removeAvatarFile(supabase, user.profile.avatar_url);
@@ -101,7 +117,7 @@ export async function removeAvatar(): Promise<ActionState> {
 
   const supabase = await createClient();
   const { error } = await supabase.from("profiles").update({ avatar_url: null }).eq("id", user.id);
-  if (error) return fail(`No se pudo quitar la foto: ${error.message}`);
+  if (error) return fail(publicDbError(error, "No se pudo quitar la foto. Intenta de nuevo.", "removeAvatar"));
 
   await removeAvatarFile(supabase, user.profile.avatar_url);
   revalidateProfile(user.id);
@@ -120,7 +136,8 @@ export async function becomeHost(): Promise<ActionState> {
 
   const supabase = await createClient();
   const { error } = await supabase.from("profiles").update({ role: "host" }).eq("id", user.id);
-  if (error) return fail(`No se pudo activar tu cuenta de anfitrión: ${error.message}`);
+  if (error)
+    return fail(publicDbError(error, "No se pudo activar tu cuenta de anfitrión. Intenta de nuevo.", "becomeHost"));
 
   revalidateProfile(user.id);
   revalidatePath("/dashboard");

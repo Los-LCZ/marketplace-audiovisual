@@ -4,12 +4,17 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { fail, type ActionState } from "@/lib/action-state";
+import { publicDbError } from "@/lib/action-errors";
+import { isUuid } from "@/lib/uuid";
 import type { ReactionKind, SpaceCategory } from "@/types/database";
+
+// Las Server Actions se pueden invocar con cualquier argumento: se validan en runtime.
+const CATEGORIES: SpaceCategory[] = ["recording_studio", "rehearsal_room", "filming_set", "photo_studio", "outdoor_location"];
 
 async function react(spaceId: string, kind: ReactionKind | null): Promise<ActionState> {
   const user = await getCurrentUser();
   if (!user) return fail("Debes iniciar sesión");
-  if (!spaceId) return fail("Espacio inválido");
+  if (!isUuid(spaceId)) return fail("Espacio inválido");
 
   const supabase = await createClient();
   const { error } = kind
@@ -23,7 +28,7 @@ async function react(spaceId: string, kind: ReactionKind | null): Promise<Action
 
   if (error) {
     if (error.code === "23503") return fail("Espacio no encontrado");
-    return fail(error.message);
+    return fail(publicDbError(error, "No se pudo guardar. Intenta de nuevo.", "react"));
   }
 
   revalidatePath("/descubrir");
@@ -57,12 +62,14 @@ export async function undoReaction(spaceId: string): Promise<ActionState> {
 export async function resetPasses(categories?: SpaceCategory[]): Promise<ActionState<{ count: number }>> {
   const user = await getCurrentUser();
   if (!user) return fail("Debes iniciar sesión");
+  if (categories !== undefined && (!Array.isArray(categories) || categories.some((c) => !CATEGORIES.includes(c))))
+    return fail("Categorías inválidas");
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("reset_passes", {
     p_categories: categories?.length ? categories : null,
   });
-  if (error) return fail(error.message);
+  if (error) return fail(publicDbError(error, "No se pudo restablecer el mazo. Intenta de nuevo.", "resetPasses"));
 
   revalidatePath("/descubrir");
   return { ok: true, data: { count: data ?? 0 } };
