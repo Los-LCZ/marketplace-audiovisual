@@ -1,0 +1,21 @@
+# Dependabot (auditoría de seguridad, B-11): PRs semanales de dependencias npm y de
+# GitHub Actions. Las actualizaciones de seguridad se activan aparte en GitHub
+# (Settings → Code security → Dependabot security updates).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Santiago
+    open-pull-requests-limit: 5
+    groups:
+      # Menores y parches juntos en un solo PR; las mayores van por separado.
+      minor-y-parches:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

@@ -24,6 +24,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Dependencias de producción sin vulnerabilidades altas o críticas (B-11).
+      - run: npm audit --omit=dev --audit-level=high
       # Genera los tipos de rutas (PageProps, LayoutProps) que usa tsc.
       - run: npx next typegen
       - run: npx tsc --noEmit
